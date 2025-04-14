@@ -36,7 +36,7 @@ test:
 
 conda-package:
 	conda build . --output-folder=./
-	conda install ./**/*.tar.bz2
+	(conda install ./**/*.tar.bz2) || (conda install ./**/*.conda)
 
 test-package:
 	cd ${TESTS_PATH} && \

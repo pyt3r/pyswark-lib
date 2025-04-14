@@ -57,7 +57,7 @@ steps:
     inputs:
       SourceFolder: '$(Build.SourcesDirectory)'
       Contents: |
-        **/*.tar.bz2
+        **/*.conda
       TargetFolder: '$(Build.ArtifactStagingDirectory)'
 
   - task: PublishBuildArtifacts@1
