@@ -3,10 +3,11 @@ channels:
   - defaults
 dependencies:
   # build dependencies
+  - python=3.9
   - conda-build
   - pyyaml
   - coverage
-  - flake8
   # ./examples dependencies
   #- pandas
   #- matplotlib
+  - pydantic

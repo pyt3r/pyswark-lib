@@ -1,7 +1,7 @@
 Classes
 ==============
 
-.. autoclass:: template.template_class.TemplateClass
+.. autoclass:: pyswark.template_class.TemplateClass
    :members:
 
 .. raw:: html

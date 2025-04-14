@@ -4,8 +4,8 @@ Functions
 These are the functions for the tempate package:
 
 
-.. autofunction:: template.dumpPackageData
+.. autofunction:: pyswark.dumpPackageData
 
-.. autofunction:: template.module.test
+.. autofunction:: pyswark.module.test
 
-.. autofunction:: template.module.uncovered
+.. autofunction:: pyswark.module.uncovered

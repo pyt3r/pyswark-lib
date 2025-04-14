@@ -1,4 +1,3 @@
-# template pipeline for a template python package
 
 trigger:
   - master
@@ -7,7 +6,7 @@ strategy:
   matrix:
     linux:
       imageName: 'ubuntu-latest'
-      pythonVersion: '3.8'
+      pythonVersion: '3.9'
 
 pool:
   vmImage: $(imageName)
@@ -29,21 +28,21 @@ steps:
 
   - script: |
       conda update conda -y
-      conda env create --name test-env-template --file ci/test-env-requirements.yml
+      conda env create --name test-env-pyswark --file ci/test-env-requirements.yml
     displayName: Conda Env
 
   - script: |
-      source activate test-env-template
+      source activate test-env-pyswark
       make lint
     displayName: Linter
 
   - script: |
-      source activate test-env-template
+      source activate test-env-pyswark
       make conda-package
     displayName: Package
 
   - script: |
-      source activate test-env-template
+      source activate test-env-pyswark
       make test-package
     displayName: Test Package
 

@@ -1,8 +1,8 @@
 =============================================================
-template-package : python + azure + conda + docs
+pyswark
 =============================================================
 
-This is a sample repo for demonstrating template CI pipelines.
+...
 
 .. badges
 
@@ -17,27 +17,27 @@ This is a sample repo for demonstrating template CI pipelines.
     * - package
       - |version| |platform| |downloads|
 
-.. |docs| image:: https://readthedocs.org/projects/template-package/badge/?version=latest
+.. |docs| image:: https://readthedocs.org/projects/pyswark-package/badge/?version=latest
     :target: `Read the Docs`_
     :alt: Docs
 
-.. |build| image:: https://img.shields.io/azure-devops/build/pyt3r/template/3
+.. |build| image:: https://img.shields.io/azure-devops/build/pyt3r/pyswark/3
     :alt: Build
     :target: `Azure Pipeline`_
 
-.. |coverage| image:: https://img.shields.io/azure-devops/coverage/pyt3r/template/3
+.. |coverage| image:: https://img.shields.io/azure-devops/coverage/pyt3r/pyswark/3
     :alt: Coverage
     :target: `Azure Pipeline`_
 
-.. |version| image:: https://img.shields.io/conda/v/pyt3r/template
+.. |version| image:: https://img.shields.io/conda/v/pyt3r/pyswark
     :alt: Version
     :target: `Anaconda Cloud`_
 
-.. |platform| image:: https://img.shields.io/conda/pn/pyt3r/template
+.. |platform| image:: https://img.shields.io/conda/pn/pyt3r/pyswark
     :alt: Platform
     :target: `Anaconda Cloud`_
 
-.. |downloads| image:: https://img.shields.io/conda/dn/pyt3r/template
+.. |downloads| image:: https://img.shields.io/conda/dn/pyt3r/pyswark
     :alt: Platform
     :target: `Anaconda Cloud`_
 
@@ -46,17 +46,17 @@ This is a sample repo for demonstrating template CI pipelines.
 .. links
 
 .. _conda-build: https://docs.conda.io/projects/conda-build/en/latest/
-.. _Azure Pipeline: https://dev.azure.com/pyt3r/template/_build
-.. _Anaconda Cloud: https://anaconda.org/pyt3r/template
-.. _Read the Docs: https://template-package.readthedocs.io
+.. _Azure Pipeline: https://dev.azure.com/pyt3r/pyswark/_build
+.. _Anaconda Cloud: https://anaconda.org/pyt3r/pyswark
+.. _Read the Docs: https://pyswark-package.readthedocs.io
 
 .. _(mini)conda: https://docs.conda.io/en/latest/miniconda.html
 .. _conda-recipe/meta.yaml: conda-recipe/meta.yaml
 .. _azure-pipelines.yml: azure-pipelines.yml
-.. _https://dev.azure.com/pyt3r/template/_build: https://dev.azure.com/pyt3r/template/_build
-.. _https://anaconda.org/pyt3r/template: https://anaconda.org/pyt3r/template
+.. _https://dev.azure.com/pyt3r/pyswark/_build: https://dev.azure.com/pyt3r/pyswark/_build
+.. _https://anaconda.org/pyt3r/pyswark: https://anaconda.org/pyt3r/pyswark
 .. _.readthedocs.yml: .readthedocs.yml
-.. _https://template-package.readthedocs.io: https://template-package.readthedocs.io
+.. _https://pyswark-package.readthedocs.io: https://pyswark-package.readthedocs.io
 .. _MIT License: LICENSE
 
 .. end links
@@ -66,14 +66,13 @@ This is a sample repo for demonstrating template CI pipelines.
 Features
 ################
 
-* triggers a template `Azure Pipeline`_ to build, test, and publish a conda package artifact
-* triggers a template `Read the Docs`_ pipeline to build, publish, and deploy an html artifact
+* TBD
 
 Prerequisites
 ################
 
 * `(mini)conda`_
-* python3.7
+* python3.8+
 * Unix
 
 Azure Builds

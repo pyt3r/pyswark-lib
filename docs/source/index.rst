@@ -1,7 +1,5 @@
-Welcome to template-package!
+Welcome to pyswark!
 =============================
-
-This is template documentation for a template-package.
 
 .. toctree::
    :maxdepth: 1

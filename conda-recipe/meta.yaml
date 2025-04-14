@@ -1,6 +1,6 @@
 package:
-  name: template
-  version: 0.0.7
+  name: pyswark
+  version: 0.0.0
 
 about:
   author : pyt3r
@@ -13,11 +13,11 @@ source:
 build:
   noarch: python
   entry_points:
-    - template-entry-point = template.scripts.hello:world
+    - template-entry-point = pyswark.scripts.hello:world
 
 requirements:
   build:
-    - python=3.8
+    - python=3.9
     - pyyaml
 
   run:
