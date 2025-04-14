@@ -1,0 +1,68 @@
+# template pipeline for a template python package
+
+trigger:
+  - master
+
+strategy:
+  matrix:
+    linux:
+      imageName: 'ubuntu-latest'
+      pythonVersion: '3.8'
+
+pool:
+  vmImage: $(imageName)
+
+steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(pythonVersion)'
+    displayName: 'Use Python $(pythonVersion)'
+
+  - script: |
+      export CONDA_ARTIFACT_NAME=conda-build
+      echo "##vso[task.setvariable variable=CONDA_ARTIFACT_NAME]$CONDA_ARTIFACT_NAME"
+    displayName: Set environment variables
+
+  - script: |
+      echo "##vso[task.prependpath]$CONDA/bin"
+    displayName: Add conda to PATH
+
+  - script: |
+      conda update conda -y
+      conda env create --name test-env-template --file ci/test-env-requirements.yml
+    displayName: Conda Env
+
+  - script: |
+      source activate test-env-template
+      make lint
+    displayName: Linter
+
+  - script: |
+      source activate test-env-template
+      make conda-package
+    displayName: Package
+
+  - script: |
+      source activate test-env-template
+      make test-package
+    displayName: Test Package
+
+  - task: PublishCodeCoverageResults@1
+    inputs:
+      codeCoverageTool: Cobertura
+      summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.xml'
+      reportDirectory: '$(System.DefaultWorkingDirectory)/**/htmlcov'
+
+  - task: CopyFiles@2
+    displayName: 'Copy Artifacts'
+    inputs:
+      SourceFolder: '$(Build.SourcesDirectory)'
+      Contents: |
+        **/*.tar.bz2
+      TargetFolder: '$(Build.ArtifactStagingDirectory)'
+
+  - task: PublishBuildArtifacts@1
+    inputs:
+      PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+      ArtifactName: '$(CONDA_ARTIFACT_NAME)'
+      publishLocation: 'Container'

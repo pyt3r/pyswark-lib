@@ -1,0 +1,12 @@
+name: test-env
+channels:
+  - defaults
+dependencies:
+  # build dependencies
+  - conda-build
+  - pyyaml
+  - coverage
+  - flake8
+  # ./examples dependencies
+  #- pandas
+  #- matplotlib

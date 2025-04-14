@@ -1,0 +1,10 @@
+package_data:
+  template:
+    data:
+      - data.py
+      - data.txt
+      - '*.yml'
+unpackage_data:
+  template:
+    data:
+      - data.yaml
