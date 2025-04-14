@@ -10,4 +10,5 @@ dependencies:
   # ./examples dependencies
   #- pandas
   #- matplotlib
+  - numpy
   - pydantic

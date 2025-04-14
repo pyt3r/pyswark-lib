@@ -13,7 +13,7 @@ source:
 build:
   noarch: python
   entry_points:
-    - template-entry-point = pyswark.scripts.hello:world
+    - pyswark-entry-point = pyswark.scripts.hello:world
 
 requirements:
   build:
