@@ -1,15 +1,15 @@
 import unittest
 import os
-import template
-from template.infra.init import dumpPackageData
-from template.infra.init import get_version
-from template.util.log import logger
+import pyswark
+from pyswark.infra.init import dumpPackageData
+from pyswark.infra.init import get_version
+from pyswark.util.log import logger
 
 
 class TestCase(unittest.TestCase):
 
     def test_package_data(self):
-        package = template
+        package = pyswark
         package_data = dumpPackageData(package.__file__)
         basedir = os.path.dirname(package.__file__)
         for fn in package_data[package.__name__]:
@@ -21,4 +21,4 @@ class TestCase(unittest.TestCase):
                 logger.debug(fn)
 
     def test_get_version(self):
-        assert template.__version__ == get_version(template.__file__)
+        assert pyswark.__version__ == get_version(pyswark.__file__)

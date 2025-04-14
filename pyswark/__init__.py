@@ -1,5 +1,5 @@
 def _get_version():
-    import template.infra.init as init
+    import pyswark.infra.init as init
     return init.get_version(__file__)
 
 
@@ -23,9 +23,9 @@ def test(engine='unittests'):
     None: None
       None if successful else sys.exit(1)
     """
-    import template
-    from template.infra.drive_tests import drive_tests
-    return drive_tests(engine, template)
+    import pyswark
+    from pyswark.infra.drive_tests import drive_tests
+    return drive_tests(engine, pyswark)
 
 
 def dumpPackageData():
@@ -41,5 +41,5 @@ def dumpPackageData():
           unpackage_data:
               [path]: [filename1, filename2, ...]
     """
-    import template.infra.init as init
+    import pyswark.infra.init as init
     return init.dumpPackageData(__file__)
