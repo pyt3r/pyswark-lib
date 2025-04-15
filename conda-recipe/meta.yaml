@@ -21,6 +21,7 @@ requirements:
     - pyyaml
     - numpy
     - pydantic
+    - fsspec
 
   run:
     - python
