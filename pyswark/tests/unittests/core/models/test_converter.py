@@ -2,8 +2,10 @@ import unittest
 import numpy as np
 from typing import List
 
-from pyswark.lib.pydantic import base, converter
 from pyswark.lib.pydantic import ser_des
+
+from pyswark.core.models import xputs
+from pyswark.core.models import converter
 
 
 class TestCase(unittest.TestCase):
@@ -19,11 +21,11 @@ class TestCase(unittest.TestCase):
         np.testing.assert_array_equal( model.outputs, des.outputs )
 
 
-class Inputs( base.BaseInputs ):
+class Inputs( xputs.BaseInputs ):
     data: List
 
 
-class ToArray( converter.ConverterModel ):
+class ToArray(converter.ConverterModel):
     inputs: Inputs
 
     @staticmethod

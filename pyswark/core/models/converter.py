@@ -2,21 +2,22 @@ from typing import Any
 from pydantic import model_validator, field_validator
 
 from pyswark.lib.pydantic import base
+from pyswark.core.models import xputs
 
 
 class ConverterModel( base.BaseModel ):
     """ for when you want to convert to an output that pydantic/typing doesnt natively support, i.e. an np.array """
-    inputs: base.BaseInputs
+    inputs: xputs.BaseInputs
 
     def __init__( self, inputs=None ):
         super().__init__( inputs=inputs )
 
     @classmethod
-    def validate( cls, inputs: base.BaseInputs ):
+    def validate( cls, inputs: xputs.BaseInputs ):
         return inputs
 
     @classmethod
-    def convert( cls, inputs: base.BaseInputs ) -> Any:
+    def convert( cls, inputs: xputs.BaseInputs ) -> Any:
         return inputs
 
     @field_validator( 'inputs', mode='before' )

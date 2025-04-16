@@ -1,9 +1,9 @@
 import unittest
 from pydantic import Field, field_validator
 
-from pyswark.lib.pydantic.function import FunctionModel
-from pyswark.lib.pydantic import base
 from pyswark.lib.pydantic import ser_des
+from pyswark.core.models import xputs
+from pyswark.core.models.function import FunctionModel
 
 
 class TestCase(unittest.TestCase):
@@ -19,7 +19,7 @@ class TestCase(unittest.TestCase):
         self.assertEqual( model, des )
 
 
-class Inputs( base.BaseInputs ):
+class Inputs( xputs.BaseInputs ):
     data: int
 
     @field_validator( 'data', mode='before' )
@@ -27,7 +27,7 @@ class Inputs( base.BaseInputs ):
         assert float( data ) > 0
         return data
 
-class Outputs( base.BaseOutputs ):
+class Outputs( xputs.BaseOutputs ):
     data: float
 
 class MultiplyBy10( FunctionModel ):

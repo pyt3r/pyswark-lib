@@ -1,18 +1,19 @@
+import pyswark.core.models.xputs
 from pydantic import Field, field_validator, model_validator
 
 from pyswark.lib.pydantic import base
 
 
 class FunctionModel( base.BaseModel ):
-    inputs  : base.BaseInputs
-    outputs : base.BaseOutputs = Field( default=None, description="" )
+    inputs  : pyswark.core.models.xputs.BaseInputs
+    outputs : pyswark.core.models.xputs.BaseOutputs = Field(default=None, description="")
 
     def __init__(self, inputs=None, **kw ):
         """ keep **kw for outputs deserialization """
         super().__init__( inputs=inputs, **kw )
 
     @classmethod
-    def validate( cls, inputs: base.BaseInputs ):
+    def validate(cls, inputs: pyswark.core.models.xputs.BaseInputs):
         return inputs
 
     @staticmethod
