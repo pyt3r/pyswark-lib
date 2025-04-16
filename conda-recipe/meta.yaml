@@ -1,11 +1,11 @@
 package:
   name: pyswark
-  version: 0.0.0
+  version: 0.0.1
 
 about:
   author : pyt3r
   license_file: LICENSE
-  summary: a template python package
+  summary: python swiss army knife
 
 source:
   path: ..
@@ -24,6 +24,6 @@ requirements:
     - fsspec
 
   run:
-    - python
+    - python>=3.9
     - pyyaml
     - coverage
