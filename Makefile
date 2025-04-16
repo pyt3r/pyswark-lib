@@ -1,13 +1,12 @@
 PACKAGE_NAME=pyswark
 PACKAGE_PATH=`python -c "import ${PACKAGE_NAME}, os; print(os.path.dirname(${PACKAGE_NAME}.__file__))"`
 TESTS_PATH=${PACKAGE_PATH}/tests
-PYVERSION=3.9
 
 test-env:
-	conda env create --file ci/test-env-requirements.yml python=${PYVERSION}
+	conda env create --file ci/test-env-requirements.yml
 
 rtd-env:
-	conda env create --file ci/rtd-env-requirements.yml python=${PYVERSION}
+	conda env create --file ci/rtd-env-requirements.yml
 
 _pip-env:
 	python -m venv pip-env
