@@ -2,7 +2,7 @@ import pathlib
 from typing import ClassVar
 from pydantic import RootModel, field_validator
 
-from swark.lib.pydantic.uri.annotated_url import AnnotatedUrl
+from pyswark.core.models.uri.annotated_url import AnnotatedUrl
 
 
 class UriRootModel( RootModel ):
