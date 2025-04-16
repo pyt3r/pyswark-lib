@@ -8,8 +8,8 @@ dependencies:
   - pyyaml
   - coverage
   # ./examples dependencies
-  #- pandas
   #- matplotlib
   - numpy
+  - pandas
   - pydantic
   - fsspec

@@ -1,6 +1,6 @@
 import logging
 
-logger = logging.getLogger('template')
+logger = logging.getLogger('pyswark')
 logger.setLevel(logging.DEBUG)
 
 
