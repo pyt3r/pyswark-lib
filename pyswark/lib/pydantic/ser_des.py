@@ -19,46 +19,46 @@ def fromJson( loadable: str ) -> BaseModelType:
     return fromDict( data )
 
 def toDict( model: BaseModelType ) -> Dict:
-    dictModel = ToDictModel( pmodel=model, kwargs=model )
+    dictModel = ToDictModel( model=model, contents=model )
     return dictModel.model_dump()
 
 def fromDict( data: Dict ) -> BaseModelType:
     dictModel = FromDictModel( **data )
-    return dictModel.pmodel( **dictModel.kwargs )
+    return dictModel.model( **dictModel.contents )
 
 
 class ToDictModel( base.BaseModel ):
-    pmodel : BaseModelInst
-    kwargs : BaseModelInst
+    model : BaseModelInst
+    contents : BaseModelInst
 
-    @field_validator( 'pmodel' )
+    @field_validator( 'model' )
     @classmethod
-    def mustBeBaseModelInstance( cls, pmodel: BaseModelInst ) -> str:
-        cls._mustBeBaseModelInstance( pmodel )
-        klass = pmodel.__class__
+    def mustBeBaseModelInstance( cls, model: BaseModelInst ) -> str:
+        cls._mustBeBaseModelInstance( model )
+        klass = model.__class__
         return f"{ klass.__module__ }.{ klass.__name__ }"
 
-    @field_validator( 'kwargs' )
+    @field_validator( 'contents' )
     @classmethod
-    def mustBeDumpable( cls, pmodel: BaseModelInst ) -> Dict:
-        cls._mustBeBaseModelInstance( pmodel )
-        return pmodel.model_dump()
+    def mustBeDumpable( cls, model: BaseModelInst ) -> Dict:
+        cls._mustBeBaseModelInstance( model )
+        return model.model_dump()
 
     @staticmethod
-    def _mustBeBaseModelInstance( pmodel: BaseModelInst ) -> None:
-        if not isinstance( pmodel, BaseModel ):
-            raise TypeError( f'{ pmodel= } must be an instance of { BaseModel }')
+    def _mustBeBaseModelInstance( model: BaseModelInst ) -> None:
+        if not isinstance( model, BaseModel ):
+            raise TypeError( f'{ model= } must be an instance of { BaseModel }')
 
 
 class FromDictModel( base.BaseModel ):
-    pmodel : str
-    kwargs : Dict
+    model : str
+    contents : Dict
 
-    @field_validator( 'pmodel' )
+    @field_validator( 'model' )
     @classmethod
-    def mustBeBaseModelSubclass( cls, pmodel: str ) -> BaseModelType:
-        Model = pydoc.locate( pmodel )
+    def mustBeBaseModelSubclass( cls, model: str ) -> BaseModelType:
+        Model = pydoc.locate( model )
         valid = Model and issubclass( Model, BaseModel )
         if not valid:
-            raise TypeError( f'{ pmodel= } must a subclass of { BaseModel }')
+            raise TypeError( f'{ model= } must a subclass of { BaseModel }')
         return Model
