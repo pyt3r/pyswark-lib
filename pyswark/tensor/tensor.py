@@ -66,6 +66,7 @@ class Tensor( converter.ConverterModel ):
 
 
 class Vector( Tensor ):
+    inputs: Inputs
 
     @property
     def vector(self):
@@ -81,6 +82,7 @@ class Vector( Tensor ):
 
 
 class Matrix( Tensor ):
+    inputs: Inputs
 
     @property
     def matrix(self):
