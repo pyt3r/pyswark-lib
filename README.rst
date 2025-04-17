@@ -1,8 +1,8 @@
 =============================================================
-PySwark: A Swiss Army Knife for everyday Python
+PySwark: my swiss army knife for everyday python
 =============================================================
 
-PySwark houses the collection of Python tools that I’ve built and found to be useful for general software purposes.
+PySwark is a collection of Python tools I’ve built and found to be useful for a wide range of software tasks.
 
 
 .. badges
@@ -70,11 +70,11 @@ Give it a try:
     $ conda install pyswark -c pyt3r
 
 
-Examples include:
+Examples include..
 
-* Simplified I/O signatures
+* Simplified I/O APIs
 
-.. code-block:: python
+  .. code-block:: python
 
     from pyswark.core.datahandler import api
 
@@ -88,9 +88,9 @@ Examples include:
     read = api.read( 'python://pyswark.core.datahandler.api.read' )
     assert read == api.read
 
-* (De)serialization methods
+* (De)serialization support
 
-.. code-block:: python
+  .. code-block:: python
 
     from pyswark.lib.pydantic import base, ser_des
 
@@ -106,7 +106,26 @@ Examples include:
     assert isinstance( des, ModelXY )
 
 
+* DataFrame-like structures for tensors, matrices, and vectors
+
+  .. code-block:: python
+
+    from pyswark.tensor.tensorframe import MatrixFrame
+
+    mf = MatrixFrame({
+        'x': [[ 1, 2, 3 ],
+              [ 4, 5, 6] ],
+        'y': [[ 1, -1, 1 ],
+              [ -1, 1, -1] ],
+    })
+    print( mf['x'] * mf['y'] )
+    """
+    [[ 1 -2  3]
+    [ -4  5 -6]]
+    """
+
+
 * A database for managing disorganized data
 
 
-* And many more...
+* And many others..
