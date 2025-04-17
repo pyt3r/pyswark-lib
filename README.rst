@@ -1,11 +1,8 @@
 =============================================================
-pyswark
+PySwark: A Swiss Army Knife for everyday Python
 =============================================================
 
-Install as follows::
-
-    $ conda install -c pyt3r pyswark
-
+PySwark houses the collection of Python tools that I’ve built and found to be useful for general software purposes.
 
 
 .. badges
@@ -65,17 +62,51 @@ Install as follows::
 
 .. end links
 
-.. contents:: :local:
+
+Give it a try:
+
+.. code-block:: bash
+
+    $ conda install pyswark -c pyt3r
 
 
+Examples include:
+
+* Simplified I/O signatures
+
+.. code-block:: python
+
+    from pyswark.core.datahandler import api
+
+    data = api.read( '/path/to/df.csv.gz' )
+    api.write( data, '/path/to/df-copy.csv.gz' )
+
+    data = api.read( 'file://path/to/data.json' )
+    api.write( data, 'file://path/to/data-copy.json' )
+
+    # import by uri
+    read = api.read( 'python://pyswark.core.datahandler.api.read' )
+    assert read == api.read
+
+* (De)serialization methods
+
+.. code-block:: python
+
+    from pyswark.lib.pydantic import base, ser_des
+
+    class ModelXY( base.BaseModel ):
+        x: int
+        y: float
+
+    model = ModelXY( x=1.0, y='2.2' )
+
+    ser = ser_des.toJson( model )
+    des = ser_des.fromJson( ser )
+
+    assert isinstance( des, ModelXY )
 
 
-Author
-################
+* A database for managing disorganized data
 
-* ``pyt3r``
 
-License
-################
-
-* `MIT License`_
+* And many more...
