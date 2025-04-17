@@ -11,6 +11,7 @@ dependencies:
   #- matplotlib
   - numpy
   - pandas
+  - pyarrow
   - pydantic
   - fsspec
   - requests

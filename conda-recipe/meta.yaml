@@ -16,11 +16,15 @@ build:
     - pyswark-entry-point = pyswark.scripts.hello:world
 
 requirements:
+  channels:
+    - defaults
+    - conda-forge
   build:
     - python>=3.9
     - pyyaml
     - numpy
     - pandas
+    - pyarrow
     - pydantic
     - fsspec
     - requests
