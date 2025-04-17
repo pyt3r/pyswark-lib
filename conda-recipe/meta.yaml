@@ -23,6 +23,7 @@ requirements:
     - pandas
     - pydantic
     - fsspec
+    - requests
 
   run:
     - python>=3.9
