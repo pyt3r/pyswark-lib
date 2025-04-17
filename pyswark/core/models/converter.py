@@ -31,7 +31,6 @@ class ConverterModel( base.BaseModel ):
 
     @classmethod
     def _coerce( cls, xputs, annotation ):
-        print(f"{cls.__annotations__=}, {annotation=}")
         klass = cls.__annotations__[ annotation ]
 
         if not issubclass( klass, base.BaseModel ):

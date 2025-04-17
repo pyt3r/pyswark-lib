@@ -92,9 +92,10 @@ Examples include..
 
   .. code-block:: python
 
-    from pyswark.lib.pydantic import base, ser_des
+    from pydantic import BaseModel
+    from pyswark.lib.pydantic import ser_des
 
-    class ModelXY( base.BaseModel ):
+    class ModelXY( BaseModel ):
         x: int
         y: float
 
