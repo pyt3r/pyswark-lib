@@ -17,3 +17,5 @@ dependencies:
   - matplotlib
   - pydantic
   - fsspec
+  - requests
+  - aiohttp

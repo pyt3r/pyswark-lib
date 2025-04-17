@@ -14,3 +14,4 @@ dependencies:
   - pydantic
   - fsspec
   - requests
+  - aiohttp
