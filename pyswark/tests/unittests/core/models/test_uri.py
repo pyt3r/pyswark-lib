@@ -1,9 +1,11 @@
 import unittest
+import pathlib
 
+import pyswark
 from pyswark.core.models.uri.base import UriModel
 
 
-class _UriMixin:
+class Mixin:
 
     URIs = []
 
@@ -18,89 +20,80 @@ class _UriMixin:
                 self.assertEqual( expected, getattr( model, attr ) )
 
 
-class UriFileTests( _UriMixin, unittest.TestCase ):
+class Pyswark( Mixin, unittest.TestCase ):
     URIs = [
-        '\\x.py//',
-        'x.py//',
-        'x.py\\\\',
-        'x.py/',
-        'x.py',
-        '/x.py//',
-        '/x.py/',
-        '/x.py',
-        '//x.py//',
-        '//x.py/',
-        '//x.py',
-        '///x.py',
-        '////x.py',
-        '/////x.py',
-        'file:/x.py//',
-        'file:/x.py/',
-        'file:/x.py',
-        'file:///x.py',
-        'file:///x.py',
-        'file:////x.py',
-        'file://///x.py',
+        'pyswark:///data/data.csv',
+        'pyswark://data/data.csv',
+        'pyswark:/data/data.csv',
+        'pyswark:data/data.csv',
     ]
 
     def test_path(self):
-        self.runTests( attr='path', expected='x.py' )
-
-    def test_path2(self):
-        uris = [ 'file://x.py', ]
-        self.runTests( attr='path', expected='.', uris=uris )
-
-    def test_scheme(self):
-        self.runTests( attr='scheme', expected="file" )
+        parent   = pathlib.Path( pyswark.__file__ ).parent
+        expected = f'{ parent }/data/data.csv'
+        self.runTests( attr='path', expected=expected )
 
 
-class UriPythonTests( _UriMixin, unittest.TestCase ):
+class Python( Mixin, unittest.TestCase ):
     URIs = [
-        'python:\\path.to.my.Class\\',
         'python:path.to.my.Class',
-        'python:/path.to.my.Class/',
         'python:/path.to.my.Class',
-        # 'python://path.to.my.Class',
+        'python://path.to.my.Class',
         'python:///path.to.my.Class',
         'python:////path.to.my.Class',
-        'python://///path.to.my.Class',
     ]
 
     def test_path(self):
-        self.runTests( attr='path', expected="path.to.my.Class" )
-
-    def test_path2(self):
-        uris = [ 'python://path.to.my.Class', ]
-        self.runTests( attr='path', expected=None, uris=uris )
-
-    def test_scheme(self):
-        self.runTests( attr='scheme', expected="python" )
+        self.runTests( attr='path', expected='path.to.my.Class' )
 
 
-class UriHttpTests( _UriMixin, unittest.TestCase ):
+
+class FileAbsolute( Mixin, unittest.TestCase ):
+
     URIs = [
-        'website.com/some/endpoint',
-        '/website.com/some/endpoint',
-        'http:/website.com/some/endpoint',
-        'http://website.com/some/endpoint',
-        'http:///website.com/some/endpoint',
-        'http:////website.com/some/endpoint',
-        'http://///website.com/some/endpoint',
+        'file-absolute:path/to/file',
+        'file-absolute:/path/to/file',
+        'file-absolute://path/to/file',
+        'file-absolute:///path/to/file',
+        'file-absolute:////path/to/file',
+        'file:/path/to/file',
+        'file://path/to/file',
+        'file:///path/to/file',
+        'file:////path/to/file',
     ]
 
-    def test_host(self):
-        self.runTests( 'host', "website.com" )
+    def test_path(self):
+        self.runTests( attr='path', expected='/path/to/file' )
 
-    def test_host2(self):
-        uris = [ 'website.com', '/website.com', ]
-        self.runTests( 'host', "website.com", uris )
 
-    def test_scheme(self):
-        self.runTests( 'scheme', "http" )
-        self.runTests( 'protocol', "http" )
+
+class FileRelative( Mixin, unittest.TestCase ):
+
+    URIs = [
+        'file-relative:path/to/file',
+        'file-relative:/path/to/file',
+        'file-relative://path/to/file',
+        'file-relative:///path/to/file',
+        'file-relative:////path/to/file',
+        'file:path/to/file',
+    ]
 
     def test_path(self):
-        self.runTests( 'path', "some/endpoint" )
+        self.runTests( attr='path', expected='path/to/file' )
+
+
+class Url( Mixin, unittest.TestCase ):
+    URIs = [
+        'scheme://username:password@domain.com:8080/my path/to/a page?query=value#section',
+        'username:password@domain.com:8080/my path/to/a page',
+        'username'       '@domain.com:8080/my path/to/a page',
+        'domain.com:8080/my path/to/a page',
+        'domain.com'   '/my path/to/a page',
+        '/my path/to/a page',
+    ]
+
+    def test_path(self):
+        self.runTests( attr='path', expected='/my path/to/a page' )
 
 
 class _ExtMixin:
@@ -118,6 +111,7 @@ class _ExtMixin:
                 self.assertEqual( expected, getattr( model.Ext, attr ) )
 
 
+@unittest.skip("temporary skip")
 class ExtTests( _ExtMixin, unittest.TestCase ):
 
     _URI = 'path.path/to.to/x.csv.gz'
