@@ -5,7 +5,7 @@ import shutil
 import pandas
 
 from pyswark.lib.pydantic import base
-from pyswark.core.datahandler import api, registry
+from pyswark.core.datahandler import api, settings
 
 
 class TestCaseLocal( unittest.TestCase ):
@@ -37,7 +37,7 @@ class LocalTestCasesDF( TestCaseLocal ):
         fn  = filename or mode
         uri = os.path.join( self.tempdir, fn )
 
-        Handler = registry.get(mode)
+        Handler = settings.get(mode)
         handler = Handler( uri )
 
         self.assertFalse( handler.exists() )
@@ -65,7 +65,7 @@ class LocalTestCasesJson( TestCaseLocal ):
         fn  = filename or mode
         uri = os.path.join( self.tempdir, fn )
 
-        Handler = registry.get(mode)
+        Handler = settings.get(mode)
         handler = Handler( uri )
 
         self.assertFalse( handler.exists() )
@@ -126,7 +126,7 @@ class LocalTestCasePython( unittest.TestCase ):
         path = "pyswark.tests.unittests.core.test_datahandler.PYTHON_DATA"
         uri  = f"{ mode }://{ path }"
 
-        Handler = registry.get(mode)
+        Handler = settings.get(mode)
         handler = Handler( uri )
 
         self.assertTrue( handler.exists() )

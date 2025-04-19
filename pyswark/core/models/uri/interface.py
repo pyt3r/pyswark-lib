@@ -5,7 +5,7 @@ from typing import ClassVar, Union
 from pydantic import Field, field_validator
 
 from pyswark.core.models import xputs, function
-from pyswark.core.models.uri import ext
+
 
 class Inputs( xputs.BaseInputs ):
     uri    : str
@@ -101,7 +101,7 @@ class Model( function.FunctionModel ):
     @property
     def Ext(self):
         return self._getProperty( 'Ext' )
-        
+
     @property
     def fsspec(self):
         """
