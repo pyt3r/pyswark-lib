@@ -2,7 +2,7 @@
 from typing import ClassVar
 from pydantic import Field, ValidationError
 
-from pyswark.core.models.uri import interface, generic, file
+from pyswark.core.models.uri import interface, generic, file, http
 
 
 class Inputs( interface.InputsWithUriPatch ):
@@ -16,6 +16,10 @@ class Model( interface.Model ):
 
     def __new__( cls, uri ):
         try:
-            return generic.Model( uri )
+            model = generic.Model( uri )
+            if model.host:
+                model = http.ModelGuess( uri )
+            return model
+
         except ValidationError:
-            return file.Model( f'file:{ uri }' )
+            return file.ModelGuess( f'file:{ uri }' )

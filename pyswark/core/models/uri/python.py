@@ -2,7 +2,7 @@ import os
 from typing import ClassVar
 from pydantic import Field
 
-from pyswark.core.models.uri import interface
+from pyswark.core.models.uri import interface, ext
 
 
 class Inputs( interface.InputsWithUriPatch ):
@@ -22,5 +22,11 @@ class Model( interface.Model ):
             path = path[1:]
         return path
 
+    @property
+    def fsspec(self):
+        return f'{ self.scheme }://{ self.path }'
 
+    @property
+    def Ext(self):
+        return ext.Ext( '' )
 

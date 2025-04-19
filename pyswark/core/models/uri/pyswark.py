@@ -3,7 +3,7 @@ from typing import ClassVar
 from pydantic import Field
 
 import pyswark
-from pyswark.core.models.uri import interface
+from pyswark.core.models.uri import interface, ext
 
 
 class Inputs( interface.InputsWithUriPatch ):
@@ -21,5 +21,11 @@ class Model( interface.Model ):
         parent = pathlib.Path( pyswark.__file__ ).parent
         return pathlib.Path( f'{ parent }/{ super().Path }' )
 
+    @property
+    def fsspec(self):
+        return self.path
 
-
+    @property
+    def Ext(self):
+        if self.Path:
+            return ext.Ext( name=self.Path.name )

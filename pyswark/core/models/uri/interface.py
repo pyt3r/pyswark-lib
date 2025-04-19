@@ -5,7 +5,7 @@ from typing import ClassVar, Union
 from pydantic import Field, field_validator
 
 from pyswark.core.models import xputs, function
-
+from pyswark.core.models.uri import ext
 
 class Inputs( xputs.BaseInputs ):
     uri    : str
@@ -72,7 +72,8 @@ class Model( function.FunctionModel ):
     @property
     def Path(self):
         path = self._getProperty( 'path' )
-        return pathlib.Path( path ) # cleans up duplicate slashes, i.e. ///path/to///file//
+        if path:
+            return pathlib.Path( path ) # cleans up duplicate slashes, i.e. ///path/to///file//
 
     @property
     def path(self):
@@ -96,6 +97,18 @@ class Model( function.FunctionModel ):
     @classmethod
     def _getModel( cls, uri ):
         return cls( uri )
+
+    @property
+    def Ext(self):
+        return self._getProperty( 'Ext' )
+        
+    @property
+    def fsspec(self):
+        """
+        Define representation for fsspec:
+         - scheme://username:password@domain.com:8080/my path/to/a page?query=value#section
+        """
+        return self._getProperty( 'fsspec' )
 
 
 class InputsWithUriPatch( Inputs ):

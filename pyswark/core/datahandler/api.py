@@ -24,13 +24,13 @@ def _acquire( uri, datahandler ):
 
 
 def _guess( uri ):
-    uri   = UriModel(uri)
-    ext   = uri.Ext
-    proto = uri.protocol
+    uri    = UriModel( uri )
+    ext    = uri.Ext
+    scheme = uri.scheme
 
-    guess = BY_EXT.get( ext.full ) if proto != 'python' else None
+    guess = BY_EXT.get( ext.full ) if scheme != 'python' else None
     guess = guess or BY_EXT.get( ext.absolute )
-    guess = guess or BY_PROTO.get( proto, proto )
+    guess = guess or BY_SCHEME.get( scheme, scheme )
     assert guess, f"Handler not found for {uri=}"
     return guess
 
@@ -49,9 +49,9 @@ BY_EXT.update({ e: Handler.YAML_DOC for e in [ 'yaml', 'yml', 'doc.yaml', 'doc.y
 BY_EXT.update({ e: Handler.YAML_DOCS for e in [ 'docs.yaml', 'docs.yml' ] })
 BY_EXT.update({ e: Handler.TEXT for e in [ 'html', 'shtml', 'py', 'txt', 'text', 'tex' ] })
 
-BY_PROTO = {
+BY_SCHEME = {
     p : Handler.URL for p in [ 'http', 'https' ]
 }
-BY_PROTO.update({
+BY_SCHEME.update({
     'python' : Handler.PYTHON,
 })

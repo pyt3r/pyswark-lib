@@ -17,17 +17,17 @@ class AbstractDataHandler:
     MODE_W = 'w'
 
     def __init__( self, uri ):
-        self.uri = uri
+        self.uri = UriModel( uri )
 
     @property
     def path(self):
-        return UriModel(self.uri).tail
+        return self.uri.path
 
     def exists(self):
-        return self.fs.exists( self.path ) or self.fs.exists( self.uri )
+        return self.fs.exists( self.path )
 
     def open( self, *args, **kwargs ):
-        return fsspec.open( self.uri, *args, **kwargs )
+        return fsspec.open( self.uri.fsspec, *args, **kwargs )
 
     @Log.decorate('r')
     def read( self, **kwargs ):

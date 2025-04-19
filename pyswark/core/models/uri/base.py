@@ -2,7 +2,7 @@ from functools import lru_cache
 from typing import ClassVar
 from pydantic import Field
 
-from pyswark.core.models.uri import interface, guess, file, pyswark, python
+from pyswark.core.models.uri import interface, guess, file, http, pyswark, python
 
 
 class UriModel( interface.Model ):
@@ -37,10 +37,12 @@ class UriModel( interface.Model ):
 
 
 _Models = [
-    file.Model,
-    file.ModelRelative,
+    file.ModelGuess,
     file.ModelAbsolute,
+    file.ModelRelative,
     python.Model,
+    http.ModelHttp,
+    http.ModelHttps,
     pyswark.Model,
 ]
 [ UriModel.register( model ) for model in _Models ]

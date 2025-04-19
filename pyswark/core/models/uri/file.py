@@ -3,8 +3,7 @@ import pathlib
 from typing import ClassVar
 from pydantic import Field
 
-
-from pyswark.core.models.uri import interface
+from pyswark.core.models.uri import interface, ext
 
 
 class InputsRelative( interface.InputsWithUriPatch ):
@@ -32,6 +31,14 @@ class ModelRelative( interface.Model ):
             return pathlib.Path( path[len(os.sep):] )
         return path
 
+    @property
+    def fsspec(self):
+        return self.path
+
+    @property
+    def Ext(self):
+        return ext.Ext( name=self.Path.name )
+
 class ModelAbsolute( interface.Model ):
     inputs  : InputsAbsolute
     outputs : interface.Outputs = Field( default=None, description="" )
@@ -42,7 +49,17 @@ class ModelAbsolute( interface.Model ):
         Path = super().Path
         return Path
 
-class Model( interface.Model ):
+    @property
+    def fsspec(self):
+        return self.path
+
+    @property
+    def Ext(self):
+        return ext.Ext( name=self.Path.name )
+
+
+
+class ModelGuess( interface.Model ):
     inputs  : Inputs
     outputs : interface.Outputs = Field( default=None, description="" )
     SCHEME  : ClassVar = Inputs.SCHEME

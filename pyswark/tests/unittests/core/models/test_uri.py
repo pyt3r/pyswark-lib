@@ -3,6 +3,7 @@ import pathlib
 
 import pyswark
 from pyswark.core.models.uri.base import UriModel
+from pyswark.core.models.uri.ext import Ext
 
 
 class Mixin:
@@ -96,41 +97,17 @@ class Url( Mixin, unittest.TestCase ):
         self.runTests( attr='path', expected='/my path/to/a page' )
 
 
-class _ExtMixin:
-
-    URIs = []
-
-    def runTests( self, attr, expected, uris=None ):
-        uris = uris or self.URIs
-
-        models = [
-            UriModel(u) for u in uris
-        ]
-        for i, model in enumerate( models ):
-            with self.subTest( i=i, model=model ):
-                self.assertEqual( expected, getattr( model.Ext, attr ) )
-
-
-@unittest.skip("temporary skip")
-class ExtTests( _ExtMixin, unittest.TestCase ):
-
-    _URI = 'path.path/to.to/x.csv.gz'
-    URIs = [
-        f'\\{ _URI }/',
-        f'{ _URI }//',
-        f'{ _URI }\\\\',
-        f'{ _URI }/',
-        f'{ _URI }',
-        f'/{ _URI }//',
-        f'/{ _URI }/',
-        f'{ _URI }',
-    ]
+class ExtTests( unittest.TestCase ):
 
     def test_ext_full(self):
-        self.runTests( 'full', 'csv.gz' )
+        e = Ext( 'file.csv.gz' )
+        self.assertEqual( e.full, 'csv.gz' )
 
     def test_ext_root(self):
-        self.runTests( 'root', 'csv' )
+        e = Ext( 'file.csv.gz' )
+        self.assertEqual( e.root, 'csv' )
 
     def test_ext_absolue(self):
-        self.runTests( 'absolute', 'gz' )
+        e = Ext( 'file.csv.gz' )
+        self.assertEqual( e.absolute, 'gz' )
+
