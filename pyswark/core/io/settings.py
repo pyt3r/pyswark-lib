@@ -1,11 +1,12 @@
 import pydoc
 
+from pyswark.core import io
 from pyswark.core import settings
-from pyswark.core.datahandler import base
+from pyswark.core.io import base
 
 
 class Settings( settings.Settings ):
-    _ROOT       = 'pyswark.core.datahandler'
+    _ROOT       = io.__name__
 
     DF_CSV      = ( "df.csv"    , f'{ _ROOT }.df.Csv' )
     DF_CSV_GZ   = ( "df.csv.gz" , f'{ _ROOT }.df.CsvGzip' )

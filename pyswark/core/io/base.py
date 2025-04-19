@@ -1,6 +1,6 @@
 import pyswark.lib.fsspec as fsspec
 from pyswark.core.models.uri.base import UriModel
-from pyswark.core.datahandler import decorate
+from pyswark.core.io import decorate
 
 
 class Log(decorate.Log):
@@ -38,7 +38,7 @@ class AbstractDataHandler:
     @Log.decorate('w')
     def write( self, data, overwrite=False, **kwargs ):
         if not overwrite and self.exists():
-            raise CannotOverwrite( self.uri )
+            raise CannotOverwrite( self.uri.inputs.uri )
 
         if overwrite and self.exists():
             self.rm()

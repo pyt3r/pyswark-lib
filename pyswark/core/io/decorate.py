@@ -53,7 +53,7 @@ class Log( AbstractDecorator ):
             @functools.wraps(func)
             def wrapper( slf, *a, **kw ):
                 o = cls( mode )
-                msg = f"{ o.payload } uri='{slf.uri.fsspec}'..."
+                msg = f"{ o.payload } uri='{slf.uri.inputs.uri}'..."
                 logger.info( msg )
                 result = func( slf, *a, **kw )
                 logger.info( "done." )

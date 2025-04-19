@@ -5,7 +5,7 @@ import shutil
 import pandas
 
 from pyswark.lib.pydantic import base
-from pyswark.core.datahandler import api, settings
+from pyswark.core.io import api, settings
 
 
 class TestCaseLocal( unittest.TestCase ):
@@ -122,8 +122,10 @@ PYTHON_DATA = [1,2,3]
 class LocalTestCasePython( unittest.TestCase ):
 
     def test_python( self ):
+        from pyswark.tests.unittests.core import test_io
+
         mode = "python"
-        path = "pyswark.tests.unittests.core.test_datahandler.PYTHON_DATA"
+        path = f'{ test_io.__name__}.PYTHON_DATA'
         uri  = f"{ mode }://{ path }"
 
         Handler = settings.get(mode)
@@ -135,7 +137,9 @@ class LocalTestCasePython( unittest.TestCase ):
         self.assertListEqual( PYTHON_DATA, data )
 
     def test_python_read(self):
-        uri = "python://pyswark.tests.unittests.core.test_datahandler.PYTHON_DATA"
+        from pyswark.tests.unittests.core import test_io
+
+        uri = f"python://{ test_io.__name__}.PYTHON_DATA"
         data = api.read(uri)
         self.assertListEqual(data, [1,2,3])
 
@@ -203,3 +207,10 @@ class LocalTestCasesPjson( TestCaseLocal ):
 class MockPjson( base.BaseModel ):
     i: int
     f: float
+
+
+class TestCustomPyswarkIo( unittest.TestCase ):
+
+    def test_read_from_package(self):
+        DF = api.read('pyswark://data/df.csv')
+        self.assertIsInstance( DF, pandas.DataFrame )

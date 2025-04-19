@@ -1,6 +1,6 @@
 import pandas
 
-from pyswark.core.datahandler import decorate, base
+from pyswark.core.io import decorate, base
 
 
 class Kwargs(decorate.Kwargs):

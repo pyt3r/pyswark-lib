@@ -1,4 +1,4 @@
-from pyswark.core.datahandler import base
+from pyswark.core.io import base
 
 
 class Url( base.AbstractDataHandler ):

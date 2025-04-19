@@ -1,5 +1,5 @@
 from pyswark.core import settings
-from pyswark.core.datahandler.settings import Settings
+from pyswark.core.io.settings import Settings
 from pyswark.core.models.uri.base import UriModel
 
 

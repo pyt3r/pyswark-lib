@@ -76,17 +76,16 @@ Examples include..
 
   .. code-block:: python
 
-    from pyswark.core.datahandler import api
+    from pyswark.core.io import api
 
-    data = api.read( '/path/to/df.csv.gz' )
-    api.write( data, '/path/to/df-copy.csv.gz' )
+    data = api.read( 'pyswark://data/df.csv' )
+    api.write( data, './df-copy.parquet' )
 
     data = api.read( 'file://path/to/data.json' )
     api.write( data, 'file://path/to/data-copy.json' )
 
-    # import by uri
-    read = api.read( 'python://pyswark.core.datahandler.api.read' )
-    assert read == api.read
+    fn = api.read( 'python://pyswark.core.io.api.read' )
+    assert fn == api.read
 
 * (De)serialization support
 

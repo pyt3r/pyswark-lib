@@ -1,5 +1,5 @@
-from pyswark.core.datahandler import guess as _guess
-from pyswark.core.datahandler.settings import Settings
+from pyswark.core.io import guess as _guess
+from pyswark.core.io.settings import Settings
 
 
 def read( uri, datahandler=None, **kw ):
