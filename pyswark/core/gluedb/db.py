@@ -1,6 +1,7 @@
 from typing import Optional, Union, List
 from pydantic import Field, create_model
 
+from pyswark.core.models import contents
 from pyswark.core.io import api
 from pyswark.core.gluedb import interface
 
@@ -14,9 +15,9 @@ class Contents( interface.Contents ):
         return api.read( self.uri, self.datahandler, **self.kw )
 
 
-def _makeDb( ContentsModel: interface.Contents, RecordModel: interface.Record, base: interface.Db ):
+def _makeDb( ContentsModel: contents.Contents, RecordModel: contents.Record, base: interface.Db ):
     """ makes a db class from a contents model """
-    RecordModel = _makeRecord( ContentsModel, RecordModel )
+    RecordModel = contents.makeRecord( ContentsModel, RecordModel )
 
     Model = create_model(
         "GlueDb",
@@ -30,22 +31,7 @@ def _makeDb( ContentsModel: interface.Contents, RecordModel: interface.Record, b
     return Model
 
 
-def _makeRecord( ContentsModel: interface.Contents, base: interface.Record ):
-    """ makes record class from a contents model """
-
-    modelType  = Optional[ str ]
-    modelValue = ContentsModel.getUri()
-
-    return create_model(
-        "Record",
-        __base__ = base,
-        name     = ( str, ... ),
-        model    = ( modelType, modelValue ),
-        contents  = ( ContentsModel, ...)
-    )
-
-
-Record  = _makeRecord( Contents, interface.Record )
+Record  = contents.makeRecord( Contents, interface.Record )
 _GlueDb = _makeDb( Contents, Record, interface.Db )
 GlueDb  = _makeDb( Contents, Record, _GlueDb )
 

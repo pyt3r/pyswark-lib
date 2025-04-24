@@ -1,4 +1,4 @@
-from typing import ClassVar, Union, List, Dict
+from typing import ClassVar, Union
 from pydantic import field_validator
 
 from pyswark.lib.pydantic import base
@@ -21,7 +21,7 @@ class Contents( contents.Contents ):
 class Record( contents.Record ):
     name     : str
     model    : str
-    contents : Union[ Contents, Dict ]
+    contents : Union[ Contents, dict ]
 
     def getData(self):
         return self.model_dump()
@@ -30,13 +30,13 @@ class Record( contents.Record ):
 class Db( base.BaseModel ):
     Record   : ClassVar = Record
     Contents : ClassVar = Contents
-    records  : Union[ str, List, List[ Record ]]
+    records  : Union[ str, list, list[ Record ]]
 
     def __init__( self, records=None ):
         super().__init__( records=[] if records is None else records )
 
     @field_validator( 'records' )
-    def _validateInstance( cls, records ) -> List:
+    def _validateInstance( cls, records ) -> list:
         klass = cls.Record
 
         if isinstance( records, str ):
@@ -79,7 +79,7 @@ class Db( base.BaseModel ):
         record = self._getRecord(name)
         return record.contents
 
-    def create(self, name, contents: Union[ Contents, Dict ]):
+    def create(self, name, contents: Union[ Contents, dict ]):
         """ creates a new record in the db """
         if isinstance( contents, dict ):
             contents = self.Contents( **contents )
@@ -87,11 +87,11 @@ class Db( base.BaseModel ):
         record = Record( name=name, model=contents.getUri(), contents=contents.model_dump() )
         self.records.append( record )
 
-    def replace(self, name, contents: Union[ Contents, Dict ]):
+    def replace(self, name, contents: Union[ Contents, dict ]):
         """ replace a record in the db new contents """
         raise NotImplementedError
 
-    def update(self, name, contents: Union[ Contents, Dict ]):
+    def update(self, name, contents: Union[ Contents, dict ]):
         """ update a record in the db with new contents """
         raise NotImplementedError
 
