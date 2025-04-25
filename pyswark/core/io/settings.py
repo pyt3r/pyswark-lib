@@ -1,28 +1,27 @@
 import pydoc
-
+from pyswark.lib import enum
 from pyswark.core import io
-from pyswark.core import settings
 from pyswark.core.io import base
 
 
-class Settings( settings.Settings ):
+class Settings( enum.AliasEnum ):
     _ROOT       = io.__name__
 
-    DF_CSV      = ( "df.csv"    , f'{ _ROOT }.df.Csv' )
-    DF_CSV_GZ   = ( "df.csv.gz" , f'{ _ROOT }.df.CsvGzip' )
-    DF_PARQUET  = ( "df.parquet", f'{ _ROOT }.df.Parquet' )
-    JSON        = ( "json"      , f'{ _ROOT }.json.Json' )
-    PJSON       = ( "pjson"     , f'{ _ROOT }.json.Pjson' )
+    DF_CSV      = f'{ _ROOT }.df.Csv', "df.csv"
+    DF_CSV_GZ   = f'{ _ROOT }.df.CsvGzip', "df.csv.gz"
+    DF_PARQUET  = f'{ _ROOT }.df.Parquet', "df.parquet"
+    JSON        = f'{ _ROOT }.json.Json', "json"
+    PJSON       = f'{ _ROOT }.json.Pjson', "pjson"
 
     _YAML       = f'{ _ROOT }.yaml.YamlDoc'
-    YAML        = ( "yaml"      , _YAML )
-    YAML_DOC    = ( "doc.yaml"  , _YAML )
+    YAML        = _YAML, "yaml"
+    YAML_DOC    = _YAML, "doc.yaml"
 
-    YAML_DOCS   = ( "docs.yaml" , f'{ _ROOT }.yaml.YamlDocs' )
-    PYTHON      = ( "python"    , f'{ _ROOT }.python.Python' )
-    URL         = ( "url"       , f'{ _ROOT }.url.Url' )
-    TEXT        = ( "file.text" , f'{ _ROOT }.text.Text' )
-    GLUEDB      = ( "gluedb"    , f'{ _ROOT }.json.Pjson' )
+    YAML_DOCS   = f'{ _ROOT }.yaml.YamlDocs', "docs.yaml"
+    PYTHON      = f'{ _ROOT }.python.Python', "python"
+    URL         = f'{ _ROOT }.url.Url', "url"
+    TEXT        = f'{ _ROOT }.text.Text', "file.text"
+    GLUEDB      = f'{ _ROOT }.json.Pjson', "gluedb"
 
     @classmethod
     def get( cls, name ):

@@ -1,8 +1,8 @@
-from pyswark.core import settings
+from pyswark.lib import enum
 from pyswark.examples import gluedb
 
 
-class Settings( settings.Settings ):
+class Settings( enum.AliasEnum ):
     _ROOT    = gluedb.__name__
     HUB     = f'{ _ROOT }.hub'
     DB      = f'{ _ROOT }.db'

@@ -1,4 +1,4 @@
-from pyswark.core import settings
+from pyswark.lib import enum
 from pyswark.core.io.settings import Settings
 from pyswark.core.models.uri.base import UriModel
 
@@ -26,7 +26,7 @@ def api( uri ):
 
 # == guesses based on criteria embedded in the uri ==
 
-class _Settings( settings.Settings ):
+class _Settings( enum.AliasEnum ):
 
     @classmethod
     def get( cls, name ):
@@ -43,35 +43,35 @@ class _Settings( settings.Settings ):
 
 
 class Ext( _Settings ):
-    CSV     = ( 'csv'    , Settings.DF_CSV )
-    CSV_GZ  = ( 'csv.gz' , Settings.DF_CSV_GZ )
-    PARQUET = ( 'parquet', Settings.DF_PARQUET )
-    JSON    = ( 'json'   , Settings.JSON )
-    PJSON   = ( 'pjson'  , Settings.PJSON )
-    GLUEDB  = ( 'gluedb' , Settings.GLUEDB )
+    CSV     = Settings.DF_CSV, 'csv'
+    CSV_GZ  = Settings.DF_CSV_GZ, 'csv.gz'
+    PARQUET = Settings.DF_PARQUET, 'parquet'
+    JSON    = Settings.JSON, 'json'
+    PJSON   = Settings.PJSON, 'pjson'
+    GLUEDB  = Settings.GLUEDB, 'gluedb'
 
     _YAML_DOC = Settings.YAML_DOC
-    YAML      = ( 'yaml'    , _YAML_DOC )
-    YML       = ( 'yml'     , _YAML_DOC )
-    DOC_YAML  = ( 'doc.yaml', _YAML_DOC )
-    DOC_YML   = ( 'doc.yml' , _YAML_DOC )
+    YAML      = _YAML_DOC, 'yaml'
+    YML       = _YAML_DOC, 'yml'
+    DOC_YAML  = _YAML_DOC, 'doc.yaml'
+    DOC_YML   = _YAML_DOC, 'doc.yml'
 
     _YAML_DOCS = Settings.YAML_DOCS
-    DOCS_YAML   = ( 'docs.yaml', _YAML_DOCS )
-    DOCS_YML    = ( 'docs.yml' , _YAML_DOCS )
+    DOCS_YAML   = _YAML_DOCS, 'docs.yaml'
+    DOCS_YML    = _YAML_DOCS, 'docs.yml'
 
     _TEXT = Settings.TEXT
-    HTML  = ( 'html' , _TEXT )
-    SHTML = ( 'shtml', _TEXT )
-    PY    = ( 'py'   , _TEXT )
-    TXT   = ( 'txt'  , _TEXT )
-    TEXT  = ( 'text' , _TEXT )
-    TEX   = ( 'tex'  , _TEXT )
+    HTML  = _TEXT, 'html'
+    SHTML = _TEXT, 'shtml'
+    PY    = _TEXT, 'py'
+    TXT   = _TEXT, 'txt'
+    TEXT  = _TEXT, 'text'
+    TEX   = _TEXT, 'tex'
 
 
 class Scheme( _Settings ):
-    HTTP   = ( 'http'  , Settings.URL )
-    HTTPS  = ( 'https' , Settings.URL )
-    PYTHON = ( 'python', Settings.PYTHON )
+    HTTP   = Settings.URL, 'http'
+    HTTPS  = Settings.URL, 'https'
+    PYTHON = Settings.PYTHON, 'python'
 
 
