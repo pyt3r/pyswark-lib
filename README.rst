@@ -28,7 +28,7 @@ PySwark is a collection of Python tools I’ve built and found to be useful for 
 
 .. |coverage| image:: https://img.shields.io/azure-devops/coverage/pyt3r/pyswark/6
     :alt: Coverage
-    :target: `Azure Pipeline`_
+    :target: `Azure Coverage`_
 
 .. |version| image:: https://img.shields.io/conda/v/pyt3r/pyswark
     :alt: Version
@@ -48,6 +48,7 @@ PySwark is a collection of Python tools I’ve built and found to be useful for 
 
 .. _conda-build: https://docs.conda.io/projects/conda-build/en/latest/
 .. _Azure Pipeline: https://dev.azure.com/pyt3r/pyswark/_build
+.. _Azure Coverage: https://dev.azure.com/pyt3r/pyswark/_build/results?view=codecoverage-tab&buildId=306
 .. _Anaconda Cloud: https://anaconda.org/pyt3r/pyswark
 .. _Read the Docs: https://pyswark-package.readthedocs.io
 
