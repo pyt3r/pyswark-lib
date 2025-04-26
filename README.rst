@@ -18,15 +18,15 @@ PySwark is a collection of Python tools I’ve built and found to be useful for 
     * - package
       - |version| |platform| |downloads|
 
-.. |docs| image:: https://readthedocs.org/projects/pyswark-package/badge/?version=latest
+.. |docs| image:: https://readthedocs.org/projects/pyswark-lib/badge/?version=latest
     :target: `Read the Docs`_
     :alt: Docs
 
-.. |build| image:: https://img.shields.io/azure-devops/build/pyt3r/pyswark/5
+.. |build| image:: https://img.shields.io/azure-devops/build/pyt3r/pyswark/6
     :alt: Build
     :target: `Azure Pipeline`_
 
-.. |coverage| image:: https://img.shields.io/azure-devops/coverage/pyt3r/pyswark/5
+.. |coverage| image:: https://img.shields.io/azure-devops/coverage/pyt3r/pyswark/6
     :alt: Coverage
     :target: `Azure Pipeline`_
 
