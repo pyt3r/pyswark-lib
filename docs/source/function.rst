@@ -1,11 +1,6 @@
 Functions
 ==============
 
-These are the functions for the tempate package:
+.. autofunction:: pyswark.lib.pydantic.ser_des.toJson
 
-
-.. autofunction:: pyswark.dumpPackageData
-
-.. autofunction:: pyswark.module.test
-
-.. autofunction:: pyswark.module.uncovered
+.. autofunction:: pyswark.lib.pydantic.ser_des.fromJson

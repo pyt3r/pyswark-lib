@@ -1,7 +1,7 @@
 Classes
 ==============
 
-.. autoclass:: pyswark.template_class.TemplateClass
+.. autoclass:: pyswark.lib.pydantic.base.BaseModel
    :members:
 
 .. raw:: html
