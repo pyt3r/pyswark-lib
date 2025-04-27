@@ -4,7 +4,7 @@ from pyswark.core import io
 from pyswark.core.io import base
 
 
-class Settings( enum.AliasEnum ):
+class DataHandler( enum.AliasEnum ):
     _ROOT       = io.__name__
 
     DF_CSV      = f'{ _ROOT }.df.Csv', "df.csv"
@@ -12,11 +12,7 @@ class Settings( enum.AliasEnum ):
     DF_PARQUET  = f'{ _ROOT }.df.Parquet', "df.parquet"
     JSON        = f'{ _ROOT }.json.Json', "json"
     PJSON       = f'{ _ROOT }.json.Pjson', "pjson"
-
-    _YAML       = f'{ _ROOT }.yaml.YamlDoc'
-    YAML        = _YAML, "yaml"
-    YAML_DOC    = _YAML, "doc.yaml"
-
+    YAML_DOC    = f'{ _ROOT }.yaml.YamlDoc', [ "yaml", "doc.yaml" ]
     YAML_DOCS   = f'{ _ROOT }.yaml.YamlDocs', "docs.yaml"
     PYTHON      = f'{ _ROOT }.python.Python', "python"
     URL         = f'{ _ROOT }.url.Url', "url"
@@ -25,7 +21,7 @@ class Settings( enum.AliasEnum ):
 
     @classmethod
     def get( cls, name ):
-        klass = Settings.getMember( name ).klass
+        klass = super().get( name ).klass
         if not ( klass and issubclass( klass, base.AbstractDataHandler ) ):
             raise ValueError( f"Invalid handler for entry = '{ name }' : '{ klass }'" )
         return klass
@@ -40,4 +36,4 @@ class Settings( enum.AliasEnum ):
 
 
 def get( name ):
-    return Settings.get( name )
+    return DataHandler.get(name)

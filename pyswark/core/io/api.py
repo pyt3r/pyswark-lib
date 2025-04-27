@@ -1,5 +1,5 @@
 from pyswark.core.io import guess as _guess
-from pyswark.core.io.settings import Settings
+from pyswark.core.io.datahandler import DataHandler
 
 
 def read( uri, datahandler=None, **kw ):
@@ -16,7 +16,7 @@ def acquire( uri, datahandler=None ):
     if not datahandler:
         klass = guess( uri )
     else:
-        klass = Settings.get( datahandler )
+        klass = DataHandler.get(datahandler)
     return klass( uri )
 
 

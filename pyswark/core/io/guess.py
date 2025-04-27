@@ -1,5 +1,5 @@
 from pyswark.lib import enum
-from pyswark.core.io.settings import Settings
+from pyswark.core.io.datahandler import DataHandler
 from pyswark.core.models.uri.base import UriModel
 
 
@@ -26,11 +26,11 @@ def api( uri ):
 
 # == guesses based on criteria embedded in the uri ==
 
-class _Settings( enum.AliasEnum ):
+class AliasEnum( enum.AliasEnum ):
 
     @classmethod
     def get( cls, name ):
-        member = cls.getMember( name )
+        member = super().get( name )
         return member.klass
 
     @property
@@ -42,36 +42,18 @@ class _Settings( enum.AliasEnum ):
         return self.value.path
 
 
-class Ext( _Settings ):
-    CSV     = Settings.DF_CSV, 'csv'
-    CSV_GZ  = Settings.DF_CSV_GZ, 'csv.gz'
-    PARQUET = Settings.DF_PARQUET, 'parquet'
-    JSON    = Settings.JSON, 'json'
-    PJSON   = Settings.PJSON, 'pjson'
-    GLUEDB  = Settings.GLUEDB, 'gluedb'
-
-    _YAML_DOC = Settings.YAML_DOC
-    YAML      = _YAML_DOC, 'yaml'
-    YML       = _YAML_DOC, 'yml'
-    DOC_YAML  = _YAML_DOC, 'doc.yaml'
-    DOC_YML   = _YAML_DOC, 'doc.yml'
-
-    _YAML_DOCS = Settings.YAML_DOCS
-    DOCS_YAML   = _YAML_DOCS, 'docs.yaml'
-    DOCS_YML    = _YAML_DOCS, 'docs.yml'
-
-    _TEXT = Settings.TEXT
-    HTML  = _TEXT, 'html'
-    SHTML = _TEXT, 'shtml'
-    PY    = _TEXT, 'py'
-    TXT   = _TEXT, 'txt'
-    TEXT  = _TEXT, 'text'
-    TEX   = _TEXT, 'tex'
+class Ext( AliasEnum ):
+    CSV       = DataHandler.DF_CSV, 'csv'
+    CSV_GZ    = DataHandler.DF_CSV_GZ, 'csv.gz'
+    PARQUET   = DataHandler.DF_PARQUET, 'parquet'
+    JSON      = DataHandler.JSON, 'json'
+    PJSON     = DataHandler.PJSON, 'pjson'
+    GLUEDB    = DataHandler.GLUEDB, 'gluedb'
+    YAML_DOC  = DataHandler.YAML_DOC, [ 'yaml', 'yml', 'doc.yaml', 'doc.yml' ]
+    YAML_DOCS = DataHandler.YAML_DOCS, [ 'docs.yaml', 'docs.yml' ]
+    TEXT      = DataHandler.TEXT, ['html', 'shtml', 'py', 'txt', 'text', 'tex']
 
 
-class Scheme( _Settings ):
-    HTTP   = Settings.URL, 'http'
-    HTTPS  = Settings.URL, 'https'
-    PYTHON = Settings.PYTHON, 'python'
-
-
+class Scheme( AliasEnum ):
+    HTTP   = DataHandler.URL, ['http', 'https']
+    PYTHON = DataHandler.PYTHON, 'python'

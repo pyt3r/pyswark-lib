@@ -4,16 +4,15 @@ from enum import Enum
 class AliasEnum( Enum ):
     """ allows an entry to be aliased:
 
-    class Example( Settings ):
+    class Example( AliasEnum ):
         X = 1, 'x'
         Y = 2
-        Z = 3, [ 'zz', 'zzz' ]
+        Z = 3, [ 'z', 'zz', 'zzz' ]
 
-    >> Example.getMember('zz').value
-    >> Example.getMember('z').value
-    >> Example.getMember( Example.Z ).value
     >> Example.Z.value
-
+    >> Example.get('zz').value
+    >> Example.get('z').value
+    >> Example.get( Example.Z ).value
     """
 
     def __init__( self, value, aliases=() ):
@@ -53,10 +52,16 @@ class AliasEnum( Enum ):
         return self._value
 
     @classmethod
-    def getMember( cls, aliasOrMember ):
+    def get( cls, aliasOrMember ):
+        """ gets the enum member by enum, attr, and finally alias """
         if isinstance( aliasOrMember, cls ):
             return aliasOrMember
-        return cls._getByAlias( aliasOrMember )
+
+        try:
+            return super().__getattr__( aliasOrMember )
+
+        except AttributeError:
+            return cls._getByAlias( aliasOrMember )
 
     @classmethod
     def _getByAlias( cls, alias ):

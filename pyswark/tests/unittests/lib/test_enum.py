@@ -11,8 +11,8 @@ class SettingsTests( unittest.TestCase ):
             A_alias = A, [ alias, 'a' ]
 
         self.assertEqual( Settings.A.value, 1)
-        self.assertEqual( Settings.getMember( Settings.A ).value, 1)
-        self.assertEqual( Settings.getMember( alias ).value, 1)
+        self.assertEqual(Settings.get(Settings.A).value, 1)
+        self.assertEqual(Settings.get(alias).value, 1)
 
     def test_duplicate_alias(self):
 
