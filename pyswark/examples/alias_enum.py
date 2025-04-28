@@ -1,15 +1,15 @@
-from pyswark.lib.enum import AliasEnum
+from pyswark.lib.enum import AliasEnum, Alias
 
 
 class Guitarists( AliasEnum ):
 
     # Bands that start with 'the':
-    THE_ALLMAN_BROTHERS_BAND = 'Duane Allman', [ 'The Allman Brothers' ]
-    THE_GRATEFUL_DEAD        = 'Jerry Garcia', [ 'The Dead', 'The Grateful Dead' ]
+    THE_ALLMAN_BROTHERS_BAND = 'Duane Allman', Alias( 'The Allman Brothers' )
+    THE_GRATEFUL_DEAD        = 'Jerry Garcia', Alias( 'The Dead', 'The Grateful Dead' )
 
     # Bands with special charaters
-    AC_DC        = 'Angus Young', [ 'AC/DC' ]
-    GUNS_N_ROSES = 'Slash', [ "Guns N' Roses" ]
+    AC_DC        = 'Angus Young', Alias( 'AC/DC' )
+    GUNS_N_ROSES = 'Slash', Alias( "Guns N' Roses" )
 
 
 def baseEnumBehavior():

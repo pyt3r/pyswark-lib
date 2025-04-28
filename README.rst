@@ -48,7 +48,7 @@ PySwark is a collection of Python tools I’ve built and found to be useful for 
 
 .. _conda-build: https://docs.conda.io/projects/conda-build/en/latest/
 .. _Azure Pipeline: https://dev.azure.com/pyt3r/pyswark/_build
-.. _Azure Coverage: https://dev.azure.com/pyt3r/pyswark/_build/results?view=codecoverage-tab&buildId=306
+.. _Azure Coverage: https://dev.azure.com/pyt3r/pyswark/_build/results?view=codecoverage-tab&buildId=309
 .. _Anaconda Cloud: https://anaconda.org/pyt3r/pyswark
 .. _Read the Docs: https://pyswark-package.readthedocs.io
 
@@ -79,11 +79,11 @@ Examples include..
 
     from pyswark.core.io import api
 
-    data = api.read( 'pyswark://data/df.csv' )
-    api.write( data, './df-copy.parquet' )
+    df = api.read( 'pyswark://data/df.csv' )
+    api.write( df, './df-copy.parquet' )
 
-    data = api.read( 'file://path/to/data.json' )
-    api.write( data, 'file://path/to/data-copy.json' )
+    dump = df.to_json()
+    api.write( dump, './df-copy.json' )
 
     fn = api.read( 'python://pyswark.core.io.api.read' )
     assert fn == api.read

@@ -1,13 +1,39 @@
-from enum import Enum
+import aenum
 
 
-class AliasEnum( Enum ):
+class Alias:
+    """ Holds a set of aliases
+    >>  Alias( 'a', 'b' ).valueset # --> {'a', 'b'}
+    >>  Alias(['a', 'b']).valueset # --> {'a', 'b'}
+    >>  Alias(('a', 'b')).valueset # --> {'a', 'b'}
+    >>  Alias({'a', 'b'}).valueset # --> {'a', 'b'}
+    """
+    def __init__( self, alias, *aliases ):
+
+        if not isinstance( alias, ( set, list, tuple )):
+            alias = [ alias ]
+
+        self._valueset = set( list( alias ) + list( aliases ) )
+
+    @property
+    def valueset(self):
+        return self._valueset
+
+    def __str__(self):
+        return self.__repr__()
+
+    def __repr__(self):
+        return f"{ self.__class__.__name__}({ self.valueset })"
+
+
+
+class AliasEnum( aenum.Enum ):
     """ allows an entry to be aliased:
 
     class Example( AliasEnum ):
-        X = 1, 'x'
+        X = 1, Alias('x')
         Y = 2
-        Z = 3, [ 'z', 'zz', 'zzz' ]
+        Z = 3, Alias('z', 'zz', 'zzz')
 
     >> Example.Z.value
     >> Example.get('zz').value
@@ -15,19 +41,34 @@ class AliasEnum( Enum ):
     >> Example.get( Example.Z ).value
     """
 
-    def __init__( self, value, aliases=() ):
+    _settings_ = aenum.NoAlias
 
-        name = super().name
+    def __init__( self, *values ):
 
-        if not isinstance( aliases, ( list, tuple )):
-            aliases = ( aliases, )
+        alias = Alias(())
 
-        aliases = set([ name ] + list( aliases ))
+        if len( values ) == 1:
+            values = values[0]
+
+        elif len( values ) == 2 and isinstance( values[-1], Alias ):
+            values, alias = values
+
+        elif len( values ) > 2 and isinstance( values[-1], Alias ):
+            *values, alias = values
+
+        else:
+            values = tuple( values )
+
+        name    = super().name
+        aliases = { name } | alias.valueset
 
         self._validateNewMember( aliases )
         self._aliases = aliases
         self._name  = name
-        self._value = value
+        self._value = values
+
+    def __repr__(self):
+        return f"name={ self.name }, value={ self.value }, aliases={ sorted( self.aliases )}"
 
     @classmethod
     def _validateNewMember( cls, aliases ):

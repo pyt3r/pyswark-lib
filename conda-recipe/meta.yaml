@@ -29,6 +29,7 @@ requirements:
     - fsspec
     - requests
     - aiohttp
+    - aenum
 
   run:
     - python>=3.9
