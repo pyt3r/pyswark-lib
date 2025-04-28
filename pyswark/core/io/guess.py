@@ -1,4 +1,4 @@
-from pyswark.lib.enum import AliasEnum, Alias
+from pyswark.lib.aenum import AliasEnum, Alias
 from pyswark.core.io.datahandler import DataHandler
 from pyswark.core.models.uri.base import UriModel
 

@@ -1,5 +1,5 @@
 import pydoc
-from pyswark.lib.enum import AliasEnum, Alias
+from pyswark.lib.aenum import AliasEnum, Alias
 from pyswark.core import io
 from pyswark.core.io import base
 

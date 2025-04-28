@@ -1,7 +1,7 @@
 import unittest
 from enum import Enum
 
-from pyswark.lib.enum import AliasEnum, Alias
+from pyswark.lib.aenum import AliasEnum, Alias
 
 
 class MixedBag( AliasEnum ):
