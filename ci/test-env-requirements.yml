@@ -16,3 +16,4 @@ dependencies:
   - fsspec
   - requests
   - aiohttp
+  - aenum
