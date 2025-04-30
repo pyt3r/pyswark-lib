@@ -1,10 +1,11 @@
 from typing import Union
 
 from pyswark.core.io import api
+from pyswark.core.models import contentsmodel
 from pyswark.core.gluedb import interface
 
 
-class Loader( interface.Loader ):
+class Loader(contentsmodel.Loader):
     uriOrDb: Union[ str, interface.Db ]
 
     def load(self) -> interface.Db:

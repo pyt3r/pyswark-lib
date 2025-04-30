@@ -12,6 +12,13 @@ class Loader( BaseModel ):
 
 class Contents( Loader ):
 
+    def __init__( self, *a, **kw ):
+        base = f"python://{ Contents.__module__}.{ Contents.__name__}"
+        if self.getUri() == base:
+            raise TypeError( f"Cannot use abstract base implementation='{ base }'")
+
+        super().__init__( *a, **kw )
+
     @classmethod
     def getUri(cls):
         return f"python://{ cls.__module__}.{ cls.__name__}"
@@ -31,7 +38,7 @@ class Record( BaseModel ):
         return klass( **self.contents.model_dump() )
 
 
-def makeRecord( ContentsModel: Contents, base: Record ):
+def makeRecord( ContentsModel, RecordModel=Record ):
     """ makes record class from a contents model """
 
     modelType  = Optional[ str ]
@@ -39,10 +46,10 @@ def makeRecord( ContentsModel: Contents, base: Record ):
 
     return create_model(
         "Record",
-        __base__ = base,
+        __base__ = RecordModel,
         name     = ( str, ... ),
         model    = ( modelType, modelValue ),
         contents  = ( ContentsModel, ...)
     )
 
-Record = makeRecord( Contents, Record )
+Record = makeRecord( Contents )

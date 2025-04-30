@@ -2,34 +2,13 @@ from typing import ClassVar, Union
 from pydantic import field_validator
 
 from pyswark.lib.pydantic import base
-from pyswark.core.models import contents
+from pyswark.core.models import contentsmodel as contentsmodel
 from pyswark.core.io import api
 
 
-class Loader( contents.Loader ):
-
-    def getData(self):
-        return self.model_dump()
-
-
-class Contents( contents.Contents ):
-
-    def getData(self):
-        return self.model_dump()
-
-
-class Record( contents.Record ):
-    name     : str
-    model    : str
-    contents : Union[ Contents, dict ]
-
-    def getData(self):
-        return self.model_dump()
-
-
 class Db( base.BaseModel ):
-    Record   : ClassVar = Record
-    Contents : ClassVar = Contents
+    Record   : ClassVar = contentsmodel.Record
+    Contents : ClassVar = contentsmodel.Contents
     records  : Union[ str, list, list[ Record ]]
 
     def __init__( self, records=None ):
@@ -79,23 +58,19 @@ class Db( base.BaseModel ):
         record = self._getRecord(name)
         return record.contents
 
-    def create(self, name, contents: Union[ Contents, dict ]):
+    def put( self, name, contents: Union[ contentsmodel.Contents, dict ] ):
+        """ update a record in the db with new contents """
+        raise NotImplementedError
+
+    def post( self, name, contents: Union[ contentsmodel.Contents, dict] ):
         """ creates a new record in the db """
         if isinstance( contents, dict ):
             contents = self.Contents( **contents )
 
-        record = Record( name=name, model=contents.getUri(), contents=contents.model_dump() )
+        record = self.Record(name=name, model=contents.getUri(), contents=contents.model_dump())
         self.records.append( record )
 
-    def replace(self, name, contents: Union[ Contents, dict ]):
-        """ replace a record in the db new contents """
-        raise NotImplementedError
-
-    def update(self, name, contents: Union[ Contents, dict ]):
-        """ update a record in the db with new contents """
-        raise NotImplementedError
-
-    def delete(self, name):
+    def delete( self, name ):
         """ delete a record in the db """
         raise NotImplementedError
 

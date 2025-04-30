@@ -70,8 +70,8 @@ class TestCRUD( unittest.TestCase ):
         db.merge( old )
 
         contents = db.getContents( "c" )
-        db.create( 'c.copy.1', contents )
-        db.create( 'c.copy.2', contents.getData() )
+        db.post('c.copy.1', contents)
+        db.post('c.copy.2', contents.model_dump())
 
         c_orig  = db.load('c')
         c_copy1 = db.load('c.copy.1')

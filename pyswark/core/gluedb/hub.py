@@ -1,10 +1,10 @@
 from typing import Union
 
-from pyswark.core.gluedb import interface
+from pyswark.core.models import contentsmodel as contentsmodel
 from pyswark.core.gluedb import db, loader
 
 
-class Contents( interface.Contents ):
+class Contents( contentsmodel.Contents ):
     gluedb : Union[ str, db.GlueDb ]
 
     def load(self):
@@ -31,7 +31,7 @@ class GlueHub( GlueDb ):
         if isinstance( contents, str ):
             contents = { 'gluedb': contents }
 
-        return super().create( name, contents )
+        return super().post(name, contents)
 
     def toDb(self) -> db.GlueDb:
         """ consolidates to db """
