@@ -1,0 +1,36 @@
+import unittest
+
+from pyswark.lib.pydantic import ser_des
+
+from pyswark.core.gluedb import api
+from pyswark.examples.gluedb.settings import Settings
+
+
+class HubTestCases( unittest.TestCase ):
+
+    def test_load_contents_from_a_hub(self):
+        uri = f'{ Settings.HUB.uri }.HUB'
+        hub = api.load(uri)
+
+        db = hub.load('db_2')
+        c  = db.load( "c" )
+        self.assertDictEqual( c, {'d': 4, 'e': 5, 'f': 6} )
+
+    def test_consolidating_a_hub_to_a_db(self):
+        uri = f'{ Settings.HUB.uri }.HUB'
+        hub = api.load(uri)
+
+        db = hub.toDb()
+        expected = ['a', 'b', 'c', 'd']
+        test = db.getNames()
+
+        self.assertListEqual(expected, test)
+
+    def test_ser_des(self):
+        uri = f'{ Settings.HUB.uri }.HUB'
+        hub = api.load(uri)
+
+        ser = hub.toJson()
+        des = ser_des.fromJson( ser )
+
+        self.assertListEqual( hub.getNames(), des.getNames() )

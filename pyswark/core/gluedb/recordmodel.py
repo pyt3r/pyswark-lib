@@ -1,0 +1,111 @@
+from typing import Union, Optional
+import pydantic
+from pydantic import field_validator
+from pyswark.lib.pydantic import base, ser_des
+from pyswark.core.io import api
+
+
+class Info( base.BaseModel ):
+    name : str
+    # ts_created  :
+    # ts_modified :
+
+
+class Contents( base.BaseModel ):
+
+    @classmethod
+    def getUri(cls):
+        return f"{ cls.__module__}.{ cls.__name__}"
+
+    def load(self):
+        return self
+
+
+class Body( base.BaseModel ):
+    model    : str
+    contents : Union[ dict, Contents ]
+
+    @field_validator('model')
+    def _model( cls, model ):
+        return model if model.startswith( 'python:' ) else f'python:{ model }'
+
+
+BodyType = Union[ dict, Contents, Body, pydantic.BaseModel ] # order matters
+
+
+class Record( base.BaseModel ):
+    info : Union[ dict, Info ]
+    body : BodyType
+
+    def __init__(self, body=None, name="", info=None ):
+        info = info or {}
+        info = { 'name': name, **info }
+        super().__init__( info=info, body=body )
+
+    @field_validator( 'info' )
+    def _info( cls, info ):
+        if not isinstance( info, Info ):
+            info = Info( **info )
+        return info
+
+    @field_validator( 'body' )
+    def _body( cls, body ) -> dict:
+
+        if isinstance( body, Contents ):
+            body = { 'model': body.getUri(), 'contents': body.model_dump() }
+
+        elif isinstance( body, Body ):
+            body = body.model_dump()
+
+        elif isinstance( body, pydantic.BaseModel ):
+            body = ser_des.toDict( body )
+
+        expected = { 'model', 'contents' }
+        passed   = set( body.keys() )
+        missing  = expected - passed
+        extra    = passed - expected
+        if missing or extra:
+            raise ValueError( f"body has invalid keys missing={ sorted(missing) }, extra={ sorted(extra) }" )
+
+        return body
+
+    def load(self):
+        model = self.get()
+        if isinstance( model, Contents ):
+            return model.load()
+        return model
+
+    def get(self):
+        return self.getModel( **self.body )
+
+    @staticmethod
+    def getModel( model, contents ):
+        klass = api.read( model, datahandler=api.DataHandler.PYTHON )
+        return klass( **contents )
+
+
+def makeBody( ContentsModel, BodyModel=Body ):
+    modelType  = Optional[ str ]
+    modelValue = ContentsModel.getUri()
+
+    return pydantic.create_model(
+        "Body",
+        __base__ = BodyModel,
+        model    = ( modelType, modelValue ),
+        contents = ( Union[ dict, ContentsModel ], ... )
+    )
+
+
+def makeRecord( ContentsModel, RecordModel=Record ):
+    """ makes record class from a contents model """
+
+    BodyModel = makeBody( ContentsModel )
+    bodyType  = Union[ dict, ContentsModel, BodyModel, pydantic.BaseModel ]
+
+    return pydantic.create_model(
+        "Record",
+        __base__ = RecordModel,
+        info     = ( Info, ... ),
+        body     = ( bodyType, ... ),
+
+    )

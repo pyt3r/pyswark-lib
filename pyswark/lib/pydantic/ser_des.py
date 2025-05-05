@@ -4,7 +4,7 @@ import json
 from pydantic import field_validator, BaseModel
 from pyswark.lib.pydantic import base
 
-from typing import Dict, TypeVar, Type
+from typing import TypeVar, Type
 
 BaseModelInst = TypeVar( 'pydantic.BaseModel' )
 BaseModelType = Type[ BaseModel ]
@@ -18,11 +18,11 @@ def fromJson( loadable: str ) -> BaseModelType:
     data = json.loads( loadable )
     return fromDict( data )
 
-def toDict( model: BaseModelType ) -> Dict:
+def toDict( model: BaseModelType ) -> dict:
     dictModel = ToDictModel( model=model, contents=model )
     return dictModel.model_dump()
 
-def fromDict( data: Dict ) -> BaseModelType:
+def fromDict( data: dict ) -> BaseModelType:
     dictModel = FromDictModel( **data )
     return dictModel.model( **dictModel.contents )
 
@@ -40,7 +40,7 @@ class ToDictModel( base.BaseModel ):
 
     @field_validator( 'contents' )
     @classmethod
-    def mustBeDumpable( cls, model: BaseModelInst ) -> Dict:
+    def mustBeDumpable( cls, model: BaseModelInst ) -> dict:
         cls._mustBeBaseModelInstance( model )
         return model.model_dump()
 
@@ -52,7 +52,7 @@ class ToDictModel( base.BaseModel ):
 
 class FromDictModel( base.BaseModel ):
     model : str
-    contents : Dict
+    contents : dict
 
     @field_validator( 'model' )
     @classmethod
@@ -60,5 +60,5 @@ class FromDictModel( base.BaseModel ):
         Model = pydoc.locate( model )
         valid = Model and issubclass( Model, BaseModel )
         if not valid:
-            raise TypeError( f'{ model= } must a subclass of { BaseModel }')
+            raise TypeError( f'{ model=} must a subclass of { BaseModel }')
         return Model

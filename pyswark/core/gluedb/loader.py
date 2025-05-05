@@ -1,20 +1,19 @@
 from typing import Union
 
 from pyswark.core.io import api
-from pyswark.core.models import contentsmodel
-from pyswark.core.gluedb import interface
+from pyswark.core.gluedb import dbmodel, recordmodel
 
 
-class Loader(contentsmodel.Loader):
-    uriOrDb: Union[ str, interface.Db ]
+class Contents( recordmodel.Contents ):
+    uriOrDb: Union[str, dbmodel.Db]
 
-    def load(self) -> interface.Db:
+    def load(self) -> dbmodel.Db:
         uriOrDb = self.uriOrDb
 
         if isinstance( uriOrDb, str ):
             uriOrDb = api.read( uriOrDb )
 
-        if not isinstance( uriOrDb, interface.Db ):
+        if not isinstance(uriOrDb, dbmodel.Db):
             raise TypeError( f"Expected type=interface.Db, got type={ type(uriOrDb) }" )
 
         return uriOrDb

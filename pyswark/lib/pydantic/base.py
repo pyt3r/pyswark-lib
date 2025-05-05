@@ -18,3 +18,17 @@ class BaseModel( ExtraForbidden ):
     def toJson( self, indent=2, **kw ):
         from pyswark.lib.pydantic import ser_des
         return ser_des.toJson( self, indent=indent, **kw )
+
+    @staticmethod
+    def fromJson( *a, **kw ):
+        from pyswark.lib.pydantic import ser_des
+        return ser_des.fromJson( *a, **kw )
+
+    def toDict( self ):
+        from pyswark.lib.pydantic import ser_des
+        return ser_des.toDict( self )
+
+    @staticmethod
+    def fromDict( *a, **kw ):
+        from pyswark.lib.pydantic import ser_des
+        return ser_des.fromDict( *a, **kw )

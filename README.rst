@@ -48,7 +48,7 @@ PySwark is a collection of Python tools I’ve built and found to be useful for 
 
 .. _conda-build: https://docs.conda.io/projects/conda-build/en/latest/
 .. _Azure Pipeline: https://dev.azure.com/pyt3r/pyswark/_build
-.. _Azure Coverage: https://dev.azure.com/pyt3r/pyswark/_build/results?view=codecoverage-tab&buildId=310
+.. _Azure Coverage: https://dev.azure.com/pyt3r/pyswark/_build/results?view=codecoverage-tab&buildId=313
 .. _Anaconda Cloud: https://anaconda.org/pyt3r/pyswark
 .. _Read the Docs: https://pyswark-package.readthedocs.io
 
@@ -129,4 +129,4 @@ Examples include..
 * A database for managing disorganized data
 
 
-* And many others..
+* And many others to explore on the `Read the Docs`_ page..
