@@ -30,6 +30,7 @@ requirements:
     - requests
     - aiohttp
     - aenum
+    - sqlalchemy
 
   run:
     - python>=3.9
