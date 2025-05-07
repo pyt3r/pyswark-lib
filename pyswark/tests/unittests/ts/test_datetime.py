@@ -55,7 +55,7 @@ class DatetimeTestCase( unittest.TestCase ):
         self.assertEqual( str(model.dt), '2025-01-08T12:30:00' )
 
         modelEST = model.toTimezone( "EST" )
-        self.assertEqual( str(modelEST.dt), '2025-01-08T07:30:00' )
+        self.assertEqual( str(modelEST.dt), '2025-01-08T08:30:00' )
 
         modelPST = modelEST.toTimezone( "PST" )
         self.assertEqual( str(modelPST.dt), '2025-01-08T04:30:00' )

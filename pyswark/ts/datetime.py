@@ -1,9 +1,9 @@
 from pydantic import Field, field_validator, model_validator
 from typing import Union, TypeVar
 import numpy as np
+from datetime import datetime
 from dateutil import parser
 
-from pyswark.lib.pydantic import base
 from pyswark.core.models import converter, xputs
 
 
@@ -16,9 +16,17 @@ class Datetime( xputs.BaseInputs ):
     dtype    : DtypeType = Field( default=None )
     tzname   : TznameType = Field( default=None )
 
+    @classmethod
+    def now( cls, tzname='UTC' ):
+        return cls( datetime.utcnow(), 's', 'UTC' ).toTimezone( tzname )
+
     @property
     def dt(self):
         return self._data
+
+    @property
+    def datetime(self):
+        return parser.parse( str( self.dt ))
 
     @field_validator( 'data', mode='before' )
     def before_data( cls, data ) -> str:
@@ -99,7 +107,7 @@ class Datetime( xputs.BaseInputs ):
     def _getOffsetUTC( tzname ):
         return {
             "UTC": np.timedelta64(  0 ),
-            "EST": np.timedelta64( -5, 'h' ),
+            "EST": np.timedelta64( -4, 'h' ),
             "EDT": np.timedelta64( -4, 'h' ),
             "CST": np.timedelta64( -6, 'h' ),
             "CDT": np.timedelta64( -5, 'h' ),

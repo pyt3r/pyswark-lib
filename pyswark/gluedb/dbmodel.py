@@ -39,20 +39,27 @@ class Db( base.BaseModel ):
         return self.getByName( name )
 
     def getByName( self, name: str ):
-        query   = self.backend.select(dbbackend.Info).where(dbbackend.Info.name == name)
-        results = self._runQuery( query )
-        if len( results ) != 1:
-            raise ValueError( f"query expected 1 result, but got {len(results)}" )
-        return results.pop()
+        query   = dbbackend.select( dbbackend.Info ).where( dbbackend.Info.name == name )
+        records = self.execute( query )
+
+        if len( records ) != 1:
+            raise ValueError( f"query expected 1 record, but got {len(records)}" )
+
+        return records.pop()
 
     def getByModel( self, model: str ):
         """ returns records based on the model type """
-        query   = self.backend.select(dbbackend.Body).where(dbbackend.Body.model == model)
-        results = self._runQuery( query )
-        return results
+        query   = dbbackend.select( dbbackend.Body ).where( dbbackend.Body.model == model )
+        records = self.execute( query )
+        return records
 
-    def _runQuery( self, query ):
-        indices = self.backend.getIndices( query )
+    def execute( self, query ):
+        with self.backend.Session() as session:
+            results = session.execute( query ).scalars().all()
+        return self._resultsToRecords( results )
+
+    def _resultsToRecords( self, results ):
+        indices = self.backend.getIndices( results )
         return [ self.records[i] for i in indices ]
 
     def put(self, name, body: recordmodel.BodyType):

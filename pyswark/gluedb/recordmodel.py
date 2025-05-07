@@ -1,16 +1,28 @@
 from typing import Union, Optional
 import pydantic
-from pydantic import field_validator
+from pydantic import field_validator, Field
 
 from pyswark.lib.pydantic import base, ser_des
+from pyswark.ts.datetime import Datetime
 from pyswark.core.models.contents import Contents
 from pyswark.core.io import api
 
 
 class Info( base.BaseModel ):
     name          : str
-    #time_created  :
-    #time_modified :
+    date_created  : Union[ Datetime, str, dict, None ] = Field( default='', validate_default=True )
+    date_modified : Union[ Datetime, str, dict, None ] = Field( default='', validate_default=True )
+    # author      : None
+
+    @field_validator( 'date_created', 'date_modified', mode='before' )
+    def _date( cls, date ):
+        if not date:
+            date = Datetime.now( 'UTC' )
+        if isinstance( date, dict ):
+            date = Datetime( **date )
+        elif not isinstance( date, Datetime ):
+            date = Datetime( date )
+        return date
 
 
 class Body( base.BaseModel ):

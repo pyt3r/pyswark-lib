@@ -14,17 +14,16 @@ class TestLocalExample( unittest.TestCase ):
 
         self.assertListEqual( db.getNames(), ['c', 'd'] )
 
-        self.assertListEqual( db.model_dump()['records'], [
-            {'info' : {'name': 'c'},
-             'body' : {
-                'model'   : db.Contents.getUri(),
-                'contents': { 'uri': f'{ Settings.OBJECTS.uri }.C' }
-             }},
-            {'info' : {'name': 'd'},
-             'body' : {
-                 'model'   : db.Contents.getUri(),
-                 'contents': { 'uri': f'{ Settings.OBJECTS.uri }.D' }
-             }},
+        records = db.model_dump()['records']
+        bodies  = [ r['body'] for r in records ]
+
+        self.assertListEqual( bodies, [
+            { 'model'   : db.Contents.getUri(),
+              'contents': { 'uri': f'{ Settings.OBJECTS.uri }.C' }
+             },
+            { 'model'   : db.Contents.getUri(),
+              'contents': { 'uri': f'{ Settings.OBJECTS.uri }.D' }
+             },
         ])
 
     def test_acquiring_content_from_a_gluedb(self):
