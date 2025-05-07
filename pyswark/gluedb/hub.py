@@ -1,30 +1,30 @@
 from typing import Union
 
-from pyswark.core.gluedb import db, loader, recordmodel
+from pyswark.gluedb import recordmodel, loader, db
 
 
-class Contents( recordmodel.Contents ):
-    gluedb : Union[ str, db.GlueDb ]
+class Contents(recordmodel.Contents):
+    gluedb : Union[str, db.GlueDb]
 
     def load(self):
 
-        gluedb = loader.Contents( uriOrDb=self.gluedb ).load()
+        gluedb = loader.Contents(uriOrDb=self.gluedb).load()
 
         if isinstance( gluedb, GlueHub ):
             raise TypeError( f"Expected type=GlueDb, got type=GlueHub" )
 
-        if not isinstance( gluedb, db.GlueDb ):
+        if not isinstance(gluedb, db.GlueDb):
             raise TypeError( f"Expected type=GlueDb, got type={ type(gluedb) }" )
 
         return gluedb
 
 
-GlueDb = db.makeDb( Contents )
+GlueDb = db.makeDb(Contents)
 
 
 class GlueHub( GlueDb ):
 
-    def post(self, name, body: Union[ str, recordmodel.BodyType ]):
+    def post(self, name, body: Union[str, recordmodel.BodyType]):
         """ creates a new record in the db """
         if isinstance( body, str ):
             body = Contents( gluedb=body )

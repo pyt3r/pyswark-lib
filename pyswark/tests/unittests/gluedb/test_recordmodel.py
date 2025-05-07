@@ -1,6 +1,6 @@
 import unittest
 import pydantic
-from pyswark.core.gluedb.recordmodel import Record, Contents
+from pyswark.gluedb.recordmodel import Record, Contents
 from pyswark.lib.pydantic import ser_des
 
 

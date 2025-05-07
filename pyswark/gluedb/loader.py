@@ -1,10 +1,10 @@
 from typing import Union
 
 from pyswark.core.io import api
-from pyswark.core.gluedb import dbmodel, recordmodel
+from pyswark.gluedb import dbmodel, recordmodel
 
 
-class Contents( recordmodel.Contents ):
+class Contents(recordmodel.Contents):
     uriOrDb: Union[str, dbmodel.Db]
 
     def load(self) -> dbmodel.Db:

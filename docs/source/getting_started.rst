@@ -1,4 +1,4 @@
-sGetting started
+Getting started
 ===============
 
 Get started with our package with these steps:

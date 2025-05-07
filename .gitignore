@@ -1,5 +1,8 @@
 # Byte-compiled / optimized / DLL files
 
+# init not allowed at lib level
+__init__.py
+
 .idea/
 
 __pycache__/

@@ -2,7 +2,7 @@ from typing import ClassVar, Union
 from pydantic import field_validator
 
 from pyswark.lib.pydantic import base
-from pyswark.core.gluedb import recordmodel, dbbackend
+from pyswark.gluedb import dbbackend, recordmodel
 from pyswark.core.io import api
 
 
@@ -13,7 +13,7 @@ class Db( base.BaseModel ):
 
     def __init__( self, records=None ):
         super().__init__( records=[] if records is None else records )
-        self._backend = dbbackend.DbBackend( self.records )
+        self._backend = dbbackend.DbBackend(self.records)
 
     @property
     def backend(self):
@@ -39,7 +39,7 @@ class Db( base.BaseModel ):
         return self.getByName( name )
 
     def getByName( self, name: str ):
-        query   = self.backend.select( dbbackend.Info ).where( dbbackend.Info.name == name )
+        query   = self.backend.select(dbbackend.Info).where(dbbackend.Info.name == name)
         results = self._runQuery( query )
         if len( results ) != 1:
             raise ValueError( f"query expected 1 result, but got {len(results)}" )
@@ -47,7 +47,7 @@ class Db( base.BaseModel ):
 
     def getByModel( self, model: str ):
         """ returns records based on the model type """
-        query   = self.backend.select( dbbackend.Body ).where( dbbackend.Body.model == model )
+        query   = self.backend.select(dbbackend.Body).where(dbbackend.Body.model == model)
         results = self._runQuery( query )
         return results
 
@@ -55,11 +55,11 @@ class Db( base.BaseModel ):
         indices = self.backend.getIndices( query )
         return [ self.records[i] for i in indices ]
 
-    def put( self, name, body: recordmodel.BodyType ):
+    def put(self, name, body: recordmodel.BodyType):
         """ update a record in the db with new contents """
         raise NotImplementedError
 
-    def post( self, name, body: recordmodel.BodyType ):
+    def post(self, name, body: recordmodel.BodyType):
         """ creates a new record in the db """
         record = recordmodel.Record(body, name=name)
         self._addRecord( record )

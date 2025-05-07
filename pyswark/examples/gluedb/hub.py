@@ -1,4 +1,4 @@
-from pyswark.core.gluedb import hub
+from pyswark.gluedb import hub
 from pyswark.examples.gluedb.settings import Settings
 
 DBs = {

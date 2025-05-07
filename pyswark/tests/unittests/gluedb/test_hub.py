@@ -2,7 +2,7 @@ import unittest
 
 from pyswark.lib.pydantic import ser_des
 
-from pyswark.core.gluedb import api
+from pyswark.gluedb import api
 from pyswark.examples.gluedb.settings import Settings
 
 

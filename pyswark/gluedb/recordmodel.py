@@ -8,9 +8,9 @@ from pyswark.core.io import api
 
 
 class Info( base.BaseModel ):
-    name : str
-    # ts_created  :
-    # ts_modified :
+    name          : str
+    #time_created  :
+    #time_modified :
 
 
 class Body( base.BaseModel ):

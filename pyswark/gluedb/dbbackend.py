@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, create_engine, select
 from sqlalchemy.orm import declarative_base, Session
 
-from pyswark.core.gluedb import recordmodel
+from pyswark.gluedb import recordmodel
 
 Base = declarative_base()
 
@@ -21,7 +21,7 @@ class Body( Base ):
 
 
 class DbBackend:
-    def __init__( self, records: list[ recordmodel.Record ] ):
+    def __init__(self, records: list[ recordmodel.Record]):
         # Create an in-memory SQLite database
         engine = create_engine( 'sqlite:///:memory:', echo=False )
 
