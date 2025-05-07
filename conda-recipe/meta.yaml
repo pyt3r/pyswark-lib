@@ -20,7 +20,7 @@ requirements:
     - defaults
     - conda-forge
   build:
-    - python>=3.12
+    - python>=3.9
     - pyyaml
     - numpy
     - pandas

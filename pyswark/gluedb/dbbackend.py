@@ -2,7 +2,6 @@ from typing import Union
 import sqlalchemy
 from sqlalchemy import Column, Integer, String, DateTime, create_engine
 from sqlalchemy.orm import declarative_base, Session
-from dateutil import parser
 
 from pyswark.gluedb import recordmodel
 

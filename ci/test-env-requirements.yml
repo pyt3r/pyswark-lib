@@ -3,7 +3,7 @@ channels:
   - defaults
 dependencies:
   # build dependencies
-  - python>=3.12
+  - python>=3.9
   - conda-build
   - pyyaml
   - coverage

@@ -1,8 +1,8 @@
 from pydantic import Field, field_validator, model_validator
 from typing import Union, TypeVar
 import numpy as np
-from datetime import datetime
-from dateutil import parser
+import datetime
+from dateutil import parser, tz
 
 from pyswark.core.models import converter, xputs
 
@@ -18,7 +18,7 @@ class Datetime( xputs.BaseInputs ):
 
     @classmethod
     def now( cls, tzname='UTC' ):
-        return cls( datetime.utcnow(), 's', 'UTC' ).toTimezone( tzname )
+        return cls( datetime.datetime.now( datetime.UTC ), 's', 'UTC' ).toTimezone( tzname )
 
     @property
     def dt(self):
@@ -47,10 +47,10 @@ class Datetime( xputs.BaseInputs ):
         self.dtype  = str( dtype ) if dtype else dtype
         return self
 
-    @staticmethod
-    def after_tzname( tzname, data ):
+    @classmethod
+    def after_tzname( cls, tzname, data ):
         try:
-            _tzname = parser.parse( data ).tzname()
+            _tzname = parser.parse( data, tzinfos=cls._getTzInfos() ).tzname()
         except:
             _tzname = None
 
@@ -116,6 +116,31 @@ class Datetime( xputs.BaseInputs ):
             "PST": np.timedelta64( -8, 'h' ),
             "PDT": np.timedelta64( -7, 'h' ),
         }[ tzname ]
+
+    @staticmethod
+    def _getTzInfos():
+        return {
+            'UTC': tz.gettz('UTC'),
+            'EST': tz.gettz('America/New_York'),
+            'EDT': tz.gettz('America/New_York'),
+            'CST': tz.gettz('America/Chicago'),
+            'CDT': tz.gettz('America/Chicago'),
+            'MST': tz.gettz('America/Denver'),
+            'MDT': tz.gettz('America/Denver'),
+            'PST': tz.gettz('America/Los_Angeles'),
+            'PDT': tz.gettz('America/Los_Angeles'),
+
+            # International examples
+            'GMT': tz.gettz('Etc/GMT'), # Greenwich Mean Time
+            'CET': tz.gettz('Europe/Paris'),
+            'CEST': tz.gettz('Europe/Paris'),
+            'IST': tz.gettz('Asia/Kolkata'),
+            'JST': tz.gettz('Asia/Tokyo'),
+            'AEST': tz.gettz('Australia/Sydney'),
+            'AEDT': tz.gettz('Australia/Sydney'),
+            'NZST': tz.gettz('Pacific/Auckland'),
+            'NZDT': tz.gettz('Pacific/Auckland'),
+        }
 
 
 class Inputs( xputs.BaseInputs ):
