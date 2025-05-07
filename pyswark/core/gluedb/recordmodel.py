@@ -1,7 +1,9 @@
 from typing import Union, Optional
 import pydantic
 from pydantic import field_validator
+
 from pyswark.lib.pydantic import base, ser_des
+from pyswark.core.models.contents import Contents
 from pyswark.core.io import api
 
 
@@ -9,16 +11,6 @@ class Info( base.BaseModel ):
     name : str
     # ts_created  :
     # ts_modified :
-
-
-class Contents( base.BaseModel ):
-
-    @classmethod
-    def getUri(cls):
-        return f"{ cls.__module__}.{ cls.__name__}"
-
-    def load(self):
-        return self
 
 
 class Body( base.BaseModel ):
@@ -80,7 +72,7 @@ class Record( base.BaseModel ):
 
     @staticmethod
     def getModel( model, contents ):
-        klass = api.read( model, datahandler=api.DataHandler.PYTHON )
+        klass = api.read( model, datahandler='python' )
         return klass( **contents )
 
 
