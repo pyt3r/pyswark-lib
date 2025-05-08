@@ -111,3 +111,13 @@ class AliasEnum( aenum.Enum ):
             if alias in member.aliases:
                 return member
         raise ValueError( f'member not found for { alias= }' )
+
+    @classmethod
+    def toMapping( cls, attr='value' ):
+        mapping = {}
+        for name, member in cls.__members__.items():
+            member = getattr( cls, name )
+            value  = getattr( member, attr )
+            for key in [ name ] + sorted(member.aliases):
+                mapping[ key ] = value
+        return mapping

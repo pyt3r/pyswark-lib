@@ -1,11 +1,12 @@
 from pydantic import Field, field_validator, model_validator
 from typing import Union, TypeVar
+from functools import cache
 import numpy as np
 import datetime
 from dateutil import parser, tz
 
 from pyswark.core.models import converter, xputs
-
+from pyswark.ts.tzinfos import TzInfos, OffsetUTC
 
 NumpyArray = TypeVar( 'numpy.ndarray' )
 DtypeType  = Union[ str, None ]
@@ -18,7 +19,7 @@ class Datetime( xputs.BaseInputs ):
 
     @classmethod
     def now( cls, tzname='UTC' ):
-        return cls( datetime.datetime.now( datetime.UTC ), 's', 'UTC' ).toTimezone( tzname )
+        return cls( datetime.datetime.now( datetime.timezone.utc ), 's', 'UTC' ).toTimezone( tzname )
 
     @property
     def dt(self):
@@ -105,42 +106,12 @@ class Datetime( xputs.BaseInputs ):
 
     @staticmethod
     def _getOffsetUTC( tzname ):
-        return {
-            "UTC": np.timedelta64(  0 ),
-            "EST": np.timedelta64( -4, 'h' ),
-            "EDT": np.timedelta64( -4, 'h' ),
-            "CST": np.timedelta64( -6, 'h' ),
-            "CDT": np.timedelta64( -5, 'h' ),
-            "MST": np.timedelta64( -7, 'h' ),
-            "MDT": np.timedelta64( -6, 'h' ),
-            "PST": np.timedelta64( -8, 'h' ),
-            "PDT": np.timedelta64( -7, 'h' ),
-        }[ tzname ]
+        return OffsetUTC.get( tzname ).value
 
     @staticmethod
+    @cache
     def _getTzInfos():
-        return {
-            'UTC': tz.gettz('UTC'),
-            'EST': tz.gettz('America/New_York'),
-            'EDT': tz.gettz('America/New_York'),
-            'CST': tz.gettz('America/Chicago'),
-            'CDT': tz.gettz('America/Chicago'),
-            'MST': tz.gettz('America/Denver'),
-            'MDT': tz.gettz('America/Denver'),
-            'PST': tz.gettz('America/Los_Angeles'),
-            'PDT': tz.gettz('America/Los_Angeles'),
-
-            # International examples
-            'GMT': tz.gettz('Etc/GMT'), # Greenwich Mean Time
-            'CET': tz.gettz('Europe/Paris'),
-            'CEST': tz.gettz('Europe/Paris'),
-            'IST': tz.gettz('Asia/Kolkata'),
-            'JST': tz.gettz('Asia/Tokyo'),
-            'AEST': tz.gettz('Australia/Sydney'),
-            'AEDT': tz.gettz('Australia/Sydney'),
-            'NZST': tz.gettz('Pacific/Auckland'),
-            'NZDT': tz.gettz('Pacific/Auckland'),
-        }
+        return TzInfos.toMapping()
 
 
 class Inputs( xputs.BaseInputs ):
