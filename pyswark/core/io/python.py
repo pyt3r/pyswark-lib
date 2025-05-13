@@ -8,4 +8,4 @@ class Python(base.AbstractDataHandler):
         super().__init__( uri if uri.startswith( 'python:' ) else f'python:{ uri }' )
 
     def _read( self, fp, **kw ):
-        return fp.locate()
+        return fp.locate( **kw )

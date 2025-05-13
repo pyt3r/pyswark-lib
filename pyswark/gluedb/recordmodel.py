@@ -87,6 +87,10 @@ class Record( base.BaseModel ):
         klass = api.read( model, datahandler='python' )
         return klass( **contents )
 
+    def put( self, body ):
+        self.body = self._body( body )
+        self.info.date_modified = Datetime.now()
+
 
 def makeBody( ContentsModel, BodyModel=Body ):
     modelType  = Optional[ str ]

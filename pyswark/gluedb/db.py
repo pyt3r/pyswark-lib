@@ -33,7 +33,7 @@ def _makeDb( ContentsModel, RecordModel, base ):
 _Record = recordmodel.makeRecord(Contents)
 Record  = recordmodel.makeRecord(Contents, _Record)
 
-_GlueDb = _makeDb(Contents, Record, dbmodel.Db)
+_GlueDb = _makeDb( Contents, Record, dbmodel.Db )
 GlueDb  = _makeDb( Contents, Record, _GlueDb )
 
 

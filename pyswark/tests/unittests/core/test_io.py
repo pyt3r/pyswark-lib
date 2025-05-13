@@ -141,7 +141,14 @@ class LocalTestCasePython( unittest.TestCase ):
 
         uri = f"python://{ test_io.__name__}.PYTHON_DATA"
         data = api.read(uri)
-        self.assertListEqual(data, [1,2,3])
+        self.assertListEqual( data, [1,2,3] )
+
+        data.append(4)
+        data = api.read(uri)
+        self.assertListEqual( data, [1,2,3,4] )
+
+        data = api.read(uri, reloadmodule=True)
+        self.assertListEqual( data, [1,2,3] )
 
 
 class TestReadWriteAcquireCsv( TestCaseLocal ):

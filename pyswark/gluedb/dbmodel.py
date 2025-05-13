@@ -53,6 +53,11 @@ class Db( base.BaseModel ):
         records = self.execute( query )
         return records
 
+    def getMostRecent( self ):
+        with self.backend.Session() as session:
+            results = session.query( dbbackend.Info ).order_by( dbbackend.Info.date_created.desc() ).all()
+        return self._resultsToRecords( results )
+
     def execute( self, query ):
         with self.backend.Session() as session:
             results = session.execute( query ).scalars().all()
@@ -64,7 +69,8 @@ class Db( base.BaseModel ):
 
     def put(self, name, body: recordmodel.BodyType):
         """ update a record in the db with new contents """
-        raise NotImplementedError
+        record = self.getByName( name )
+        record.put( body )
 
     def post(self, name, body: recordmodel.BodyType):
         """ creates a new record in the db """

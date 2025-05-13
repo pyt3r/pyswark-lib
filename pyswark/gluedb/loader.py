@@ -1,22 +1,22 @@
-from typing import Union
-
+from pydantic import model_validator, Field
 from pyswark.core.io import api
-from pyswark.gluedb import dbmodel, recordmodel
+from pyswark.gluedb import recordmodel, dbmodel
 
 
-class Contents(recordmodel.Contents):
-    uriOrDb: Union[str, dbmodel.Db]
+class Contents( recordmodel.Contents ):
+    uri : str
+    kw  : dict = Field( default_factory=lambda: {} )
+
+    @model_validator( mode='after' )
+    def _validate(self):
+        if self.uri.startswith( "python:" ):
+            self.kw = { "reloadmodule": True }
+        return self
 
     def load(self) -> dbmodel.Db:
-        uriOrDb = self.uriOrDb
+        loaded = api.read( self.uri, **self.kw )
 
-        if isinstance( uriOrDb, str ):
-            uriOrDb = api.read( uriOrDb )
+        if not isinstance( loaded, dbmodel.Db ):
+            raise TypeError( f"Expected type=interface.Db, got type={ type(loaded) }" )
 
-        if not isinstance(uriOrDb, dbmodel.Db):
-            raise TypeError( f"Expected type=interface.Db, got type={ type(uriOrDb) }" )
-
-        return uriOrDb
-
-
-
+        return loaded

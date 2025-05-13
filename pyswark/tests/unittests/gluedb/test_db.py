@@ -82,7 +82,16 @@ class TestCRUD( unittest.TestCase ):
         self.assertDictEqual( c_copy1, c_copy2 )
 
     def test_PUT_content_in_a_db(self):
-        pass
+        db = api.load(f'{ Settings.DB.uri }.DB_2')
+
+        old = db.load( "c" )
+
+        db.put( "c", db.get("d").body )
+        new = db.load( "c" )
+
+        self.assertDictEqual( old, {'d': 4, 'e': 5, 'f': 6} )
+        self.assertDictEqual( new, {'g': 7, 'h': 8, 'i': 9} )
+
 
     def test_DELETE_content_in_a_db(self):
         pass
