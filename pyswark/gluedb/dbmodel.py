@@ -43,7 +43,7 @@ class Db( base.BaseModel ):
         records = self.execute( query )
 
         if len( records ) != 1:
-            raise ValueError( f"query expected 1 record, but got {len(records)}" )
+            raise ValueError( f"GET query expected n=1 record, but got n={len(records)}" )
 
         return records.pop()
 
@@ -67,14 +67,14 @@ class Db( base.BaseModel ):
         indices = self.backend.getIndices( results )
         return [ self.records[i] for i in indices ]
 
-    def put(self, name, body: recordmodel.BodyType):
+    def put(self, name, body: recordmodel.Body):
         """ update a record in the db with new contents """
         record = self.getByName( name )
         record.put( body )
 
-    def post(self, name, body: recordmodel.BodyType):
+    def post(self, name, body: recordmodel.Body):
         """ creates a new record in the db """
-        record = recordmodel.Record(body, name=name)
+        record = self.Record( body, name=name )
         self._addRecord( record )
 
     def delete( self, name ):
@@ -84,7 +84,7 @@ class Db( base.BaseModel ):
     def merge( self, otherDb ):
         """ merge the contents of another db """
         if not isinstance( otherDb, Db ):
-            raise TypeError( f"can only add type DBInterface, got type={ type(otherDb) }" )
+            raise TypeError( f"can only add type=Db, got type={ type(otherDb) }" )
         self._addRecords( otherDb.records )
 
     def _addRecords( self, records ):

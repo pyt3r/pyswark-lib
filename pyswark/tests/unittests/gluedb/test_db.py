@@ -64,9 +64,10 @@ class TestCRUD( unittest.TestCase ):
 
     def test_POST_content_in_a_db(self):
 
-        old = api.load(f'{ Settings.DB.uri }.DB_2')
+        uri = f'{ Settings.DB.uri }.DB_2'
+        old = api.load( uri )
 
-        db = api.new()
+        db = api.newDb()
         db.merge( old )
 
         record = db.get("c")

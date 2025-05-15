@@ -16,7 +16,7 @@ class Contents( contents.Contents ):
 
 def _makeDb( ContentsModel, RecordModel, base ):
     """ makes a db class from a contents model """
-    RecordModel = recordmodel.makeRecord(ContentsModel, RecordModel)
+    RecordModel = recordmodel.makeRecord( ContentsModel, RecordModel )
 
     Model = create_model(
         "GlueDb",
@@ -30,12 +30,20 @@ def _makeDb( ContentsModel, RecordModel, base ):
     return Model
 
 
-_Record = recordmodel.makeRecord(Contents)
-Record  = recordmodel.makeRecord(Contents, _Record)
+_Record = recordmodel.makeRecord( Contents )
+Record  = recordmodel.makeRecord( Contents, _Record )
 
 _GlueDb = _makeDb( Contents, Record, dbmodel.Db )
-GlueDb  = _makeDb( Contents, Record, _GlueDb )
 
 
-def makeDb( ContentsModel ):
-    return _makeDb( ContentsModel, Record, GlueDb  )
+class GlueDb( _GlueDb ):
+
+    def merge( self, otherDb ):
+        """ merge the contents of another db """
+        if not isinstance( otherDb, GlueDb ):
+            raise TypeError( f"can only add type=GlueDb, got type={ type(otherDb) }" )
+        super().merge( otherDb )
+
+
+def makeDb( ContentsModel, RecordModel=Record ):
+    return _makeDb( ContentsModel, RecordModel, GlueDb  )

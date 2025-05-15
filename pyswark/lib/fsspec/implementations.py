@@ -40,25 +40,26 @@ class PythonFile:
 
     def locate( self, reloadmodule=False, **kw ):
         if reloadmodule:
-            return self._reload_then_locate( **kw )
+            return self._sys_pop_then_locate( **kw )
         else:
             return self._locate( **kw )
 
-    def _reload_then_locate( self, **kw ):
-        module = None
-        data   = self.data
+    def _sys_pop_then_locate( self, **kw ):
+        parts = self.path.split('.')
+        found, module = False, None
+        if not found:
+            found, module = self._sys_pop( parts )
+        if not found:
+            found, module = self._sys_pop( parts[:-1] )
+        return self._locate( **kw )
 
-        try:
-            parts = self.path.split('.')
-            path  = '.'.join( parts[:-1] )
-            orig  = sys.modules.pop( path, None )
-            return self._locate( **kw )
-
-        except Exception as e:
-            if orig is not None:
-                sys.modules[ path ] = orig
-            self.data = data
-            raise e
+    @staticmethod
+    def _sys_pop( parts ):
+        path = '.'.join( parts )
+        found, module = False, None
+        if path in sys.modules:
+            return True, sys.modules.pop( path )
+        return found, module
 
     def _locate( self, **kw ):
         if self.data:

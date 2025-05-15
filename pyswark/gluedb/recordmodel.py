@@ -1,4 +1,4 @@
-from typing import Union, Optional
+from typing import Union, Optional, ClassVar
 import pydantic
 from pydantic import field_validator, Field
 
@@ -34,12 +34,10 @@ class Body( base.BaseModel ):
         return model if model.startswith( 'python:' ) else f'python:{ model }'
 
 
-BodyType = Union[ dict, Contents, Body, pydantic.BaseModel ] # order matters
-
-
 class Record( base.BaseModel ):
-    info : Union[ dict, Info ]
-    body : BodyType
+    Contents : ClassVar = Contents
+    info     : Union[ dict, Info ]
+    body     : Union[ dict, Contents, Body, pydantic.BaseModel ] # order matters
 
     def __init__(self, body=None, name="", info=None ):
         info = info or {}
@@ -55,7 +53,7 @@ class Record( base.BaseModel ):
     @field_validator( 'body' )
     def _body( cls, body ) -> dict:
 
-        if isinstance( body, Contents ):
+        if isinstance( body, cls.Contents ):
             body = { 'model': body.getUri(), 'contents': body.model_dump() }
 
         elif isinstance( body, Body ):
@@ -64,18 +62,27 @@ class Record( base.BaseModel ):
         elif isinstance( body, pydantic.BaseModel ):
             body = ser_des.toDict( body )
 
+        if not isinstance( body, dict ):
+            raise TypeError(  f"expected type=dict, got {type(body)}")
+
         expected = { 'model', 'contents' }
         passed   = set( body.keys() )
         missing  = expected - passed
         extra    = passed - expected
         if missing or extra:
-            raise ValueError( f"body has invalid keys missing={ sorted(missing) }, extra={ sorted(extra) }" )
+            raise ValueError( f"body has invalid keys: missing={ sorted(missing) }, extra={ sorted(extra) }" )
+
+        cls.validate( body )
 
         return body
 
+    @classmethod
+    def validate( cls, body ):
+        """ optional validation to be added """
+
     def load(self):
         model = self.get()
-        if isinstance( model, Contents ):
+        if isinstance( model, self.Contents ):
             return model.load()
         return model
 
@@ -110,10 +117,12 @@ def makeRecord( ContentsModel, RecordModel=Record ):
     BodyModel = makeBody( ContentsModel )
     bodyType  = Union[ dict, ContentsModel, BodyModel, pydantic.BaseModel ]
 
-    return pydantic.create_model(
+    model = pydantic.create_model(
         "Record",
         __base__ = RecordModel,
         info     = ( Info, ... ),
         body     = ( bodyType, ... ),
-
     )
+
+    model.Contents = ContentsModel
+    return model
