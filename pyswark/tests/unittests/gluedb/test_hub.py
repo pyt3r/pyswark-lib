@@ -55,11 +55,18 @@ class TestCRUD( unittest.TestCase ):
         self.assertListEqual( hub.getNames(), ['db_1', 'db_2', 'db_2.copy'] )
         self.assertDictEqual( db_orig.toDict(), db_copy.toDict() )
 
-    def _test_PUT_content_in_a_hub(self):
+    def test_PUT_content_in_a_hub(self):
 
         uri = f'{ Settings.HUB.uri }.HUB'
         hub = api.load(uri)
 
+        old = hub.load( 'db_2' )
+
+        hub.put( 'db_2', hub.get("db_1").body )
+        new = hub.load('db_2')
+
+        self.assertListEqual( old.getNames(), ['c', 'd'] )
+        self.assertListEqual( new.getNames(), ['a', 'b'] )
 
     def test_DELETE_content_in_a_hub(self):
         pass

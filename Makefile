@@ -64,6 +64,9 @@ git-merge: # if your changes are in develop...
 	git merge origin/master
 	git push origin develop
 
+git-amend:
+	git commit --amend --no-edit
+
 clean:
 	rm -rf .coverage htmlcov coverage.xml
 	rm -rf ${TESTS_PATH}/.coverage ${TESTS_PATH}/htmlcov ${TESTS_PATH}/coverage.xml
