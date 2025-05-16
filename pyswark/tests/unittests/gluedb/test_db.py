@@ -93,7 +93,46 @@ class TestCRUD( unittest.TestCase ):
         self.assertDictEqual( old, {'d': 4, 'e': 5, 'f': 6} )
         self.assertDictEqual( new, {'g': 7, 'h': 8, 'i': 9} )
 
+    @staticmethod
+    def makeTestDb():
+        db_1 = api.load(f'{ Settings.DB.uri }.DB_1')
+        db_2 = api.load(f'{ Settings.DB.uri }.DB_2')
 
-    def test_DELETE_content_in_a_db(self):
-        pass
+        db = api.newDb()
+        db.merge( db_1 )
+        db.merge( db_2 )
+        return db
 
+    def test_exampleDb_creation_without_DELETE(self):
+        db = self.makeTestDb()
+        self.assertListEqual( db.getNames(), ['a','b','c','d'] )
+
+        infoBody = db.backend.selectInfoAndBody()
+        nameIxMap = { info.name : info.index for info, body in infoBody }
+        nameIdMap = { info.name : info.id for info, body in infoBody }
+        self.assertDictEqual( nameIxMap, { 'a': 0, 'b': 1, 'c': 2, 'd': 3 })
+        self.assertDictEqual( nameIdMap, { 'a': 1, 'b': 2, 'c': 3, 'd': 4 })
+
+    def test_DELETE_one_name_from_exampleDb(self):
+        db = self.makeTestDb()
+        db.delete( 'b' )
+        self.assertListEqual( db.getNames(), ['a','c','d'] )
+
+        infoBody  = db.backend.selectInfoAndBody()
+        nameIxMap = { info.name : info.index for info, body in infoBody }
+        nameIdMap = { info.name : info.id for info, body in infoBody }
+        self.assertDictEqual( nameIxMap, {'a': 0, 'c': 1, 'd': 2})
+        self.assertDictEqual( nameIdMap, {'a': 1, 'c': 3, 'd': 4})
+
+
+    def test_DELETE_two_names_from_exampleDb(self):
+        db = self.makeTestDb()
+        db.delete( 'a' )
+        db.delete( 'd' )
+        self.assertListEqual( db.getNames(), ['b','c'] )
+
+        infoBody  = db.backend.selectInfoAndBody()
+        nameIxMap = { info.name : info.index for info, body in infoBody }
+        nameIdMap = { info.name : info.id for info, body in infoBody }
+        self.assertDictEqual( nameIxMap, {'b': 0, 'c': 1})
+        self.assertDictEqual( nameIdMap, {'b': 2, 'c': 3})

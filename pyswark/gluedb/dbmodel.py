@@ -39,18 +39,24 @@ class Db( base.BaseModel ):
         return self.getByName( name )
 
     def getByName( self, name: str ):
-        query   = dbbackend.select( dbbackend.Info ).where( dbbackend.Info.name == name )
-        records = self.execute( query )
-
-        if len( records ) != 1:
-            raise ValueError( f"GET query expected n=1 record, but got n={len(records)}" )
-
+        query   = self._getByNameQuery( name )
+        records = self.getByQuery( query )
+        self._assertOneResult( records )
         return records.pop()
+
+    @staticmethod
+    def _getByNameQuery( name ):
+        return dbbackend.select( dbbackend.Info ).where( dbbackend.Info.name == name )
+
+    @staticmethod
+    def _assertOneResult( records ):
+        if len( records ) != 1:
+            raise ValueError( f"Expected query to return n=1 record, but got n={len(records)}" )
 
     def getByModel( self, model: str ):
         """ returns records based on the model type """
         query   = dbbackend.select( dbbackend.Body ).where( dbbackend.Body.model == model )
-        records = self.execute( query )
+        records = self.getByQuery( query )
         return records
 
     def getMostRecent( self ):
@@ -58,7 +64,7 @@ class Db( base.BaseModel ):
             results = session.query( dbbackend.Info ).order_by( dbbackend.Info.date_created.desc() ).all()
         return self._resultsToRecords( results )
 
-    def execute( self, query ):
+    def getByQuery( self, query ):
         with self.backend.Session() as session:
             results = session.execute( query ).scalars().all()
         return self._resultsToRecords( results )
@@ -79,7 +85,20 @@ class Db( base.BaseModel ):
 
     def delete( self, name ):
         """ delete a record in the db """
-        raise NotImplementedError
+        self.deleteByName( name )
+
+    def deleteByName( self, name ):
+        """ delete a record in the db """
+        query   = self._getByNameQuery( name )
+        records = self.getByQuery( query )
+        self._assertOneResult( records )
+
+        results = self.backend.delete( query )
+        self._delete( results )
+
+    def _delete( self, results ):
+        for result in results:
+            self.records.pop( result.index )
 
     def merge( self, otherDb ):
         """ merge the contents of another db """
