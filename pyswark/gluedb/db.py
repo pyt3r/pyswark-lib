@@ -10,6 +10,11 @@ class Contents( contents.Contents ):
     datahandler : Optional[ str ] = ""
     kw          : Optional[ dict ] = Field( default_factory=lambda: {} )
 
+    @classmethod
+    def fromArgs( cls, uri, datahandler="", kw=None ):
+        """ create the model from args """
+        return cls( uri=uri, datahandler=datahandler, kw=kw or {} )
+
     def load( self ):
         return super().read()
 

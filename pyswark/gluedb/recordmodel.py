@@ -34,15 +34,39 @@ class Body( base.BaseModel ):
         return model if model.startswith( 'python:' ) else f'python:{ model }'
 
 
+class BodyType:
+
+    def __init__(self, ContentsModel, BodyModel ):
+        self.instances = ( dict, ContentsModel, BodyModel, pydantic.BaseModel )
+
+    def getType(self):
+        return Union[ self.instances ]
+
+    def isInstance( self, o ):
+        return isinstance( o, self.instances )
+
+
 class Record( base.BaseModel ):
     Contents : ClassVar = Contents
+    bodyType : ClassVar = BodyType( Contents, Body )
     info     : Union[ dict, Info ]
-    body     : Union[ dict, Contents, Body, pydantic.BaseModel ] # order matters
+    body     : bodyType.getType()
 
     def __init__(self, body=None, name="", info=None ):
-        info = info or {}
-        info = { 'name': name, **info }
+        info = self._parseInfo( name, info )
+        body = self._parseBody( body )
         super().__init__( info=info, body=body )
+
+    @classmethod
+    def _parseInfo(cls, name, info):
+        info = info or {}
+        return { 'name': name, **info }
+
+    @classmethod
+    def _parseBody( cls, body ):
+        if cls.bodyType.isInstance( body ):
+            return body
+        return cls.Contents.fromArgs( body )
 
     @field_validator( 'info' )
     def _info( cls, info ):
@@ -54,7 +78,7 @@ class Record( base.BaseModel ):
     def _body( cls, body ) -> dict:
 
         if isinstance( body, cls.Contents ):
-            body = { 'model': body.getUri(), 'contents': body.model_dump() }
+            body = body.toDict()
 
         elif isinstance( body, Body ):
             body = body.model_dump()
@@ -63,14 +87,14 @@ class Record( base.BaseModel ):
             body = ser_des.toDict( body )
 
         if not isinstance( body, dict ):
-            raise TypeError(  f"expected type=dict, got {type(body)}")
+            body = cls.Contents( body ).toDict()
 
         expected = { 'model', 'contents' }
         passed   = set( body.keys() )
         missing  = expected - passed
         extra    = passed - expected
         if missing or extra:
-            raise ValueError( f"body has invalid keys: missing={ sorted(missing) }, extra={ sorted(extra) }" )
+            body = cls.Contents( **body ).toDict()
 
         cls.validate( body )
 
@@ -115,13 +139,13 @@ def makeRecord( ContentsModel, RecordModel=Record ):
     """ makes record class from a contents model """
 
     BodyModel = makeBody( ContentsModel )
-    bodyType  = Union[ dict, ContentsModel, BodyModel, pydantic.BaseModel ]
+    bodyType  = BodyType( ContentsModel, BodyModel )
 
     model = pydantic.create_model(
         "Record",
         __base__ = RecordModel,
         info     = ( Info, ... ),
-        body     = ( bodyType, ... ),
+        body     = ( bodyType.getType(), ... ),
     )
 
     model.Contents = ContentsModel

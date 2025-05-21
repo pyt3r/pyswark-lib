@@ -59,6 +59,19 @@ class TestLocalExample( unittest.TestCase ):
 
         self.assertDictEqual( db.load('a'), des.load('a') )
 
+    def test_ser_des_using_a_uri_to_set_the_record(self):
+        uri = f'{ Settings.DB.uri }.DB_1'
+        db  = api.load(uri)
+
+        uri = db.get('a').body['contents']['uri']
+
+        db.delete( 'a' )
+        db.post( 'a', uri )
+
+        ser = db.toJson()
+        des = ser_des.fromJson( ser )
+
+        self.assertDictEqual( db.load('a'), des.load('a') )
 
 class TestCRUD( unittest.TestCase ):
 
