@@ -1,5 +1,5 @@
 from pyswark.gluedb import hub
-from pyswark.examples.gluedb.settings import Settings
+from pyswark.tests.unittests.data.gluedb.settings import Settings
 
 DBs = {
     'db_1' : f'{ Settings.DB.uri }.DB_1',

@@ -3,7 +3,7 @@ import unittest
 from pyswark.lib.pydantic import ser_des
 
 from pyswark.gluedb import api
-from pyswark.examples.gluedb.settings import Settings
+from pyswark.tests.unittests.data.gluedb.settings import Settings
 
 
 class HubTestCases( unittest.TestCase ):

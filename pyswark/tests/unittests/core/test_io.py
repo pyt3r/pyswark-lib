@@ -174,6 +174,23 @@ class TestReadWriteAcquireCsv( TestCaseLocal ):
         handler.rm()
         self.assertFalse( handler.exists() )
 
+    def test_csv_gz(self):
+        raw = self.raw
+        fn  = "df.csv.gz"
+        uri = os.path.join( self.tempdir, fn )
+
+        handler = api.acquire(uri)
+        self.assertFalse( handler.exists() )
+
+        api.write(raw, uri)
+        self.assertTrue( handler.exists() )
+
+        df = api.read(uri)
+        pandas.testing.assert_frame_equal( raw, df )
+
+        handler.rm()
+        self.assertFalse( handler.exists() )
+
 
 class TestReadWriteAcquireHtml( TestCaseLocal ):
 

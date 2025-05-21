@@ -1,5 +1,5 @@
 from pyswark.lib import aenum
-from pyswark.examples import gluedb
+from pyswark.tests.unittests.data import gluedb
 
 
 class Settings(aenum.AliasEnum):

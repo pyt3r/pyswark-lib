@@ -1,4 +1,4 @@
-from pyswark.lib.aenum import AliasEnum, Alias
+from pyswark.lib.aenum import AliasEnum, Alias, AliasEnumError
 from pyswark.core.io.datahandler import DataHandler
 from pyswark.core.models.uri.base import UriModel
 
@@ -11,15 +11,14 @@ def api( uri ):
 
     klass = None
 
-    try:
-        klass = Ext.get( ext.full )
+    if klass is None:
+        klass = Ext.tryGet( ext.full, klass )
 
-    except ValueError:
-        klass = Scheme.get( scheme )
+    if klass is None:
+        klass = Scheme.tryGet( scheme, klass )
 
-    finally:
-        if not klass:
-            raise ValueError( f"Handler not found for {uri=}" )
+    if klass is None:
+        raise ValueError( f"Handler not found for {uri=}" )
 
     return klass
 

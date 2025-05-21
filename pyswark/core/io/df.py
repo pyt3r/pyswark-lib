@@ -21,7 +21,7 @@ class Kwargs(decorate.Kwargs):
     }
 
 
-class Csv(base.AbstractDataHandler):
+class Csv( base.AbstractDataHandler ):
 
     @Kwargs.decorate('r')
     def _read( self, fp, **kw ):
@@ -32,8 +32,27 @@ class Csv(base.AbstractDataHandler):
         data.to_csv( fp, **kw )
 
 
-class CsvGzip( Csv ):
+class CsvGzip( base.AbstractDataHandler ):
     """ csv gzip """
+    MODE_R = 'rt'
+    MODE_W = 'wt'
+
+    @Kwargs.decorate('r')
+    def _readWithContext( self, compression=None, **kwargs ):
+        with self.open( self.MODE_R, compression=compression, **kwargs ) as fp:
+            result = self._read( fp, **kwargs )
+        return result
+
+    @Kwargs.decorate('w')
+    def _writeWithContext( self, data, compression=None, **kwargs ):
+        with self.open( self.MODE_W, compression=compression, **kwargs ) as fp:
+            self._write( data, fp, **kwargs )
+
+    def _read( self, fp, **kw ):
+        return pandas.read_csv( fp, **kw )
+
+    def _write( self, data, fp, **kw ):
+        data.to_csv( fp, **kw )
 
 
 class Parquet(base.AbstractDataHandler):

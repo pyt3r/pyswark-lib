@@ -31,6 +31,9 @@ class AbstractDataHandler:
 
     @Log.decorate('r')
     def read( self, **kwargs ):
+        return self._readWithContext( **kwargs )
+
+    def _readWithContext( self, **kwargs ):
         with self.open( self.MODE_R ) as fp:
             result = self._read( fp, **kwargs )
         return result
@@ -43,6 +46,9 @@ class AbstractDataHandler:
         if overwrite and self.exists():
             self.rm()
 
+        return self._writeWithContext( data, **kwargs )
+
+    def _writeWithContext( self, data, **kwargs ):
         with self.open( self.MODE_W ) as fp:
             self._write( data, fp, **kwargs )
 

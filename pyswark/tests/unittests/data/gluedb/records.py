@@ -1,4 +1,4 @@
-from pyswark.examples.gluedb.settings import Settings
+from pyswark.tests.unittests.data.gluedb.settings import Settings
 from pyswark.gluedb.db import Contents
 
 RECORDS_1 = [

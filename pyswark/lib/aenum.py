@@ -78,7 +78,7 @@ class AliasEnum( aenum.Enum ):
             if dupe:
                 dupes[ name ] = dupe
         if dupes:
-            raise ValueError( f"duplicate alias for {dupes}")
+            raise AliasEnumError( f"duplicate alias for {dupes}")
 
     @property
     def aliases(self):
@@ -110,7 +110,7 @@ class AliasEnum( aenum.Enum ):
             member = getattr( cls, name )
             if alias in member.aliases:
                 return member
-        raise ValueError( f'member not found for { alias= }' )
+        raise AliasEnumError( f'member not found for {alias=}' )
 
     @classmethod
     def toMapping( cls, attr='value' ):
@@ -121,3 +121,15 @@ class AliasEnum( aenum.Enum ):
             for key in [ name ] + sorted(member.aliases):
                 mapping[ key ] = value
         return mapping
+
+    @classmethod
+    def tryGet( cls, aliasOrMember, default=None ):
+        try:
+            return cls.get( aliasOrMember )
+        except AliasEnumError:
+            return default
+
+
+
+class AliasEnumError( Exception ):
+    pass

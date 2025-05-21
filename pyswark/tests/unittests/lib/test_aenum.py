@@ -1,7 +1,7 @@
 import unittest
 from enum import Enum
 
-from pyswark.lib.aenum import AliasEnum, Alias
+from pyswark.lib.aenum import AliasEnum, Alias, AliasEnumError
 
 
 class MixedBag( AliasEnum ):
@@ -47,15 +47,12 @@ class SettingsTests( unittest.TestCase ):
             ( MixedBag.H, "name=H, value=[1, 2], aliases=['H', 'h']" ),
             ( MixedBag.I, "name=I, value=Alias({'i'}), aliases=['I']" ),
         ]
-
         for i, (test, expected) in enumerate( cases ):
             with self.subTest( i=i, test=test ):
                 self.assertEqual( expected, test.__repr__() )
 
-
     def test_duplicate_alias(self):
-
-        with self.assertRaises( ValueError ):
+        with self.assertRaises( AliasEnumError ):
             class Settings( AliasEnum ):
                 A    = 1
                 dupe = A, Alias( 'A', 'a' )
