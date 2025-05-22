@@ -1,22 +1,19 @@
 from typing import Union
-import sqlalchemy
 from sqlalchemy import Column, Integer, String, DateTime, create_engine
+from sqlalchemy import select
 from sqlalchemy.orm import declarative_base, Session
 
 from pyswark.gluedb import recordmodel
 
 Base = declarative_base()
 
-# sql operators
-select = sqlalchemy.select
-
 
 class Info( Base ):
     __tablename__ = 'info'
 
     id            = Column( Integer, primary_key=True )
-    index         = Column( Integer, primary_key=False )
-    name          = Column( String, nullable=False )
+    index         = Column( Integer )
+    name          = Column( String, nullable=False, unique=True )
     date_created  = Column( DateTime, nullable=False )
     date_modified = Column( DateTime, nullable=False )
 
@@ -25,7 +22,7 @@ class Body( Base ):
     __tablename__ = 'records'
 
     id    = Column( Integer, primary_key=True )
-    index = Column( Integer, primary_key=False )
+    index = Column( Integer )
     model = Column( String, nullable=False )
 
 

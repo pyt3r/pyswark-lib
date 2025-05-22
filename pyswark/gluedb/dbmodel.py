@@ -2,8 +2,11 @@ from typing import ClassVar, Union
 from pydantic import field_validator
 
 from pyswark.lib.pydantic import base
-from pyswark.gluedb import dbbackend, recordmodel
+
 from pyswark.core.io import api
+
+from pyswark.gluedb import dbbackend, recordmodel
+from pyswark.gluedb import sql, table
 
 
 class Db( base.BaseModel ):
@@ -33,7 +36,9 @@ class Db( base.BaseModel ):
         return records
 
     def getNames(self):
-        return [ record.info.name for record in self.records ]
+        query   = sql.select( table.Info )
+        results = self.getByQuery( query, returnBackend=True )
+        return [ r.name for r in results ]
 
     def get( self, name: str ):
         return self.getByName( name )
@@ -46,7 +51,7 @@ class Db( base.BaseModel ):
 
     @staticmethod
     def _getByNameQuery( name ):
-        return dbbackend.select( dbbackend.Info ).where( dbbackend.Info.name == name )
+        return sql.select( table.Info ).where( table.Info.name == name )
 
     @staticmethod
     def _assertOneResult( records ):
@@ -55,18 +60,20 @@ class Db( base.BaseModel ):
 
     def getByModel( self, model: str ):
         """ returns records based on the model type """
-        query   = dbbackend.select( dbbackend.Body ).where( dbbackend.Body.model == model )
+        query   = sql.select( table.Body ).where( table.Body.model == model )
         records = self.getByQuery( query )
         return records
 
     def getMostRecent( self ):
         with self.backend.Session() as session:
-            results = session.query( dbbackend.Info ).order_by( dbbackend.Info.date_created.desc() ).all()
+            results = session.query( table.Info ).order_by( table.Info.date_created.desc() ).all()
         return self._resultsToRecords( results )
 
-    def getByQuery( self, query ):
+    def getByQuery( self, query, returnBackend=False ):
         with self.backend.Session() as session:
             results = session.execute( query ).scalars().all()
+        if returnBackend:
+            return results
         return self._resultsToRecords( results )
 
     def _resultsToRecords( self, results ):
@@ -80,6 +87,8 @@ class Db( base.BaseModel ):
 
     def post(self, name, body: recordmodel.Body):
         """ creates a new record in the db """
+        if isinstance( body, self.Record ):
+            body = body.body
         record = self.Record( body, name=name )
         self._addRecord( record )
 
@@ -107,6 +116,7 @@ class Db( base.BaseModel ):
         self._addRecords( otherDb.records )
 
     def _addRecords( self, records ):
+        # TO DO - validate one name
         self.records += records
         self.backend.addRecords( records )
 
