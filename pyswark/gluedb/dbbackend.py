@@ -9,7 +9,7 @@ Base = declarative_base()
 
 
 class Info( Base ):
-    __tablename__ = 'info'
+    __tablename__ = 'Info'
 
     id            = Column( Integer, primary_key=True )
     index         = Column( Integer )
@@ -19,7 +19,7 @@ class Info( Base ):
 
 
 class Body( Base ):
-    __tablename__ = 'records'
+    __tablename__ = 'Body'
 
     id    = Column( Integer, primary_key=True )
     index = Column( Integer )

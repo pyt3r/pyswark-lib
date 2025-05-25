@@ -1,12 +1,12 @@
 from typing import Optional
 from pydantic import Field
 
-from pyswark.core.models import contents
+from pyswark.lib.pydantic import base
 from pyswark.core.io import guess
 from pyswark.core.io.datahandler import DataHandler
 
 
-class Contents( contents.Contents ):
+class Contents( base.BaseModel ):
     uri         : str
     datahandler : Optional[ str ] = ""
     kw          : Optional[ dict ] = Field( default_factory=lambda: {} )

@@ -32,3 +32,7 @@ class BaseModel( ExtraForbidden ):
     def fromDict( *a, **kw ):
         from pyswark.lib.pydantic import ser_des
         return ser_des.fromDict( *a, **kw )
+
+    @classmethod
+    def getUri(cls):
+        return f"{ cls.__module__}.{ cls.__name__}"

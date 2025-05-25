@@ -116,7 +116,6 @@ class Db( base.BaseModel ):
         self._addRecords( otherDb.records )
 
     def _addRecords( self, records ):
-        # TO DO - validate one name
         self.records += records
         self.backend.addRecords( records )
 

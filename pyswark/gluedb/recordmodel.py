@@ -4,7 +4,6 @@ from pydantic import field_validator, Field
 
 from pyswark.lib.pydantic import base, ser_des
 from pyswark.ts.datetime import Datetime
-from pyswark.core.models.contents import Contents
 from pyswark.core.io import api
 
 
@@ -23,6 +22,10 @@ class Info( base.BaseModel ):
         elif not isinstance( date, Datetime ):
             date = Datetime( date )
         return date
+
+
+class Contents( base.BaseModel ):
+    pass
 
 
 class Body( base.BaseModel ):

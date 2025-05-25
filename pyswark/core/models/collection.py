@@ -10,13 +10,13 @@ class Base( base.BaseModel ):
     def __init__(self, data):
         return super().__init__( data=data )
 
+    @field_validator( 'data' )
+    def _data( cls, data ) -> list:
+        return [e.data if isinstance(e, primitive.Base) else primitive.Infer(e).data for e in data]
+
 
 class List( Base ):
     data: Union[ list, tuple ]
-
-    @field_validator( 'data' )
-    def _data( cls, data ) -> list:
-        return [ e.data if isinstance( e, primitive.Base ) else primitive.Infer(e).data for e in data ]
 
 
 class Tuple( List ):
@@ -35,7 +35,7 @@ class Set( base.BaseModel ):
 
     @field_validator( 'inputs' )
     def _inputs( cls, inputs ) -> list:
-        return [ e.data if isinstance( e, primitive.Base ) else primitive.Infer(e).data for e in inputs ]
+        return [e.data if isinstance(e, primitive.Base) else primitive.Infer(e).data for e in inputs]
 
     @property
     def data(self):

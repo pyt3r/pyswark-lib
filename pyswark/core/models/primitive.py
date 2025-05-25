@@ -3,10 +3,13 @@ from pyswark.lib.pydantic import base
 
 
 class Base( base.BaseModel ):
-    data: Any
+    data : Any
 
     def __init__( self, data ):
         return super().__init__( data=data )
+
+    def load( self ):
+        return super().read()
 
 
 class Int( Base ):
