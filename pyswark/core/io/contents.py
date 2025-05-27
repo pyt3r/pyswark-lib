@@ -1,22 +1,22 @@
 from typing import Optional
 from pydantic import Field
 
-from pyswark.lib.pydantic import base
+from pyswark.core.models import loader
 from pyswark.core.io import guess
 from pyswark.core.io.datahandler import DataHandler
 
 
-class Contents( base.BaseModel ):
+class Contents( loader.Loader ):
     uri         : str
     datahandler : Optional[ str ] = ""
     kw          : Optional[ dict ] = Field( default_factory=lambda: {} )
 
+    def load( self ):
+        return self.read()
+
     def read( self ):
         handler = self.acquire()
         return handler.read( **self.kw )
-
-    def load( self ):
-        return self.read()
 
     def acquire( self ):
         uri         = self.uri

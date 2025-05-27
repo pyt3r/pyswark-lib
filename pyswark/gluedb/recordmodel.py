@@ -3,6 +3,7 @@ import pydantic
 from pydantic import field_validator, Field
 
 from pyswark.lib.pydantic import base, ser_des
+from pyswark.core.models import loader
 from pyswark.ts.datetime import Datetime
 from pyswark.core.io import api
 
@@ -24,7 +25,7 @@ class Info( base.BaseModel ):
         return date
 
 
-class Contents( base.BaseModel ):
+class Contents( loader.Loader ):
     pass
 
 
@@ -92,11 +93,7 @@ class Record( base.BaseModel ):
         if not isinstance( body, dict ):
             body = cls.Contents( body ).toDict()
 
-        expected = { 'model', 'contents' }
-        passed   = set( body.keys() )
-        missing  = expected - passed
-        extra    = passed - expected
-        if missing or extra:
+        if not ser_des.isSerializedDict( body ):
             body = cls.Contents( **body ).toDict()
 
         cls.validate( body )

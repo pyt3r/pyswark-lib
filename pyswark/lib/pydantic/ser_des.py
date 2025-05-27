@@ -1,10 +1,9 @@
 import pydoc
 import json
+from typing import TypeVar, Type
 
 from pydantic import field_validator, BaseModel
 from pyswark.lib.pydantic import base
-
-from typing import TypeVar, Type
 
 BaseModelInst = TypeVar( 'pydantic.BaseModel' )
 BaseModelType = Type[ BaseModel ]
@@ -24,11 +23,21 @@ def toDict( model: BaseModelType ) -> dict:
 
 def fromDict( data: dict ) -> BaseModelType:
     dictModel = FromDictModel( **data )
-    return dictModel.model( **dictModel.contents )
+    return dictModel.load()
+
+
+def isSerializedDict( data: dict ):
+    """ simple check to see if the data has the correct keys """
+    if isinstance( data, dict ):
+        expected = set( FromDictModel.model_fields.keys() )
+        passed   = set( data.keys() )
+        missing  = expected - passed
+        extra    = passed - expected
+        return not ( missing or extra )
 
 
 class ToDictModel( base.BaseModel ):
-    model : BaseModelInst
+    model    : BaseModelInst
     contents : BaseModelInst
 
     @field_validator( 'model' )
@@ -51,7 +60,7 @@ class ToDictModel( base.BaseModel ):
 
 
 class FromDictModel( base.BaseModel ):
-    model : str
+    model    : str
     contents : dict
 
     @field_validator( 'model' )
@@ -62,3 +71,6 @@ class FromDictModel( base.BaseModel ):
         if not valid:
             raise TypeError( f'{ model=} must a subclass of { BaseModel }')
         return Model
+
+    def load(self):
+        return self.model( **self.contents )
