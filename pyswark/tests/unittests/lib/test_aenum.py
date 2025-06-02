@@ -57,3 +57,22 @@ class SettingsTests( unittest.TestCase ):
                 A    = 1
                 dupe = A, Alias( 'A', 'a' )
 
+
+class TestDynamicEnum(unittest.TestCase):
+
+    def test_createDynamically(self):
+        e = AliasEnum.createDynamically({'a': 1, '123 this is my variable name': 2})
+        self.assertEqual(e.a.value, 1)
+        self.assertEqual(e._123_this_is_my_variable_name.value, 2)
+
+    def test_asPythonCode(self):
+        e = AliasEnum.createDynamically({'a': 1, '123 this is my variable name': 2})
+        code = "from pyswark.lib.enum import AliasEnum"
+        code += '\n\n'
+        code += 'class MyAliasEnum( AliasEnum ):'
+        code += '\n    '
+        code += 'a = 1'
+        code += '\n    '
+        code += '_123_this_is_my_variable_name = 2'
+
+        self.assertEqual(e.asPythonCode(), code )

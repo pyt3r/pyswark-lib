@@ -1,4 +1,5 @@
 import aenum
+from pyswark.lib.enum import Mixin
 
 
 class Alias:
@@ -27,7 +28,7 @@ class Alias:
 
 
 
-class AliasEnum( aenum.Enum ):
+class AliasEnum( Mixin, aenum.Enum ):
     """ allows an entry to be aliased:
 
     class Example( AliasEnum ):

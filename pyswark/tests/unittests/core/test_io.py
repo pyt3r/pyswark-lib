@@ -225,7 +225,7 @@ class LocalTestCasesPjson( TestCaseLocal ):
         raw = self.raw
         api.write(raw, outpath)
         data = api.read(outpath)
-        self.assertEqual( raw, data )
+        self.assertEqual( raw.toDict(), data.toDict() )
 
 
 class MockPjson( base.BaseModel ):
