@@ -179,5 +179,5 @@ class TestPrimitivesAndCollections( unittest.TestCase ):
 
         self.assertEqual( db.load('valid'), '1' )
         
-        with self.assertRaisesRegexp( ValueError, "Handler not found for uri='1'" ):
+        with self.assertRaisesRegex( ValueError, "Handler not found for uri='1'" ):
             db.load('invalid')    
