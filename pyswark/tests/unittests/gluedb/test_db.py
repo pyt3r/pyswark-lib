@@ -39,15 +39,15 @@ class TestLocalExample( unittest.TestCase ):
             {'uri': f'{ Settings.OBJECTS.uri }.D', 'datahandler': '', 'kw': {}}
         )
 
-        d = record.load()
+        d = record.extract()
         self.assertDictEqual( d, {'g': 7, 'h': 8, 'i': 9} )
 
     def test_loading_content_from_a_gluedb(self):
         uri = f'{ Settings.DB.uri }.DB_2'
         db  = api.load(uri)
 
-        c   = db.load( "c" )
-        d   = db.load( "d" )
+        c   = db.extract( "c" )
+        d   = db.extract( "d" )
 
         self.assertDictEqual( c, {'d': 4, 'e': 5, 'f': 6} )
         self.assertDictEqual( d, {'g': 7, 'h': 8, 'i': 9} )
@@ -59,7 +59,7 @@ class TestLocalExample( unittest.TestCase ):
         ser = db.toJson()
         des = ser_des.fromJson( ser )
 
-        self.assertDictEqual( db.load('a'), des.load('a') )
+        self.assertDictEqual( db.extract('a'), des.extract('a') )
 
     def test_ser_des_using_a_uri_to_set_the_record(self):
         uri = f'{ Settings.DB.uri }.DB_1'
@@ -73,7 +73,7 @@ class TestLocalExample( unittest.TestCase ):
         ser = db.toJson()
         des = ser_des.fromJson( ser )
 
-        self.assertDictEqual( db.load('a'), des.load('a') )
+        self.assertDictEqual( db.extract('a'), des.extract('a') )
 
 
 class TestCRUD( unittest.TestCase ):
@@ -90,9 +90,9 @@ class TestCRUD( unittest.TestCase ):
         db.post('c.copy.1', record.model_dump()['body'])
         db.post('c.copy.2', record.body)
 
-        c_orig  = db.load('c')
-        c_copy1 = db.load('c.copy.1')
-        c_copy2 = db.load('c.copy.2')
+        c_orig  = db.extract('c')
+        c_copy1 = db.extract('c.copy.1')
+        c_copy2 = db.extract('c.copy.2')
 
         self.assertListEqual( db.getNames(), ['c', 'd', 'c.copy.1', 'c.copy.2'] )
         self.assertDictEqual( c_orig, c_copy1 )
@@ -101,10 +101,10 @@ class TestCRUD( unittest.TestCase ):
     def test_PUT_content_in_a_db(self):
         db = api.load(f'{ Settings.DB.uri }.DB_2')
 
-        old = db.load( "c" )
+        old = db.extract( "c" )
 
         db.put( "c", db.get("d").body )
-        new = db.load( "c" )
+        new = db.extract( "c" )
 
         self.assertDictEqual( old, {'d': 4, 'e': 5, 'f': 6} )
         self.assertDictEqual( new, {'g': 7, 'h': 8, 'i': 9} )
@@ -166,18 +166,18 @@ class TestPrimitivesAndCollections( unittest.TestCase ):
             ( primitive.String('2.0'), primitive.Float('2.0') ),
         ]))
 
-        self.assertEqual( db.load('integer'), 1.0 )
-        self.assertEqual( db.load('float'), 1.0 )
-        self.assertEqual( db.load('string'), '1.0' )
-        self.assertEqual( db.load('list'), [1, '1', 1.] )
-        self.assertEqual( db.load('dict'), { '1.0': 1.0, '2.0': 2.0 } ) 
+        self.assertEqual( db.extract('integer'), 1.0 )
+        self.assertEqual( db.extract('float'), 1.0 )
+        self.assertEqual( db.extract('string'), '1.0' )
+        self.assertEqual( db.extract('list'), [1, '1', 1.] )
+        self.assertEqual( db.extract('dict'), { '1.0': 1.0, '2.0': 2.0 } ) 
 
     def test_invalid_and_valid_models(self):
         db = api.newDb()
         db.post( 'valid', infer.Infer('1') )
         db.post( 'invalid', '1' )
 
-        self.assertEqual( db.load('valid'), '1' )
+        self.assertEqual( db.extract('valid'), '1' )
         
         with self.assertRaisesRegex( ValueError, "Handler not found for uri='1'" ):
-            db.load('invalid')    
+            db.extract('invalid')    

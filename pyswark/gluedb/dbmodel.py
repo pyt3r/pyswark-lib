@@ -125,5 +125,5 @@ class Db( base.BaseModel ):
     def toDb(self):
         return self
 
-    def load(self, name):
-        return self.get( name ).load()
+    def extract(self, name):
+        return self.get( name ).extract()

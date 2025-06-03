@@ -8,19 +8,19 @@ class TestCase(unittest.TestCase):
 
     def test_int(self):
         model = primitive.Int('1.0')
-        self.assertEqual(model.load(), 1)
+        self.assertEqual(model.extract(), 1)
 
     def test_float(self):
         model = primitive.Float('1.1')
-        self.assertEqual(model.load(), 1.1)
+        self.assertEqual(model.extract(), 1.1)
 
     def test_string(self):
         model = primitive.String('1.1')
-        self.assertEqual(model.load(), '1.1')
+        self.assertEqual(model.extract(), '1.1')
 
     def test_bool(self):
         model = primitive.Bool(1.0)
-        self.assertEqual(model.load(), True)
+        self.assertEqual(model.extract(), True)
 
     def test_ser_des(self):
         model = primitive.Infer('1.0')

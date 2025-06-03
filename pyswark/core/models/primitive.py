@@ -1,14 +1,14 @@
 from typing import Any, Union
-from pyswark.core.models import loader
+from pyswark.core.models import extractor
 
 
-class Base( loader.Loader ):
+class Base( extractor.Extractor ):
     inputs : Any
 
     def __init__( self, inputs ):
         return super().__init__( inputs=inputs )
 
-    def load(self):
+    def extract(self):
         return self.inputs
 
 

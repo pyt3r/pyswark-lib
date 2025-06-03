@@ -15,7 +15,7 @@ class Contents( contents.Contents ):
         """ create the model from args """
         return cls( uri=uri, datahandler=datahandler, kw=kw or {} )
 
-    def load( self ):
+    def extract( self ):
         return super().read()
 
 

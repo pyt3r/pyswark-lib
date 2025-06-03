@@ -13,7 +13,7 @@ class Contents( recordmodel.Contents ):
             self.kw = { "reloadmodule": True }
         return self
 
-    def load(self) -> dbmodel.Db:
+    def extract(self) -> dbmodel.Db:
         loaded = api.read( self.uri, **self.kw )
 
         if not isinstance( loaded, dbmodel.Db ):

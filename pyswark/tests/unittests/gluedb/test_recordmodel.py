@@ -9,13 +9,13 @@ class CasesWithoutValidation( unittest.TestCase ):
     def test_load_a_record_via_model_without_validation(self):
         body   = ModelXYZ( x=1, y=2, z=3 )
         record = Record( body )
-        loaded = record.load()
+        loaded = record.extract()
         self.assertEqual( body.sum(), loaded.sum() )
 
     def test_load_a_record_via_contents_without_validation(self):
         body   = ContentsABC( a=1, b=2, c=3 )
         record = Record( body )
-        loaded = record.load()
+        loaded = record.extract()
         self.assertEqual( -6, loaded )
 
     def test_ser_des_of_model(self):
@@ -23,7 +23,7 @@ class CasesWithoutValidation( unittest.TestCase ):
         record = Record( body )
         ser    = record.toJson()
         des    = ser_des.fromJson( ser )
-        loaded = des.load()
+        loaded = des.extract()
         self.assertEqual( body.sum(), loaded.sum() )
 
     def test_ser_des_of_contents(self):
@@ -31,8 +31,8 @@ class CasesWithoutValidation( unittest.TestCase ):
         record = RecordABC( body )
         ser    = record.toJson()
         des    = ser_des.fromJson( ser )
-        loaded = des.load()
-        self.assertEqual( body.load(), loaded )
+        loaded = des.extract()
+        self.assertEqual( body.extract(), loaded )
 
 
 class ModelXYZ( pydantic.BaseModel ):
@@ -48,7 +48,7 @@ class ContentsABC( Contents ):
     b: int
     c: int
 
-    def load( self ):
+    def extract( self ):
         return - ( self.a + self.b + self.c )
 
 
@@ -57,7 +57,7 @@ class CasesWithValidation( unittest.TestCase ):
     def test_load_a_record_via_contents_with_validation(self):
         body   = ContentsABC( a=1, b=2, c=3 )
         record = RecordABC( body )
-        loaded = record.load()
+        loaded = record.extract()
         self.assertEqual( -6, loaded )
 
     def test_ser_des_of_contents(self):
@@ -65,8 +65,8 @@ class CasesWithValidation( unittest.TestCase ):
         record = RecordABC( body )
         ser    = record.toJson()
         des    = ser_des.fromJson( ser )
-        loaded = des.load()
-        self.assertEqual( body.load(), loaded )
+        loaded = des.extract()
+        self.assertEqual( body.extract(), loaded )
 
     def test_invalid_contents(self):
         body = Contents()

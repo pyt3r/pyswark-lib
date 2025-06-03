@@ -1,7 +1,7 @@
 from pyswark.lib.pydantic import base
 
 
-class Loader( base.BaseModel ):
+class Extractor( base.BaseModel ):
 
-    def load( self ):
+    def extract( self ):
         raise NotImplementedError

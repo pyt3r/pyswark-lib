@@ -1,11 +1,11 @@
 from typing import Any, Union
 from pydantic import field_validator
 from pyswark.lib.pydantic import base, ser_des
-from pyswark.core.models import loader, primitive
+from pyswark.core.models import extractor, primitive
 
 
 
-class Base( loader.Loader ):
+class Base( extractor.Extractor ):
     inputs: Any
 
     def __init__(self, inputs):
@@ -35,15 +35,15 @@ class Base( loader.Loader ):
             new.append( element )
         return new
 
-    def loadModels(self):
+    def extractModels(self):
         return [ ser_des.fromDict(e) for e in self.inputs ]
 
-    def load(self):
+    def extract(self):
         data = []
-        for e in self.loadModels():
+        for e in self.extractModels():
             model = e
             if isinstance( model, ( Base, primitive.Base )):
-                model = model.load()
+                model = model.extract()
             data.append( model )
         return data
 
@@ -54,8 +54,8 @@ class List( Base ):
 
 class Tuple( List ):
 
-    def load(self):
-        return tuple( super().load() )
+    def extract(self):
+        return tuple( super().extract() )
 
 
 class Set( List ):
@@ -65,8 +65,8 @@ class Set( List ):
             inputs = list( inputs )
         return super().__init__( inputs=inputs )
 
-    def load(self):
-        return set( super().load() )
+    def extract(self):
+        return set( super().extract() )
 
 
 class Dict( List ):
@@ -98,8 +98,8 @@ class Dict( List ):
             if key in keys:
                 raise ValueError(f"duplicate keys for {key=}")
 
-    def load(self):
-        return dict( super().load() )
+    def extract(self):
+        return dict( super().extract() )
 
 class Infer( primitive.Infer ):
 

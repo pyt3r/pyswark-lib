@@ -3,7 +3,7 @@ import pydantic
 from pydantic import field_validator, Field
 
 from pyswark.lib.pydantic import base, ser_des
-from pyswark.core.models import loader, primitive, collection
+from pyswark.core.models import extractor
 from pyswark.ts.datetime import Datetime
 from pyswark.core.io import api
 
@@ -25,7 +25,7 @@ class Info( base.BaseModel ):
         return date
 
 
-class Contents( loader.Loader ):
+class Contents( extractor.Extractor ):
     pass
 
 
@@ -104,11 +104,11 @@ class Record( base.BaseModel ):
     def validate( cls, body ):
         """ optional validation to be added """
 
-    def load(self):
+    def extract(self):
         model = self.get()
 
-        if isinstance( model, loader.Loader ):
-            return model.load()
+        if isinstance( model, extractor.Extractor ):
+            return model.extract()
         
         return model
 

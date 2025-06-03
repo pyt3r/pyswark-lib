@@ -12,8 +12,8 @@ class HubTestCases( unittest.TestCase ):
         uri = f'{ Settings.HUB.uri }.HUB'
         hub = api.load(uri)
 
-        db = hub.load('db_2')
-        c  = db.load( "c" )
+        db = hub.extract('db_2')
+        c  = db.extract( "c" )
         self.assertDictEqual( c, {'d': 4, 'e': 5, 'f': 6} )
 
     def test_consolidating_a_hub_to_a_db(self):
@@ -49,8 +49,8 @@ class TestCRUD( unittest.TestCase ):
         record = hub.get("db_2")
         hub.post('db_2.copy', record.body)
 
-        db_orig = hub.load('db_2')
-        db_copy = hub.load('db_2.copy')
+        db_orig = hub.extract('db_2')
+        db_copy = hub.extract('db_2.copy')
 
         self.assertListEqual( hub.getNames(), ['db_1', 'db_2', 'db_2.copy'] )
         self.assertDictEqual( db_orig.toDict(), db_copy.toDict() )
@@ -60,10 +60,10 @@ class TestCRUD( unittest.TestCase ):
         uri = f'{ Settings.HUB.uri }.HUB'
         hub = api.load(uri)
 
-        old = hub.load( 'db_2' )
+        old = hub.extract( 'db_2' )
 
         hub.put( 'db_2', hub.get("db_1").body )
-        new = hub.load('db_2')
+        new = hub.extract('db_2')
 
         self.assertListEqual( old.getNames(), ['c', 'd'] )
         self.assertListEqual( new.getNames(), ['a', 'b'] )

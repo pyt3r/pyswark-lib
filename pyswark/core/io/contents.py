@@ -1,17 +1,17 @@
 from typing import Optional
 from pydantic import Field
 
-from pyswark.core.models import loader
+from pyswark.core.models import extractor
 from pyswark.core.io import guess
 from pyswark.core.io.datahandler import DataHandler
 
 
-class Contents( loader.Loader ):
+class Contents( extractor.Extractor ):
     uri         : str
     datahandler : Optional[ str ] = ""
     kw          : Optional[ dict ] = Field( default_factory=lambda: {} )
 
-    def load( self ):
+    def extract( self ):
         return self.read()
 
     def read( self ):

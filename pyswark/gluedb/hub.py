@@ -1,11 +1,11 @@
 from typing import Union
-from pyswark.gluedb import recordmodel, loader, db
+from pyswark.gluedb import extractor, recordmodel, db
 
 
-class Contents( loader.Contents ):
+class Contents( extractor.Contents ):
 
-    def load(self):
-        loaded = super().load()
+    def extract(self):
+        loaded = super().extract()
 
         if isinstance( loaded, GlueHub ):
             raise TypeError( f"Expected type=GlueDb, got type=GlueHub" )
@@ -40,7 +40,7 @@ class GlueHub( GlueDb ):
         """ consolidates to db """
         gluedb = db.GlueDb()
         for name in self.getNames():
-            gluedb.merge( self.load( name ))
+            gluedb.merge( self.extract( name ))
         return gluedb
 
     def merge(self, otherHub):

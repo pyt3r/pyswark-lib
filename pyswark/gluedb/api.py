@@ -1,6 +1,6 @@
 def load( uri ):
-    from pyswark.gluedb import loader
-    return loader.Contents( uri=uri ).load()
+    from pyswark.gluedb import extractor
+    return extractor.Contents( uri=uri ).extract()
 
 def newDb():
     from pyswark.gluedb import db
