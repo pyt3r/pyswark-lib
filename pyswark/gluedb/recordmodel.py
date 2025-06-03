@@ -3,7 +3,7 @@ import pydantic
 from pydantic import field_validator, Field
 
 from pyswark.lib.pydantic import base, ser_des
-from pyswark.core.models import loader
+from pyswark.core.models import loader, primitive, collection
 from pyswark.ts.datetime import Datetime
 from pyswark.core.io import api
 
@@ -106,8 +106,10 @@ class Record( base.BaseModel ):
 
     def load(self):
         model = self.get()
-        if isinstance( model, self.Contents ):
+
+        if isinstance( model, loader.Loader ):
             return model.load()
+        
         return model
 
     def get(self):

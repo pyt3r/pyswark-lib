@@ -1,11 +1,11 @@
 from typing import Any, Union
 from pydantic import field_validator
 from pyswark.lib.pydantic import base, ser_des
-from pyswark.core.models import primitive
+from pyswark.core.models import loader, primitive
 
 
 
-class Base( base.BaseModel ):
+class Base( loader.Loader ):
     inputs: Any
 
     def __init__(self, inputs):

@@ -2,6 +2,8 @@ import unittest
 
 from pyswark.lib.pydantic import ser_des
 
+from pyswark.core.models import primitive, collection, infer
+
 from pyswark.gluedb import api
 from pyswark.tests.unittests.data.gluedb.settings import Settings
 
@@ -73,6 +75,7 @@ class TestLocalExample( unittest.TestCase ):
 
         self.assertDictEqual( db.load('a'), des.load('a') )
 
+
 class TestCRUD( unittest.TestCase ):
 
     def test_POST_content_in_a_db(self):
@@ -106,16 +109,6 @@ class TestCRUD( unittest.TestCase ):
         self.assertDictEqual( old, {'d': 4, 'e': 5, 'f': 6} )
         self.assertDictEqual( new, {'g': 7, 'h': 8, 'i': 9} )
 
-    @staticmethod
-    def makeTestDb():
-        db_1 = api.load(f'{ Settings.DB.uri }.DB_1')
-        db_2 = api.load(f'{ Settings.DB.uri }.DB_2')
-
-        db = api.newDb()
-        db.merge( db_1 )
-        db.merge( db_2 )
-        return db
-
     def test_exampleDb_creation_without_DELETE(self):
         db = self.makeTestDb()
         self.assertListEqual( db.getNames(), ['a','b','c','d'] )
@@ -137,7 +130,6 @@ class TestCRUD( unittest.TestCase ):
         self.assertDictEqual( nameIxMap, {'a': 0, 'c': 1, 'd': 2})
         self.assertDictEqual( nameIdMap, {'a': 1, 'c': 3, 'd': 4})
 
-
     def test_DELETE_two_names_from_exampleDb(self):
         db = self.makeTestDb()
         db.delete( 'a' )
@@ -149,3 +141,43 @@ class TestCRUD( unittest.TestCase ):
         nameIdMap = { info.name : info.id for info, body in infoBody }
         self.assertDictEqual( nameIxMap, {'b': 0, 'c': 1})
         self.assertDictEqual( nameIdMap, {'b': 2, 'c': 3})
+
+    @staticmethod
+    def makeTestDb():
+        db_1 = api.load(f'{ Settings.DB.uri }.DB_1')
+        db_2 = api.load(f'{ Settings.DB.uri }.DB_2')
+
+        db = api.newDb()
+        db.merge( db_1 )
+        db.merge( db_2 )
+        return db
+
+
+class TestPrimitivesAndCollections( unittest.TestCase ):
+
+    def test_adding_primitive_and_collection_models(self):
+        db = api.newDb()
+        db.post( 'integer', primitive.Int('1.0'))
+        db.post( 'float', primitive.Float('1.0'))
+        db.post( 'string', primitive.String('1.0'))
+        db.post( 'list', collection.List([1, '1', 1.]))
+        db.post( 'dict', collection.Dict([
+            ( '1.0', 1.0 ), 
+            ( primitive.String('2.0'), primitive.Float('2.0') ),
+        ]))
+
+        self.assertEqual( db.load('integer'), 1.0 )
+        self.assertEqual( db.load('float'), 1.0 )
+        self.assertEqual( db.load('string'), '1.0' )
+        self.assertEqual( db.load('list'), [1, '1', 1.] )
+        self.assertEqual( db.load('dict'), { '1.0': 1.0, '2.0': 2.0 } ) 
+
+    def test_invalid_and_valid_models(self):
+        db = api.newDb()
+        db.post( 'valid', infer.Infer('1') )
+        db.post( 'invalid', '1' )
+
+        self.assertEqual( db.load('valid'), '1' )
+        
+        with self.assertRaisesRegexp( ValueError, "Handler not found for uri='1'" ):
+            db.load('invalid')    
