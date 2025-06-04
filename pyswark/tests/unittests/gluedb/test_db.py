@@ -157,6 +157,7 @@ class TestCRUD( unittest.TestCase ):
         return db
 
 
+
 class TestPrimitivesAndCollections( unittest.TestCase ):
 
     def test_adding_primitive_and_collection_models(self):
@@ -169,12 +170,16 @@ class TestPrimitivesAndCollections( unittest.TestCase ):
             ( '1.0', 1.0 ), 
             ( primitive.String('2.0'), primitive.Float('2.0') ),
         ]))
+        db.post( 'a string with spaces!', primitive.String('my string'))
 
-        self.assertEqual( db.extract('integer'), 1.0 )
-        self.assertEqual( db.extract('float'), 1.0 )
-        self.assertEqual( db.extract('string'), '1.0' )
-        self.assertEqual( db.extract('list'), [1, '1', 1.] )
-        self.assertEqual( db.extract('dict'), { '1.0': 1.0, '2.0': 2.0 } ) 
+        self.assertEqual( db.extract( 'integer' ), 1.0 )
+        self.assertEqual( db.extract( 'float' ), 1.0 )
+        self.assertEqual( db.extract( 'string' ), '1.0' )
+        self.assertEqual( db.extract( 'list' ), [1, '1', 1.] )
+        self.assertEqual( db.extract( 'dict' ), { '1.0': 1.0, '2.0': 2.0 } ) 
+
+        self.assertEqual( db.extract( 'a string with spaces!' ), 'my string' ) 
+        self.assertEqual( db.extract( db.enum.a_string_with_spaces_.value ), 'my string' ) 
 
     def test_invalid_and_valid_models(self):
         db = api.newDb()
@@ -184,8 +189,23 @@ class TestPrimitivesAndCollections( unittest.TestCase ):
         self.assertEqual( db.extract('valid'), '1' )
         
         with self.assertRaisesRegex( ValueError, "Handler not found for uri='1'" ):
-            db.extract('invalid')    
+            db.extract('invalid')
 
+    def test_pop(self):
+        db = api.newDb()
+        db.post( 'string', primitive.String('1.0'))
+
+        self.assertTrue( 'string' in db )
+        self.assertEqual( db.extract( 'string' ), '1.0' )
+
+        popped = db.pop( 'string' )
+        self.assertFalse( 'string' in db )
+        self.assertEqual( popped.extract(), '1.0' )
+
+        db = api.newDb()
+        db.post( 'popped', popped )
+        self.assertEqual( db.extract( 'popped' ), '1.0' )
+        
 
 class TestLoad( unittest.TestCase ):
 

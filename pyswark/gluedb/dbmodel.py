@@ -2,6 +2,7 @@ from typing import ClassVar, Union
 from pydantic import field_validator
 
 from pyswark.lib.pydantic import base
+from pyswark.lib import enum
 
 from pyswark.core.io import api
 
@@ -23,6 +24,10 @@ class Db( base.BaseModel ):
         """ backend querying engine, i.e. sqlalchemy """
         return self._backend
 
+    @property
+    def enum(self):
+        return enum.Enum.createDynamically({ n: n for n in self.getNames() })
+
     @field_validator( 'records' )
     def _validateInstance( cls, records ) -> list:
         klass = cls.Record
@@ -34,6 +39,9 @@ class Db( base.BaseModel ):
             records = [ klass( **record ) if isinstance( record, dict ) else record for record in records ]
 
         return records
+
+    def __contains__(self, name):
+        return name in self.getNames()
 
     def getNames(self):
         query   = sql.select( table.Info )
@@ -136,3 +144,14 @@ class Db( base.BaseModel ):
     def acquire(self, name):
         """ acquire the contents from a system """
         return self.get( name ).acquire()
+
+    def pop(self, name):
+        """ pop the contents from the db """
+        return self.popByName( name )
+
+    def popByName(self, name):
+        """ pop the contents from the db """
+        record = self.get(name)
+        self.deleteByName( name )
+        return record
+    

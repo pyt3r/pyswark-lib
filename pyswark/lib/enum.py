@@ -1,5 +1,5 @@
 import re
-
+import enum as _enum
 
 class Mixin:
 
@@ -57,3 +57,7 @@ class Mixin:
             validName = validName[1:]
 
         return validName
+    
+
+class Enum( Mixin, _enum.Enum ):
+    pass
