@@ -105,14 +105,20 @@ class Record( base.BaseModel ):
         """ optional validation to be added """
 
     def extract(self):
-        model = self.get()
+        model = self.acquire()
 
         if isinstance( model, extractor.Extractor ):
             return model.extract()
         
         return model
 
-    def get(self):
+    def load(self, data):
+        model = self.acquire()
+        if not isinstance( model, self.Contents ):
+            raise TypeError( f"can only load type=Contents, got type={ type(model) }" )
+        model.load( data )
+
+    def acquire(self):
         return self.getModel( **self.body )
 
     @staticmethod

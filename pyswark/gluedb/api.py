@@ -1,4 +1,4 @@
-def load( uri ):
+def connect( uri ):
     from pyswark.gluedb import extractor
     return extractor.Contents( uri=uri ).extract()
 

@@ -126,4 +126,13 @@ class Db( base.BaseModel ):
         return self
 
     def extract(self, name):
+        """ the E in ETL - extracts the contents from a system """
         return self.get( name ).extract()
+
+    def load(self, data, name):
+        """ the L in ETL - loads the contents into a system """
+        self.get( name ).load( data )
+    
+    def acquire(self, name):
+        """ acquire the contents from a system """
+        return self.get( name ).acquire()

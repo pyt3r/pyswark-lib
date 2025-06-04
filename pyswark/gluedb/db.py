@@ -5,18 +5,43 @@ from pyswark.core.io import contents
 from pyswark.gluedb import dbmodel, recordmodel
 
 
+class Extractor( contents.Contents ):
+    uri              : str
+    datahandler      : Optional[ str ] = ""
+    kw               : Optional[ dict ] = Field( default_factory=lambda: {} )
+
+
+class Loader( contents.Contents ):
+    uri              : str
+    datahandler      : Optional[ str ] = ""
+    kw               : Optional[ dict ] = Field( default_factory=lambda: {} )
+
+
 class Contents( contents.Contents ):
-    uri         : str
-    datahandler : Optional[ str ] = ""
-    kw          : Optional[ dict ] = Field( default_factory=lambda: {} )
+
+    # for extracting (reading)
+    uri              : str
+    datahandler      : Optional[ str ] = ""
+    kw               : Optional[ dict ] = Field( default_factory=lambda: {} )
+
+    # for loading (writing)
+    datahandlerWrite : Optional[ str ] = ""
+    kwWrite          : Optional[ dict ] = Field( default_factory=lambda: {} )
 
     @classmethod
-    def fromArgs( cls, uri, datahandler="", kw=None ):
+    def fromArgs( cls, uri, datahandler="", kw=None, datahandlerWrite="", kwWrite=None ):
         """ create the model from args """
-        return cls( uri=uri, datahandler=datahandler, kw=kw or {} )
+        return cls( uri=uri, datahandler=datahandler, kw=kw or {}, datahandlerWrite=datahandlerWrite, kwWrite=kwWrite or {} )
 
     def extract( self ):
-        return super().read()
+        extractor = Extractor( uri=self.uri, datahandler=self.datahandler, kw=self.kw or {} )
+        return extractor.read()
+
+    def load( self, data ):
+        """ the L in ETL - loads the contents into a system """
+        datahandler = self.datahandlerWrite or self.datahandler
+        loader = Loader( uri=self.uri, datahandler=datahandler, kw=self.kwWrite )
+        return loader.write( data )
 
 
 def _makeDb( ContentsModel, RecordModel, base ):

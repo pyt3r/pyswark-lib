@@ -1,4 +1,8 @@
 import unittest
+import tempfile
+import pathlib
+import shutil
+import pandas
 
 from pyswark.lib.pydantic import ser_des
 
@@ -12,7 +16,7 @@ class TestLocalExample( unittest.TestCase ):
 
     def test_view_available_content_from_a_gluedb(self):
         uri = f'{ Settings.DB.uri }.DB_2'
-        db  = api.load(uri)
+        db  = api.connect(uri)
 
         self.assertListEqual( db.getNames(), ['c', 'd'] )
 
@@ -30,13 +34,13 @@ class TestLocalExample( unittest.TestCase ):
 
     def test_acquiring_content_from_a_gluedb(self):
         uri = f'{ Settings.DB.uri }.DB_2'
-        db  = api.load(uri)
+        db  = api.connect(uri)
 
         record = db.get( "d" )
 
-        contents = record.get()
+        contents = record.acquire()
         self.assertDictEqual( contents.model_dump(),
-            {'uri': f'{ Settings.OBJECTS.uri }.D', 'datahandler': '', 'kw': {}}
+            {'uri': f'{ Settings.OBJECTS.uri }.D', 'datahandler': '', 'kw': {}, 'datahandlerWrite': '', 'kwWrite': {}}
         )
 
         d = record.extract()
@@ -44,7 +48,7 @@ class TestLocalExample( unittest.TestCase ):
 
     def test_loading_content_from_a_gluedb(self):
         uri = f'{ Settings.DB.uri }.DB_2'
-        db  = api.load(uri)
+        db  = api.connect(uri)
 
         c   = db.extract( "c" )
         d   = db.extract( "d" )
@@ -54,7 +58,7 @@ class TestLocalExample( unittest.TestCase ):
 
     def test_ser_des(self):
         uri = f'{ Settings.DB.uri }.DB_1'
-        db  = api.load(uri)
+        db  = api.connect(uri)
 
         ser = db.toJson()
         des = ser_des.fromJson( ser )
@@ -63,7 +67,7 @@ class TestLocalExample( unittest.TestCase ):
 
     def test_ser_des_using_a_uri_to_set_the_record(self):
         uri = f'{ Settings.DB.uri }.DB_1'
-        db  = api.load(uri)
+        db  = api.connect(uri)
 
         uri = db.get('a').body['contents']['uri']
 
@@ -81,7 +85,7 @@ class TestCRUD( unittest.TestCase ):
     def test_POST_content_in_a_db(self):
 
         uri = f'{ Settings.DB.uri }.DB_2'
-        old = api.load( uri )
+        old = api.connect( uri )
 
         db = api.newDb()
         db.merge( old )
@@ -99,7 +103,7 @@ class TestCRUD( unittest.TestCase ):
         self.assertDictEqual( c_copy1, c_copy2 )
 
     def test_PUT_content_in_a_db(self):
-        db = api.load(f'{ Settings.DB.uri }.DB_2')
+        db = api.connect(f'{ Settings.DB.uri }.DB_2')
 
         old = db.extract( "c" )
 
@@ -144,8 +148,8 @@ class TestCRUD( unittest.TestCase ):
 
     @staticmethod
     def makeTestDb():
-        db_1 = api.load(f'{ Settings.DB.uri }.DB_1')
-        db_2 = api.load(f'{ Settings.DB.uri }.DB_2')
+        db_1 = api.connect(f'{ Settings.DB.uri }.DB_1')
+        db_2 = api.connect(f'{ Settings.DB.uri }.DB_2')
 
         db = api.newDb()
         db.merge( db_1 )
@@ -181,3 +185,32 @@ class TestPrimitivesAndCollections( unittest.TestCase ):
         
         with self.assertRaisesRegex( ValueError, "Handler not found for uri='1'" ):
             db.extract('invalid')    
+
+
+class TestLoad( unittest.TestCase ):
+
+    def setUp(self):
+        self.tempdir = tempfile.mkdtemp()
+        self.uri = str( pathlib.Path( self.tempdir ) / 'mydata.csv' )
+        
+        self.DF = pandas.DataFrame({'a': [1,2,3]})
+        self.DF.to_csv( self.uri )
+
+    def tearDown(self):
+        shutil.rmtree( self.tempdir )
+
+    def test_load(self):
+        db = api.newDb()
+        
+        contents = db.Contents.fromArgs( self.uri, '', {}, '', {'overwrite' : True} )
+        db.post( 'mydata', contents )
+
+        DF = db.extract('mydata')
+        pandas.testing.assert_frame_equal( DF, self.DF )
+
+        DF['x'] = [4,5,6]
+        db.load( DF, 'mydata' )   
+
+        DF = db.extract('mydata')
+        expected = pandas.DataFrame({'a': [1,2,3], 'x': [4,5,6]})
+        pandas.testing.assert_frame_equal( DF, expected )
