@@ -7,8 +7,8 @@ from pyswark.lib.pydantic.ser_des import fromDict, toDict
 class Kwargs(decorate.Kwargs):
 
     PAYLOAD = {
-        "Json"  : { 'r': {}, 'w': {} },
-        "Pjson" : { 'r': {}, 'w': {} },
+        "Json"  : { 'r': {}, 'w': { 'indent': 2 } },
+        "Pjson" : { 'r': {}, 'w': { 'indent': 2 } },
     }
 
 

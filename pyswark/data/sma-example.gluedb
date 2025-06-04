@@ -1,0 +1,98 @@
+{
+  "model": "pyswark.gluedb.db.GlueDb",
+  "contents": {
+    "records": [
+      {
+        "info": {
+          "name": "JPM",
+          "date_created": {
+            "data": "2020-03-01T00:07:17",
+            "dtype": "datetime64[s]",
+            "tzname": "UTC"
+          },
+          "date_modified": {
+            "data": "2025-06-04T15:14:05",
+            "dtype": "datetime64[s]",
+            "tzname": "UTC"
+          }
+        },
+        "body": {
+          "model": "pyswark.gluedb.db.Contents",
+          "contents": {
+            "uri": "pyswark:/data/ohlc-jpm.csv.gz",
+            "datahandler": "",
+            "kw": {},
+            "datahandlerWrite": "",
+            "kwWrite": {}
+          }
+        }
+      },
+      {
+        "info": {
+          "name": "BAC",
+          "date_created": {
+            "data": "2020-03-01T00:07:24",
+            "dtype": "datetime64[s]",
+            "tzname": "UTC"
+          },
+          "date_modified": {
+            "data": "2025-06-04T15:14:05",
+            "dtype": "datetime64[s]",
+            "tzname": "UTC"
+          }
+        },
+        "body": {
+          "model": "pyswark.gluedb.db.Contents",
+          "contents": {
+            "uri": "pyswark:/data/ohlc-bac.csv.gz",
+            "datahandler": "",
+            "kw": {},
+            "datahandlerWrite": "",
+            "kwWrite": {}
+          }
+        }
+      },
+      {
+        "info": {
+          "name": "kwargs",
+          "date_created": {
+            "data": "2025-06-04T15:14:05",
+            "dtype": "datetime64[s]",
+            "tzname": "UTC"
+          },
+          "date_modified": {
+            "data": "2025-06-04T15:14:05",
+            "dtype": "datetime64[s]",
+            "tzname": "UTC"
+          }
+        },
+        "body": {
+          "model": "pyswark.core.models.collection.Dict",
+          "contents": {
+            "inputs": [
+              {
+                "model": "pyswark.core.models.collection.Tuple",
+                "contents": {
+                  "inputs": [
+                    {
+                      "model": "pyswark.core.models.primitive.String",
+                      "contents": {
+                        "inputs": "window"
+                      }
+                    },
+                    {
+                      "model": "pyswark.core.models.primitive.Int",
+                      "contents": {
+                        "inputs": 60
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
+}

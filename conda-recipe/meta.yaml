@@ -31,6 +31,10 @@ requirements:
     - aiohttp
     - aenum
     - sqlalchemy
+    - holoviews
+    - panel
+    - bokeh
+    - jupyter_bokeh
 
   run:
     - python>=3.9

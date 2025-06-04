@@ -18,3 +18,7 @@ dependencies:
   - aiohttp
   - aenum
   - sqlalchemy
+  - holoviews
+  - panel
+  - bokeh
+  - jupyter_bokeh
