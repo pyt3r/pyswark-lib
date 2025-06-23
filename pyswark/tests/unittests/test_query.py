@@ -1,5 +1,6 @@
 import unittest
-from pyswark.query.native import Query, OneOf, Equals
+from pyswark.query.native import OneOf, Equals
+from pyswark.query.model import QueryAll, QueryAny
 from pyswark.lib.pydantic import ser_des
 
 
@@ -15,40 +16,40 @@ class NativeTestCase( unittest.TestCase ):
 
     def test_query_all_using_params(self):
         records = self.records
-        query   = Query(params={'team' : OneOf(['mets', 'yankees']) })
-        results = query.runAll( records )
+        query   = QueryAll(params={'team' : OneOf(['mets', 'yankees']) })
+        results = query( records )
         results = [ r['name'] for r in results ]
         self.assertListEqual( results, ['Aaron Judge', 'Pete Alonso', 'Francisco Lindor'] )
     
     def test_query_any_using_kw(self):
         records = self.records
-        query   = Query( params=[ ('team', Equals('mets')), ('team', Equals('yankees')) ])
-        results = query.runAny( records )
+        query   = QueryAny( params=[ ('team', Equals('mets')), ('team', Equals('yankees')) ])
+        results = query( records )
         results = [ r['name'] for r in results ]
         self.assertListEqual( results, ['Aaron Judge', 'Pete Alonso', 'Francisco Lindor'] )
 
     def test_query_all_using_kw(self):
         records = self.records
-        query   = Query( team=OneOf(['mets', 'yankees']) )
-        results = query.runAll( records )
+        query   = QueryAll( team=OneOf(['mets', 'yankees']) )
+        results = query( records )
         results = [ r['name'] for r in results ]
         self.assertListEqual( results, ['Aaron Judge', 'Pete Alonso', 'Francisco Lindor'] )
 
     def test_query_all_using_params_and_kw(self):
         records = self.records
-        query   = Query( params={'team' : OneOf(['mets', 'yankees'])}, position=Equals('OF'))
-        results = query.runAll( records )
+        query   = QueryAll( params={'team' : OneOf(['mets', 'yankees'])}, position=Equals('OF'))
+        results = query( records )
         results = [ r['name'] for r in results ]
         self.assertListEqual( results, ['Aaron Judge'] )
         
     def test_collect(self):
         records = self.records
-        query   = Query( team=OneOf(['mets', 'yankees']), position=Equals('OF'), collect='name' )
-        results = query.runAll( records )
+        query   = QueryAll( team=OneOf(['mets', 'yankees']), position=Equals('OF'), collect='name' )
+        results = query( records )
         self.assertListEqual( results, [{'name': 'Aaron Judge'}] )
 
     def test_ser_des(self):
-        query = Query( team=OneOf(['mets', 'yankees']), position=Equals('OF'), collect=['name', 'position'] ) 
+        query = QueryAll( team=OneOf(['mets', 'yankees']), position=Equals('OF'), collect=['name', 'position'] ) 
         ser = query.toJson()
         des = ser_des.fromJson( ser )
         self.assertEqual( query, des )

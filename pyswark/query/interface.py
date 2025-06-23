@@ -6,6 +6,22 @@ from pyswark.lib.pydantic import base, ser_des
 class Param( base.BaseModel ):
     inputs: Any
 
+    def __init__(self, inputs):
+        super().__init__(inputs=inputs)
+        
+    def __call__( self, value, records=None ):
+        """ main call """
+
+
+class Equals( Param ):
+    """ value == other """
+    inputs: Union[ str, int, float ]
+
+
+class OneOf( Param ):
+    """ value in [ *values ] """
+    inputs: list
+
 
 class Query( base.BaseModel ):
     params: Union[ 
@@ -15,15 +31,24 @@ class Query( base.BaseModel ):
     collect: Union[ str, list[str], tuple[str] ] = Field( default_factory=lambda: [] )
 
     def __init__(self, params=None, collect=None, **otherParams ):
-        params  = [] if params is None else params
-        params  = list( params.items() ) if isinstance( params, dict ) else params
-        params  = [ params ] if isinstance( params, tuple ) else params
-        params += list( otherParams.items() ) 
-        super().__init__( params=params, collect=collect or [] )
+        params = self._params_to_list( params, otherParams )
+        super().__init__( params=params , collect=collect or [] )
     
+    @staticmethod
+    def _params_to_list( params, otherParams ):
+        params = [] if params is None else params
+        params = list( params.items() ) if isinstance( params, dict ) else params
+        params = [ params ] if isinstance( params, tuple ) else params
+        params = [ params ] if not isinstance( params, list ) else params
+        return params + list( otherParams.items() ) 
+
+    @field_validator( 'params', mode='before' )
+    def _params_before(cls, params):
+        return cls._extract( params )
+
     @field_validator( 'params', mode='after' )
     def _params_after(cls, params):
-        return [( k, p if isinstance(p, dict) else p.toDict() ) for k, p in params ]
+        return cls._load( params )
 
     @field_validator( 'collect', mode='after' )
     def _collect_after(cls, collect):
@@ -31,53 +56,32 @@ class Query( base.BaseModel ):
             collect = [ collect ]
         return collect
 
+    @staticmethod
+    def _load( params ):
+        return [( k, p if isinstance(p, dict) else p.toDict() ) for k, p in params ]
+
+    @staticmethod
+    def _extract( params ):
+        return [( k, ser_des.fromDict( p ) if isinstance(p, dict) else p) for k, p in params ]
+
     def _extractParams(self):
-        return [( k, ser_des.fromDict( p )) for k, p in self.params ]
+        return self._extract( self.params )
 
     def runAll( self, records: list[ dict ] ):
-        return self.all( records, self._extractParams() )
+        results = self.all( records, self._extractParams() )
+        return self.collectResults( results )
 
     def runAny( self, records: list[ dict ] ):
-        return self.any( records, self._extractParams() )
+        results = self.any( records, self._extractParams() )
+        return self.collectResults( results )
 
     def all( self, records: list[ dict ], params ):
         """ records must meet all param criteria """
-        results = []
-        for record in records:
-            match = True
-            for key, condition in params:
-                if not self.runCondition( record, key, condition ):
-                    match = False
-                    break
-            if match:
-                results.append(record)
-
-        return self.collectResults( results )
+        raise NotImplementedError
 
     def any( self, records: list[ dict ], params ):
         """ records must meet any param criteria """
-        results = []
-        for record in records:
-            match = False
-            for key, condition in params:
-                if self.runCondition( record, key, condition ):
-                    match = True
-                    break
-            if match:
-                results.append(record)
-
-        return self.collectResults( results )
-
-    @classmethod
-    def runCondition( cls, record, key, condition ):
-        val = cls.getVal( record, key, condition )
-        return condition( val )
-
-    @staticmethod
-    def getVal( record, key, condition=None ):
         raise NotImplementedError
 
     def collectResults( self, results ):
-        if self.collect:
-            results = [{ c: self.getVal(r, c) for c in self.collect } for r in results ]
         return results
