@@ -67,13 +67,20 @@ class Query( base.BaseModel ):
     def _extractParams(self):
         return self._extract( self.params )
 
-    def runAll( self, records: list[ dict ] ):
-        results = self.all( records, self._extractParams() )
-        return self.collectResults( results )
+    def runAll( self, records: list[ Any ] ):
+        records = self.extractRecords( records )
+        indices = self.all( records, self._extractParams() )
+        return self.collectResults( records, indices, self.collect )
 
-    def runAny( self, records: list[ dict ] ):
-        results = self.any( records, self._extractParams() )
-        return self.collectResults( results )
+    def runAny( self, records: list[ Any ] ):
+        records = self.extractRecords( records )
+        indices = self.any( records, self._extractParams() )
+        return self.collectResults( records, indices, self.collect )
+
+    @classmethod
+    def extractRecords( cls, records: list[ Any ]):
+        """ optional extraction step, say to convert to a list of dicts """
+        return records
 
     def all( self, records: list[ dict ], params ):
         """ records must meet all param criteria """
@@ -83,5 +90,6 @@ class Query( base.BaseModel ):
         """ records must meet any param criteria """
         raise NotImplementedError
 
-    def collectResults( self, results ):
-        return results
+    @classmethod
+    def collectResults( cls, records, indices, collect ):
+        return [ records[i] for i in indices ]

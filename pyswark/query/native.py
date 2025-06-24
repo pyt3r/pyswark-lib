@@ -19,42 +19,44 @@ class Query( interface.Query ):
     
     def all( self, records: list[ dict ], params ):
         """ records must meet all param criteria """
-        results = []
-        for record in records:
+        indices = []
+        for i, record in enumerate(records):
             match = True
             for key, condition in params:
                 if not self.runCondition( key, condition, record, records ):
                     match = False
                     break
             if match:
-                results.append(record)
+                indices.append(i)
 
-        return results
+        return indices
 
     def any( self, records: list[ dict ], params ):
         """ records must meet any param criteria """
-        results = []
-        for record in records:
+        indices = []
+        for i, record in enumerate(records):
             match = False
             for key, condition in params:
                 if self.runCondition( key, condition, record, records ):
                     match = True
                     break
             if match:
-                results.append(record)
+                indices.append(i)
 
-        return results
+        return indices
     
     @classmethod
-    def runCondition( cls, key, condition, record, records=None ):
-        val = cls.getVal( record, key, condition )
+    def runCondition( cls, key, condition, record, records ):
+        val = cls.getVal( record, key )
         return condition( val, records )
 
     @staticmethod
-    def getVal( record, key, condition=None ):
+    def getVal( record, key ):
         return record.get( key )
 
-    def collectResults( self, results ):
-        if self.collect:
-            results = [{ c: self.getVal(r, c) for c in self.collect } for r in results ]
+    @classmethod
+    def collectResults( cls, records, indices, collect ):
+        results = super().collectResults( records, indices, collect )
+        if collect:
+            results = [{ c: cls.getVal(r, c) for c in collect } for r in results ]
         return results

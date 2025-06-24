@@ -1,4 +1,5 @@
-from pyswark.query import interface, native
+import pandas
+from pyswark.query import interface, native, dataframe
 
 
 class _Param:
@@ -7,7 +8,7 @@ class _Param:
         kwargs = self._getKwargs()
         klass  = self._getKlass( records )
         param  = klass( **kwargs )
-        return param( value, records )
+        return param( value )
 
     def _getKwargs( self ):
         return { 'inputs' : self.inputs }
@@ -19,7 +20,8 @@ class Equals( _Param, interface.Equals ):
     def _getKlass( records ):
         if isinstance( records, list ):
             return native.Equals
-
+        if isinstance( records, pandas.DataFrame ):
+            return dataframe.Equals
 
 class OneOf( _Param, interface.OneOf ):
 
@@ -27,6 +29,8 @@ class OneOf( _Param, interface.OneOf ):
     def _getKlass( records ):
         if isinstance( records, list ):
             return native.OneOf
+        if isinstance( records, pandas.DataFrame ):
+            return dataframe.OneOf
 
 
 class _Query:
@@ -45,7 +49,10 @@ class _Query:
     def _getKlass( records ):
         if isinstance( records, list ):
             return native.Query
-        
+        if isinstance( records, pandas.DataFrame ):
+            return dataframe.Query
+
+
     @staticmethod
     def _call( query, records ):
         return query.runAll( records )

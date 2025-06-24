@@ -1,11 +1,11 @@
 import unittest
-from pyswark.query.native import OneOf, Equals
-from pyswark.query.model import QueryAll, QueryAny
+import pandas
+
+from pyswark.query.model import QueryAll, QueryAny, OneOf, Equals
 from pyswark.lib.pydantic import ser_des
 
 
-class NativeTestCase( unittest.TestCase ):
-
+class Mixin:
     def setUp(self):
         self.records = [
             {'name': 'Aaron Judge', 'team': 'yankees', 'position': 'OF'},
@@ -13,6 +13,11 @@ class NativeTestCase( unittest.TestCase ):
             {'name': 'Mookie Betts', 'team': 'dodgers', 'position': 'OF'},
             {'name': 'Francisco Lindor', 'team': 'mets', 'position': 'SS'},
         ]
+
+class NativeTestCase( Mixin, unittest.TestCase ):
+
+    def setUp(self):
+        super().setUp()
 
     def test_query_all_using_params(self):
         records = self.records
@@ -53,3 +58,20 @@ class NativeTestCase( unittest.TestCase ):
         ser = query.toJson()
         des = ser_des.fromJson( ser )
         self.assertEqual( query, des )
+
+
+class DataFrameTestCase( Mixin, unittest.TestCase ):
+
+    def setUp(self):
+        super().setUp()
+        self.records = pandas.DataFrame( self.records )
+
+    def test_query_all_using_kw(self):
+        records = self.records
+        query   = QueryAll( team=OneOf(['mets', 'yankees']), collect='name' )
+        results = query( records )
+        pandas.testing.assert_frame_equal( results, 
+            pandas.DataFrame({
+                'name': ['Aaron Judge', 'Pete Alonso', 'Francisco Lindor']
+            }, index=[0,1,3])
+        )
