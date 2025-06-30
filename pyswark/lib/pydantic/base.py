@@ -35,4 +35,4 @@ class BaseModel( ExtraForbidden ):
 
     @classmethod
     def getUri(cls):
-        return f"{ cls.__module__}.{ cls.__name__}"
+        return f"{ cls.__module__}.{ cls.__qualname__}"
