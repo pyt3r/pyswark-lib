@@ -17,39 +17,44 @@ class Step( base.BaseModel ):
         return pydoc.locate( self.model )
 
     def run( self, state ):
-        model = self.extractModel( state )
+        """ runs the step """
+        stateInput  = self.extractStateInputFromState( state )
+        modelInput  = self.extractModelInputFromStateInput( stateInput )
+        model       = self.extractModelFromModelInput( modelInput )
         modelOutput = model.run()
-        outputData = self.extractOutputData( modelOutput )
-        self.loadOutputData( state, outputData )
-        return outputData
+        stateOutput = self.extractStateOutputFromModelOutput( modelOutput )
+        self.loadStateOutputToState( state, stateOutput )
+        return stateOutput
 
-    def extractModel( self, state ):
+    def extractModelFromModelInput( self, inputData ):
         Model = self._getModelClass()
-        inputData = self.extractInputData( state )
         return Model( **inputData )
 
-    def getExternalInputNames( self ):
+    def getStateInputNames( self ):
         return list( self.inputs.keys() )
         
-    def getInternalInputNames( self ):
+    def getModelInputNames( self ):
         return list( self.inputs.values() )
 
-    def getInternalOutputNames( self ):
+    def getModelOutputNames( self ):
         return list( self.outputs.keys() )
 
-    def getExternalOutputNames( self ):
+    def getStateOutputNames( self ):
         return list( self.outputs.values() )
 
-    def extractInputData( self, state ):
+    def extractStateInputFromState( self, state ):
         """ extracts inputs from state """
-        inputData = state.extract( self.getExternalInputNames() )
-        return dict( zip( self.getInternalInputNames(), inputData ))
+        return state.extract( self.getStateInputNames() )
+
+    def extractModelInputFromStateInput( self, stateInput ):
+        """ extracts inputs from state """
+        return dict( zip( self.getModelInputNames(), stateInput ))
         
-    def loadOutputData( self, state, outputData ):
+    def loadStateOutputToState( self, state, outputData ):
         """ loads output to state """
         state.load( outputData )
 
-    def extractOutputData( self, modelOutput ):
+    def extractStateOutputFromModelOutput( self, modelOutput ):
         """ extracts outputs from model """
-        internalToExternal = zip( self.getInternalOutputNames(), self.getExternalOutputNames() )
+        internalToExternal = zip( self.getModelOutputNames(), self.getStateOutputNames() )
         return { e: modelOutput[i] for i, e in internalToExternal }
