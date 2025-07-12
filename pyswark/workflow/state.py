@@ -1,37 +1,81 @@
+#%%
 from typing import Union, Any
+from pydantic import BaseModel
 from pyswark.lib.pydantic import base
 
+from pyswark.gluedb import api
+from pyswark.core.models.infer import Infer
 
-class State( dict ):
 
-    def __init__( self, *a, mutable=False, **kw ):
-        super().__init__( *a, **kw )
-        self.mutable = mutable
+class Interface:
 
-    def extract( self, names: Union[ str, list[ str ]] ):
-        """
-        Extracts the values from the state for the given names.
-        If a single name is provided, the value is returned.
-        If a list of names is provided, a list of values is returned.
-        """
-        isList = isinstance( names, list )
-        names = names if isList else [ names ]
-        extracted = self._extract( names )
-        return extracted if isList else extracted.pop()
+    def __init__( self, mutable=False ):
+        self.mutable = mutable or False
+        
+    def extract(self, name: str ):
+        """ extracts the data from the state """
+
+    def post( self, name: str, data: Any ):
+        """ posts the data into the state """
+
+    def delete( self, name: str ):
+        """ deletes the data from the state """
+
+    def __contains__( self, *a, **kw ):
+        """ checks if the state contains the data """
+        return super().__contains__( *a, **kw )
+
+
+class State( Interface, dict ):
+
+    def __init__( self, *a, **kw ):
+        Interface.__init__( self, kw.pop( 'mutable', False ))
+        dict.__init__( self, *a, **kw )
+
+    def extract( self, name: str ):
+        return self[ name ]
     
-    def _extract( self, names: list[ str ] ):
-        return [ self[name] for name in names ]
-
-    def load( self, data: dict[ str, Any ] ):
+    def post( self, name: str, data: Any ):
         """
-        Loads the data into the state.
+        posts the data into the state.
         If the state is immutable, the data is validated to ensure that it does not contain any keys that are already in the state.
         """
-        self._validateDataForLoad( data )
-        super().update( **data )
-
-    def _validateDataForLoad( self, data: dict[ str, Any ] ):
         if not self.mutable:
-            err = sorted( set( data.keys() ) & set( super().keys() ) )
-            if err:
-                raise ValueError( f"Cannot mutate keys: {err}" )
+            if name in self:
+                raise ValueError( f"Cannot mutate key: {name}" )
+
+        self[ name ] = data
+
+    def delete( self, name: str ):
+        """ deletes the data from the state """
+        del self[ name ]
+
+
+class StateWithGlueDb( Interface ):
+
+    def __init__( self, *args: tuple[dict], **kw ):
+        Interface.__init__( self, kw.pop( 'mutable', False ) )
+        dicts = args + ( kw, )
+        self.db = api.newDb()        
+        [ self.post( k, v ) for d in dicts for k, v in d.items() ]
+                
+    def extract( self, name: str ):
+        return self.db.extract( name )
+    
+    def post( self, name: str, data: Any ):
+
+        if not isinstance( data, BaseModel ):
+            data = Infer( data )
+
+        if name in self and self.mutable:
+            self.db.put( name, data )
+        else:
+            self.db.post( name, data )
+
+    def delete( self, name: str ):
+        """ deletes the data from the state """
+        self.db.delete( name )
+
+    def __contains__( self, name: str ):
+        """ checks if the state contains the data """
+        return name in self.db

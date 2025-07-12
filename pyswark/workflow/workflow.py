@@ -31,11 +31,11 @@ class Workflow( base.BaseModel ):
     
     steps : list[ Step ]
 
-    inputs  : Extracts = Field( default_factory=Extracts )
-    outputs : Extracts = Field( default_factory=Extracts )
+    modelInputs  : Extracts = Field( default_factory=Extracts )
+    modelOutputs : Extracts = Field( default_factory=Extracts )
 
-    useExtract      : bool = True
-    populateExtract : bool = True
+    useExtracts      : bool = True
+    populateExtracts : bool = True
 
     stepsSkipped : list[ int ] = Field( default_factory=list )
     stepsRan     : list[ int ] = Field( default_factory=list )
@@ -53,7 +53,7 @@ class Workflow( base.BaseModel ):
             raise ValueError( f"Invalid step: {step}" )
         return step
 
-    @field_validator( 'inputs','outputs', mode='before' )
+    @field_validator( 'modelInputs', 'modelOutputs', mode='before' )
     def _extracts_before( cls, extracts: Extracts ):
 
         if isinstance( extracts, dict ):
@@ -92,35 +92,39 @@ class Workflow( base.BaseModel ):
             self.stepsRan.append( i )
             logger.info( f"done." )
 
-        self._extractOutput( i, modelOutput )
+        self._addOutputExtract( i, modelOutput )
 
         stateOutput = step.extractStateOutputFromModelOutput( modelOutput )
-        step.loadStateOutputToState( state, stateOutput )
+        step.postStateOutputToState( state, stateOutput )
         return state, stateOutput
 
     def _skipModel( self, i: int, modelInput ):
         skip        = False
         modelOutput = None
 
-        if all(( self.useExtract, i in self.inputs, i in self.outputs )):
-            if self.inputs.equal( i, modelInput ):
-                skip        = True
-                modelOutput = self.outputs.get( i )
+        skippable = all(( self.useExtracts, i in self.modelInputs, i in self.modelOutputs ))
+        
+        if skippable and self.modelInputs.equal( i, modelInput ):
+            skip        = True
+            modelOutput = self.modelOutputs.get( i )
 
-        if self.populateExtract:
-            self.inputs.add( i, modelInput )
+        self._addInputExtract( i, modelInput )
 
         return skip, modelOutput
 
-    def _extractOutput( self, i: int, modelOutput ):
-        if self.populateExtract:
-            self.outputs.add( i, modelOutput )
+    def _addInputExtract( self, i: int, modelInput ):
+        if self.populateExtracts:
+            self.modelInputs.add( i, modelInput )
+
+    def _addOutputExtract( self, i: int, modelOutput ):
+        if self.populateExtracts:
+            self.modelOutputs.add( i, modelOutput )
 
     def getModelInput( self, i: int ):
-        return self.inputs.get( i )
+        return self.modelInputs.get( i )
 
     def getModelOutput( self, i: int ):
-        return self.outputs.get( i )
+        return self.modelOutputs.get( i )
 
     def getModel( self, i: int ):
         step = self.steps[i]

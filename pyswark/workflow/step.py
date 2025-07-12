@@ -2,6 +2,9 @@ from typing import Any, Dict, Optional, Union
 from pydantic import field_validator
 import pydoc
 from pyswark.lib.pydantic import base
+from pyswark.core.models.infer import Infer
+
+from pyswark.workflow.state import State
 
 
 class Step( base.BaseModel ):
@@ -23,7 +26,7 @@ class Step( base.BaseModel ):
         model       = self.extractModelFromModelInput( modelInput )
         modelOutput = model.run()
         stateOutput = self.extractStateOutputFromModelOutput( modelOutput )
-        self.loadStateOutputToState( state, stateOutput )
+        self.postStateOutputToState( state, stateOutput )
         return stateOutput
 
     def extractModelFromModelInput( self, inputData ):
@@ -44,15 +47,16 @@ class Step( base.BaseModel ):
 
     def extractStateInputFromState( self, state ):
         """ extracts inputs from state """
-        return state.extract( self.getStateInputNames() )
+        return [ state.extract( name ) for name in self.getStateInputNames() ]
 
     def extractModelInputFromStateInput( self, stateInput ):
         """ extracts inputs from state """
         return dict( zip( self.getModelInputNames(), stateInput ))
         
-    def loadStateOutputToState( self, state, outputData ):
+    def postStateOutputToState( self, state, outputData ):
         """ loads output to state """
-        state.load( outputData )
+        for name, contents in outputData.items():
+            state.post( name, contents )
 
     def extractStateOutputFromModelOutput( self, modelOutput ):
         """ extracts outputs from model """

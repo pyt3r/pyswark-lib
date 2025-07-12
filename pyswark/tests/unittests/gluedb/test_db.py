@@ -102,6 +102,14 @@ class TestCRUD( unittest.TestCase ):
         self.assertDictEqual( c_orig, c_copy1 )
         self.assertDictEqual( c_copy1, c_copy2 )
 
+    def test_POST_duplicate_names_in_a_db(self):
+
+        db = api.newDb()
+        db.post( 'a', infer.Infer('1') )
+
+        with self.assertRaises( Exception ):
+            db.post( 'a', infer.Infer('2') )
+        
     def test_PUT_content_in_a_db(self):
         db = api.connect(f'{ Settings.DB.uri }.DB_2')
 

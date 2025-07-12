@@ -3,7 +3,7 @@ import unittest
 from pyswark.lib.pydantic import base, ser_des
 from pyswark.workflow.workflow import Workflow
 from pyswark.workflow.step import Step
-from pyswark.workflow.state import State
+from pyswark.workflow.state import State, StateWithGlueDb
 
 
 class ExampleModel( base.BaseModel ):
@@ -31,7 +31,8 @@ class OneMoreExampleModel( base.BaseModel ):
         return { 'e' : result }
 
 
-class TestStep( unittest.TestCase ):
+class TestStepMixin:
+    STATE_CLASS = None # State or StateWithGlueDb
 
     def setUp( self ):
         self.stateData = { 'external.a': 1, 'external.b': 2 }
@@ -48,7 +49,7 @@ class TestStep( unittest.TestCase ):
         )
 
     def test_running_a_step( self ):
-        state  = State( self.stateData )
+        state  = self.STATE_CLASS( self.stateData )
         step0  = self.step0
         result = step0.run( state )
 
@@ -60,11 +61,21 @@ class TestStep( unittest.TestCase ):
         ser = step0.toJson()
         des = ser_des.fromJson( ser )
         self.assertEqual( des, step0 )
-        
 
-class TestStepImmutability( unittest.TestCase ):
+
+class TestStepUsingState( TestStepMixin, unittest.TestCase ):
+    STATE_CLASS = State
+
+class TestStepUsingStateWithGlueDb( TestStepMixin, unittest.TestCase ):
+    STATE_CLASS = StateWithGlueDb
+
+
+class TestStepImmutabilityMixin:
+    STATE_CLASS = None # State or StateWithGlueDb
 
     def setUp( self ):
+        self.stateData = { 'external.a': 1, 'external.b': 2 }
+
         self.step0 = Step( 
             model = ExampleModel, 
             inputs = {
@@ -75,10 +86,9 @@ class TestStepImmutability( unittest.TestCase ):
                 'c' : 'external.a'
             },
         )
-        self.stateData = { 'external.a': 1, 'external.b': 2 }
 
     def test_running_a_step_with_mutable_state( self ):
-        state  = State( self.stateData, mutable=True )
+        state  = self.STATE_CLASS( self.stateData, mutable=True )
         step0  = self.step0
         result = step0.run( state )
 
@@ -87,16 +97,29 @@ class TestStepImmutability( unittest.TestCase ):
 
     def test_running_a_step_with_immutable_state( self ):
         step0 = self.step0
-        state = state = State( self.stateData, mutable=False )
+        state = self.STATE_CLASS( self.stateData, mutable=False )
+        return self._test_running_a_step_with_immutable_state( step0, state )
 
+class TestStepImmutabilityUsingState( TestStepImmutabilityMixin, unittest.TestCase ):
+    STATE_CLASS = State
+
+    def _test_running_a_step_with_immutable_state( self, step0, state ):
         with self.assertRaises( ValueError ):
             step0.run( state )
 
+class TestStepImmutabilityUsingStateWithGlueDb( TestStepImmutabilityMixin, unittest.TestCase ):
+    STATE_CLASS = StateWithGlueDb
 
-class TestWorkflow( unittest.TestCase ):
+    def _test_running_a_step_with_immutable_state( self, step0, state):
+        with self.assertRaises( Exception ):
+            step0.run( state )
+
+
+class TestWorkflowMixin:
+    STATE_CLASS = None # State or StateWithGlueDb
 
     def setUp( self ):
-        self.state = State({ 'external.a': 1, 'external.b': 2 })
+        self.state = self.STATE_CLASS({ 'external.a': 1, 'external.b': 2 })
 
         step0 = Step( 
             model = ExampleModel, 
@@ -172,11 +195,18 @@ class TestWorkflow( unittest.TestCase ):
         des = ser_des.fromJson( ser )
         self.assertEqual( des, workflow )
         
+class TestWorkflowUsingState( TestWorkflowMixin, unittest.TestCase ):
+    STATE_CLASS = State
 
-class TestWorkflowWithExtracts( unittest.TestCase ):
+class TestWorkflowUsingStateWithGlueDb( TestWorkflowMixin, unittest.TestCase ):
+    STATE_CLASS = StateWithGlueDb
+
+
+class TestWorkflowWithExtractsMixin:
+    STATE_CLASS = None # State or StateWithGlueDb
 
     def setUp( self ):
-        self.state = State({ 'external.a': 1, 'external.b': 2 })
+        self.state = self.STATE_CLASS({ 'external.a': 1, 'external.b': 2 })
 
         step0 = Step( 
             model = ExampleModel, 
@@ -190,16 +220,18 @@ class TestWorkflowWithExtracts( unittest.TestCase ):
         )
         self.workflow = Workflow(
             steps=[step0],
-            inputs={
+            modelInputs={
                 # 0: {'a': 1, 'b': 2},  # do not skip
                 1: {'b': 2, 'c': 3},
                 2: {'a': 1, 'd': 5},
             },
-            outputs={
+            modelOutputs={
                 0: {'c': 3}, 
                 1: {'d': 5}, 
                 # 2: {'e': 6}, # do not skip
             },
+            useExtracts=True,
+            populateExtracts=True,
         )
 
         self.step1 = Step( 
@@ -235,3 +267,10 @@ class TestWorkflowWithExtracts( unittest.TestCase ):
 
         self.assertEqual( workflow.getModelOutput(1), {'d': 5} )
         self.assertEqual( workflow.getModelOutput(2), {'e': 6} )
+
+
+class TestWorkflowWithExtractsUsingState( TestWorkflowWithExtractsMixin, unittest.TestCase ):
+    STATE_CLASS = State
+
+class TestWorkflowWithExtractsUsingStateWithGlueDb( TestWorkflowWithExtractsMixin, unittest.TestCase ):
+    STATE_CLASS = StateWithGlueDb
