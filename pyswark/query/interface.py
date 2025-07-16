@@ -15,7 +15,7 @@ class Param( base.BaseModel ):
 
 class Equals( Param ):
     """ value == other """
-    inputs: Union[ str, int, float ]
+    inputs: Union[ bool, str, int, float ]
 
 
 class OneOf( Param ):

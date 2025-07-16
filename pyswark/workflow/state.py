@@ -1,17 +1,18 @@
-#%%
 from typing import Union, Any
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from pyswark.lib.pydantic import base
 
-from pyswark.gluedb import api
+from pyswark.gluedb import api, db
 from pyswark.core.models.infer import Infer
 
 
-class Interface:
+class Interface( base.BaseModel ):
+    backend : dict = Field( default_factory=dict )
+    mutable : bool = False
+    
+    def __init__( self, backend=None, **kw ):
+        super().__init__( backend=backend or {}, **kw )
 
-    def __init__( self, mutable=False ):
-        self.mutable = mutable or False
-        
     def extract(self, name: str ):
         """ extracts the data from the state """
 
@@ -26,14 +27,10 @@ class Interface:
         return super().__contains__( *a, **kw )
 
 
-class State( Interface, dict ):
-
-    def __init__( self, *a, **kw ):
-        Interface.__init__( self, kw.pop( 'mutable', False ))
-        dict.__init__( self, *a, **kw )
+class State( Interface ):
 
     def extract( self, name: str ):
-        return self[ name ]
+        return self.backend[ name ]
     
     def post( self, name: str, data: Any ):
         """
@@ -41,26 +38,28 @@ class State( Interface, dict ):
         If the state is immutable, the data is validated to ensure that it does not contain any keys that are already in the state.
         """
         if not self.mutable:
-            if name in self:
+            if name in self.backend:
                 raise ValueError( f"Cannot mutate key: {name}" )
 
-        self[ name ] = data
+        self.backend[ name ] = data
 
     def delete( self, name: str ):
         """ deletes the data from the state """
-        del self[ name ]
+        del self.backend[ name ]
 
 
 class StateWithGlueDb( Interface ):
+    backend : db.GlueDb = Field( default_factory=dict )
 
-    def __init__( self, *args: tuple[dict], **kw ):
-        Interface.__init__( self, kw.pop( 'mutable', False ) )
-        dicts = args + ( kw, )
-        self.db = api.newDb()        
-        [ self.post( k, v ) for d in dicts for k, v in d.items() ]
-                
+    def __init__( self, backend=None, **kw ):
+        backend = backend or {}
+        isDict  = isinstance( backend, dict )
+        super().__init__( backend=api.newDb() if isDict else backend, **kw )
+        if isDict:
+            [ self.post( k, v ) for k, v in backend.items() ]
+
     def extract( self, name: str ):
-        return self.db.extract( name )
+        return self.backend.extract( name )
     
     def post( self, name: str, data: Any ):
 
@@ -68,14 +67,14 @@ class StateWithGlueDb( Interface ):
             data = Infer( data )
 
         if name in self and self.mutable:
-            self.db.put( name, data )
+            self.backend.put( name, data )
         else:
-            self.db.post( name, data )
+            self.backend.post( name, data )
 
     def delete( self, name: str ):
         """ deletes the data from the state """
-        self.db.delete( name )
+        self.backend.delete( name )
 
     def __contains__( self, name: str ):
         """ checks if the state contains the data """
-        return name in self.db
+        return name in self.backend

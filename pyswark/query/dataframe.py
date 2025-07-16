@@ -29,7 +29,7 @@ class Query( interface.Query ):
 
     def any( self, records: pandas.DataFrame, params ):
         """ records must meet any param criteria """
-        indices = pandas.Series( numpy.ones( len(records), dtype=bool ))
+        indices = pandas.Series( numpy.zeros( len(records), dtype=bool ))
         for key, condition in params:
             indices |= condition( records[ key ], records )
         return indices

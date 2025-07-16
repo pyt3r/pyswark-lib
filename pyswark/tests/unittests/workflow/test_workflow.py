@@ -49,7 +49,7 @@ class TestStepMixin:
         )
 
     def test_running_a_step( self ):
-        state  = self.STATE_CLASS( self.stateData )
+        state  = self.STATE_CLASS( backend=self.stateData )
         step0  = self.step0
         result = step0.run( state )
 

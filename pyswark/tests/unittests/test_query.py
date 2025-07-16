@@ -14,44 +14,30 @@ class Mixin:
             {'name': 'Francisco Lindor', 'team': 'mets', 'position': 'SS'},
         ]
 
-class NativeTestCase( Mixin, unittest.TestCase ):
-
-    def setUp(self):
-        super().setUp()
-
     def test_query_all_using_params(self):
         records = self.records
         query   = QueryAll(params={'team' : OneOf(['mets', 'yankees']) })
-        results = query( records )
-        results = [ r['name'] for r in results ]
-        self.assertListEqual( results, ['Aaron Judge', 'Pete Alonso', 'Francisco Lindor'] )
+        return query( records )
     
     def test_query_any_using_kw(self):
         records = self.records
         query   = QueryAny( params=[ ('team', Equals('mets')), ('team', Equals('yankees')) ])
-        results = query( records )
-        results = [ r['name'] for r in results ]
-        self.assertListEqual( results, ['Aaron Judge', 'Pete Alonso', 'Francisco Lindor'] )
+        return query( records )
 
     def test_query_all_using_kw(self):
         records = self.records
         query   = QueryAll( team=OneOf(['mets', 'yankees']) )
-        results = query( records )
-        results = [ r['name'] for r in results ]
-        self.assertListEqual( results, ['Aaron Judge', 'Pete Alonso', 'Francisco Lindor'] )
+        return query( records )
 
     def test_query_all_using_params_and_kw(self):
         records = self.records
         query   = QueryAll( params={'team' : OneOf(['mets', 'yankees'])}, position=Equals('OF'))
-        results = query( records )
-        results = [ r['name'] for r in results ]
-        self.assertListEqual( results, ['Aaron Judge'] )
-        
+        return query( records )
+
     def test_collect(self):
         records = self.records
         query   = QueryAll( team=OneOf(['mets', 'yankees']), position=Equals('OF'), collect='name' )
-        results = query( records )
-        self.assertListEqual( results, [{'name': 'Aaron Judge'}] )
+        return query( records )
 
     def test_ser_des(self):
         query = QueryAll( team=OneOf(['mets', 'yankees']), position=Equals('OF'), collect=['name', 'position'] ) 
@@ -60,18 +46,39 @@ class NativeTestCase( Mixin, unittest.TestCase ):
         self.assertEqual( query, des )
 
 
+class NativeTestCase( Mixin, unittest.TestCase ):
+
+    def setUp(self):
+        super().setUp()
+
+    def test_query_all_using_params(self):
+        results = super().test_query_all_using_params()
+        results = [ r['name'] for r in results ]
+        self.assertListEqual( results, ['Aaron Judge', 'Pete Alonso', 'Francisco Lindor'] )
+    
+    def test_query_any_using_kw(self):
+        results = super().test_query_any_using_kw()
+        results = [ r['name'] for r in results ]
+        self.assertListEqual( results, ['Aaron Judge', 'Pete Alonso', 'Francisco Lindor'] )
+
+    def test_query_all_using_kw(self):
+        results = super().test_query_all_using_kw()
+        results = [ r['name'] for r in results ]
+        self.assertListEqual( results, ['Aaron Judge', 'Pete Alonso', 'Francisco Lindor'] )
+
+    def test_query_all_using_params_and_kw(self):
+        results = super().test_query_all_using_params_and_kw()
+        results = [ r['name'] for r in results ]
+        self.assertListEqual( results, ['Aaron Judge'] )
+        
+    def test_collect(self):
+        results = super().test_collect()
+        self.assertListEqual( results, [{'name': 'Aaron Judge'}] )
+
+
+
 class DataFrameTestCase( Mixin, unittest.TestCase ):
 
     def setUp(self):
         super().setUp()
         self.records = pandas.DataFrame( self.records )
-
-    def test_query_all_using_kw(self):
-        records = self.records
-        query   = QueryAll( team=OneOf(['mets', 'yankees']), collect='name' )
-        results = query( records )
-        pandas.testing.assert_frame_equal( results, 
-            pandas.DataFrame({
-                'name': ['Aaron Judge', 'Pete Alonso', 'Francisco Lindor']
-            }, index=[0,1,3])
-        )
