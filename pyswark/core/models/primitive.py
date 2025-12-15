@@ -1,15 +1,28 @@
-from typing import Any, Union
+from typing import Any
 from pyswark.core.models import extractor
 
 
-class Base( extractor.Extractor ):
+class Interface( extractor.Extractor ):
     inputs : Any
 
     def __init__( self, inputs ):
         return super().__init__( inputs=inputs )
 
     def extract(self):
+        raise NotImplementedError
+
+    def asCollection( self ):
+        raise NotImplementedError
+
+
+class Base( Interface ):
+
+    def extract(self):
         return self.inputs
+
+    def asCollection( self ):
+        from pyswark.core.models import collection
+        return collection.Infer([ self ])
 
 
 class Int( Base ):
