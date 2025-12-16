@@ -65,7 +65,7 @@ class TestListAsDict(unittest.TestCase):
         model = collection.List([{1: 2}, {3: 4}])
         result = model.asDict()
         self.assertIsInstance(result, collection.Dict)
-        self.assertDictEqual(result.extract(), {1: 2, 3: 4})
+        self.assertDictEqual(result.extract(), {0: {1: 2}, 1: {3: 4}})
 
     def test_with_dicts_and_tuples(self):
         """Test asDict() with a list containing both dicts and tuples"""
@@ -94,6 +94,20 @@ class TestListAsDict(unittest.TestCase):
         with self.assertRaises(ValueError) as context:
             model.asDict()
         self.assertIn("must be unique", str(context.exception))
+
+    def test_with_list_of_records(self):
+        """Test asDict() with a list of record-like dicts - should enumerate them"""
+        records = [
+            {"name": "A", "data": 1},
+            {"name": "B", "data": 2},
+        ]
+        model = collection.List(records)
+        result = model.asDict()
+        self.assertIsInstance(result, collection.Dict)
+        self.assertDictEqual(result.extract(), {
+            0: {"name": "A", "data": 1},
+            1: {"name": "B", "data": 2},
+        })
 
 
 class TestDict(unittest.TestCase):

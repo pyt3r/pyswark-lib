@@ -61,11 +61,22 @@ class List( Base ):
 
     def asDict(self):
         extracted = self.extract()
-        
-        def isDictCompatible(item):
-            return isinstance(item, dict) or (isinstance(item, (tuple, list, set)) and len(item) >= 2)
-        
-        if extracted and not all( isDictCompatible(item) for item in extracted ):
+
+        def isRecords(extracted):
+            return extracted and all( _isRecord(item) for item in extracted )
+
+        def hasPrimitives(extracted):
+            return extracted and any( not _isDictCompatible(item) for item in extracted )
+
+        def _isRecord(item):
+            return isinstance(item, dict)
+
+        def _isDictCompatible(item):
+            return _isRecord(item) or (isinstance(item, (tuple, list, set)) and len(item) >= 2)
+
+
+        if isRecords(extracted) or hasPrimitives(extracted):
+            """ if all items are records, we need to convert them to a list of records """
             extracted = [(i, item) for i, item in enumerate(extracted)]
 
         return Dict( extracted )
@@ -156,5 +167,3 @@ class Infer( primitive.Infer ):
         set   : Set,
         dict  : Dict,
     }
-
-
