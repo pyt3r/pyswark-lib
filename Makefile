@@ -34,7 +34,7 @@ test:
 	open htmlcov/index.html
 
 conda-package:
-	conda build . --output-folder=./
+	conda build . -c conda-forge -c defaults --output-folder=./
 	(conda install ./**/*.tar.bz2) || (conda install ./**/*.conda)
 
 test-package:

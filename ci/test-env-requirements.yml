@@ -1,5 +1,6 @@
 name: test-env
 channels:
+  - conda-forge
   - defaults
 dependencies:
   # build dependencies

@@ -4,10 +4,11 @@ channels:
   - defaults
 dependencies:
   # build dependencies:
-  - python>=3.9
+  - python>=3.9,<3.13
   - pip
+  - setuptools
   - pyyaml
-  - sphinx
+  - sphinx<7
   - sphinx_rtd_theme
   - sphinx-gallery
   - pip:
