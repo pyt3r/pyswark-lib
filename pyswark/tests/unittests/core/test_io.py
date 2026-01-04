@@ -8,6 +8,16 @@ from pyswark.lib.pydantic import base
 from pyswark.core.io import api, datahandler
 
 
+class TestIsUri( unittest.TestCase ):
+    def test_is_uri(self):
+        self.assertTrue( api.isUri( "file://data.csv" ) )
+        self.assertTrue( api.isUri( "http://data.csv" ) )
+        self.assertTrue( api.isUri( "https://data.csv" ) )
+        self.assertTrue( api.isUri( "data.csv" ) )
+        self.assertFalse( api.isUri( 123 ) )
+        self.assertFalse( api.isUri( None ) )
+        self.assertFalse( api.isUri( {} ) )
+
 class TestCaseLocal( unittest.TestCase ):
 
     def setUp(self):
@@ -238,3 +248,32 @@ class TestCustomPyswarkIo( unittest.TestCase ):
     def test_read_from_package(self):
         DF = api.read('pyswark://data/df.csv')
         self.assertIsInstance( DF, pandas.DataFrame )
+
+
+class TestStringDataHandler( unittest.TestCase ):
+
+    def test_read_yaml_string(self):
+        data = '''
+- a
+- b
+- c: 3
+'''
+        result = api.read( data, datahandler=datahandler.DataHandler.STRING )
+        self.assertListEqual( result, ['a', 'b', {'c': 3}] )
+
+    def test_read_json_string(self):
+        data = '[\n  "a",\n  "b",\n  {\n    "c": 3\n  }\n]'
+        result = api.read( data, datahandler=datahandler.DataHandler.STRING )
+        self.assertListEqual( result, ['a', 'b', {'c': 3}] )
+
+    def test_read_yaml_multidoc_string(self):
+        data = '''
+---
+a
+---
+b
+---
+c: 3
+'''
+        result = api.read( data, datahandler=datahandler.DataHandler.STRING )
+        self.assertListEqual( result, ['a', 'b', {'c': 3}] )

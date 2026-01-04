@@ -18,6 +18,7 @@ class DataHandler( AliasEnum ):
     URL         = f'{ _ROOT }.url.Url', Alias("url")
     TEXT        = f'{ _ROOT }.text.Text', Alias("file.text")
     GLUEDB      = f'{ _ROOT }.json.Pjson', Alias("gluedb")
+    STRING      = f'{ _ROOT }.string.String', Alias("string")
 
     @classmethod
     def get( cls, name ):

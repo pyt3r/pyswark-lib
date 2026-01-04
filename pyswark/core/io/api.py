@@ -1,4 +1,5 @@
 from pyswark.core.io.contents import Contents
+from pyswark.core.io import guess
 
 
 def read( uri, datahandler=None, **kw ):
@@ -14,3 +15,12 @@ def write( data, uri, datahandler=None, **kw ):
 def acquire( uri, datahandler=None ):
     contents = Contents( uri=uri, datahandler=datahandler )
     return contents.acquire()
+
+
+def isUri( uri ):
+    """ checks if the uri is a valid uri """
+    try:
+        guess.api( uri )
+        return True
+    except ValueError:
+        return False

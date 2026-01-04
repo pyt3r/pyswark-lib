@@ -18,7 +18,11 @@ class Json(base.AbstractDataHandler):
 
     @Kwargs.decorate('r')
     def _read( self, fp, **kw ):
-        return json.load( fp, **kw )
+        return self.readStatic( fp, **kw )
+
+    @staticmethod
+    def readStatic( data, **kw ):
+        return json.load( data, **kw )
 
     @Kwargs.decorate('w')
     def _write( self, data, fp, **kw ):

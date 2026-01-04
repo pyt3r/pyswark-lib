@@ -1,5 +1,5 @@
 from typing import Optional
-from pydantic import Field
+from pydantic import Field, field_validator
 
 from pyswark.core.models import extractor
 from pyswark.core.io import guess
@@ -10,6 +10,12 @@ class Contents( extractor.Extractor ):
     uri         : str
     datahandler : Optional[ str ] = ""
     kw          : Optional[ dict ] = Field( default_factory=lambda: {} )
+
+    @field_validator( 'datahandler', mode='before' )
+    def _datahandler( cls, datahandler ):
+        if isinstance( datahandler, DataHandler ):
+            return datahandler.name
+        return datahandler
 
     def extract( self ):
         return self.read()
