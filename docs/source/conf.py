@@ -28,7 +28,7 @@ master_doc = 'index'
 # -- Project information -----------------------------------------------------
 author = meta['about']['author']
 project = meta['package']['name']
-copyright = f'2020, {author}'
+copyright = f'2024, {author}'
 release = str(meta['package']['version'])
 
 
