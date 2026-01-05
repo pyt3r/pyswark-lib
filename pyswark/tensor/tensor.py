@@ -1,3 +1,34 @@
+"""
+Tensor Module
+=============
+
+This module provides Pydantic-validated wrappers around numpy arrays.
+Tensors are serializable, type-safe, and integrate with the pyswark
+serialization system.
+
+Classes
+-------
+Vector
+    A 1-dimensional validated array.
+Matrix
+    A 2-dimensional validated array.
+Tensor
+    Base class for n-dimensional arrays.
+
+Example
+-------
+>>> from pyswark.tensor.tensor import Vector, Matrix
+>>>
+>>> v = Vector([1.0, 2.0, 3.0, 4.0, 5.0])
+>>> print(v.shape)  # (5,)
+>>>
+>>> m = Matrix([[1, 2, 3], [4, 5, 6]])
+>>> print(m.shape)  # (2, 3)
+>>>
+>>> # Tensors are serializable
+>>> print(v.model_dump())
+"""
+
 import numpy as np
 from typing import Any, Union, List, TypeVar
 from pydantic import model_validator, field_validator, Field
@@ -7,6 +38,16 @@ from pyswark.core.models import xputs, converter
 NumpyArray = TypeVar( 'numpy.array' )
 
 class Inputs( xputs.BaseInputs ):
+    """
+    Input specification for Tensor creation.
+
+    Parameters
+    ----------
+    data : array-like
+        The array data (list, tuple, or numpy array).
+    dtype : str, optional
+        The numpy dtype (e.g., 'float64', 'int32').
+    """
     data  : Union[ NumpyArray, List ]
     dtype : Any = Field( None )
 
@@ -39,6 +80,24 @@ class Inputs( xputs.BaseInputs ):
 
 
 class Tensor( converter.ConverterModel ):
+    """
+    Base class for validated numpy arrays.
+
+    Wraps numpy arrays with Pydantic validation, enabling serialization
+    and type-safe array operations.
+
+    Parameters
+    ----------
+    inputs : Inputs or array-like
+        The input data specification.
+
+    Attributes
+    ----------
+    tensor : numpy.ndarray
+        The underlying numpy array.
+    shape : tuple
+        The array shape.
+    """
     inputs: Inputs
 
     def __len__(self):
@@ -46,10 +105,12 @@ class Tensor( converter.ConverterModel ):
 
     @property
     def shape(self):
+        """Return the shape of the tensor."""
         return self.tensor.shape
 
     @property
     def tensor(self):
+        """Return the underlying numpy array."""
         return self.outputs
 
     @classmethod
@@ -66,10 +127,22 @@ class Tensor( converter.ConverterModel ):
 
 
 class Vector( Tensor ):
+    """
+    A validated 1-dimensional array.
+
+    Validates that the input data is exactly 1-dimensional.
+
+    Example
+    -------
+    >>> v = Vector([1.0, 2.0, 3.0])
+    >>> print(v.shape)  # (3,)
+    >>> print(v.vector)  # array([1., 2., 3.])
+    """
     inputs: Inputs
 
     @property
     def vector(self):
+        """Return the underlying 1D numpy array."""
         return self.tensor
 
     @staticmethod
@@ -82,10 +155,22 @@ class Vector( Tensor ):
 
 
 class Matrix( Tensor ):
+    """
+    A validated 2-dimensional array.
+
+    Validates that the input data is exactly 2-dimensional.
+
+    Example
+    -------
+    >>> m = Matrix([[1, 2, 3], [4, 5, 6]])
+    >>> print(m.shape)  # (2, 3)
+    >>> print(m.matrix)
+    """
     inputs: Inputs
 
     @property
     def matrix(self):
+        """Return the underlying 2D numpy array."""
         return self.tensor
 
     @staticmethod

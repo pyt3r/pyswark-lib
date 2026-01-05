@@ -1,29 +1,98 @@
+"""
+Query Interface
+===============
+
+This module provides SQL-like query interfaces for filtering and
+selecting records from data collections.
+
+Classes
+-------
+Query
+    Base query class with parameter filtering.
+Param
+    Base parameter class for query conditions.
+Equals
+    Parameter for equality comparisons.
+OneOf
+    Parameter for "in list" comparisons.
+
+Example
+-------
+>>> from pyswark.query.interface import Query, Equals, OneOf
+>>>
+>>> query = Query(
+...     params=[
+...         ('status', Equals('active')),
+...         ('category', OneOf(['A', 'B']))
+...     ],
+...     collect=['name', 'value']
+... )
+"""
+
 from typing import Union, Any
 from pydantic import field_validator, Field
 from pyswark.lib.pydantic import base, ser_des
 
 
 class Param( base.BaseModel ):
+    """
+    Base class for query parameters.
+
+    Parameters
+    ----------
+    inputs : Any
+        The parameter value(s) for comparison.
+    """
     inputs: Any
 
     def __init__(self, inputs):
         super().__init__(inputs=inputs)
         
     def __call__( self, value, records=None ):
-        """ main call """
+        """Evaluate the parameter against a value."""
 
 
 class Equals( Param ):
-    """ value == other """
+    """
+    Parameter for equality comparison (value == other).
+
+    Example
+    -------
+    >>> Equals('active')  # matches records where field == 'active'
+    """
     inputs: Union[ bool, str, int, float ]
 
 
 class OneOf( Param ):
-    """ value in [ *values ] """
+    """
+    Parameter for "in list" comparison (value in [values]).
+
+    Example
+    -------
+    >>> OneOf(['A', 'B', 'C'])  # matches records where field in ['A', 'B', 'C']
+    """
     inputs: list
 
 
 class Query( base.BaseModel ):
+    """
+    SQL-like query for filtering records.
+
+    Parameters
+    ----------
+    params : list or dict
+        Query parameters as (field_name, Param) pairs.
+    collect : str or list, optional
+        Field names to return in results.
+
+    Example
+    -------
+    >>> query = Query(
+    ...     params={'status': Equals('active')},
+    ...     collect=['name', 'email']
+    ... )
+    >>> results = query.runAll(records)
+    """
     params: Union[ 
         dict[ str, Union[ Param, dict ]], 
         list[ tuple[ str, Union[ Param, dict ] ]],

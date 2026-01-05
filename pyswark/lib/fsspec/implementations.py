@@ -1,9 +1,30 @@
+"""
+Filesystem Implementations
+==========================
+
+This module provides custom fsspec filesystem implementations,
+including the PythonFileSystem for accessing Python objects by path.
+"""
+
 import sys
 import pydoc
 from fsspec import AbstractFileSystem
 
 
 class PythonFileSystem( AbstractFileSystem ):
+    """
+    Filesystem for accessing Python objects by import path.
+
+    Allows treating Python objects (classes, functions, modules) as
+    files that can be "opened" and "read" via their import paths.
+
+    Example
+    -------
+    >>> fs = PythonFileSystem()
+    >>> fs.exists('os.path.join')
+    True
+    >>> obj = fs.open('json.loads').locate()
+    """
 
     def open( self, path, *args, **kw ):
         exists, data = self.exists( path, returnDataToo=True, **kw )
@@ -24,6 +45,19 @@ class PythonFileSystem( AbstractFileSystem ):
 
 
 class PythonFile:
+    """
+    File-like wrapper for Python objects.
+
+    Provides a context manager interface for accessing Python objects
+    located by import path.
+
+    Parameters
+    ----------
+    path : str
+        The Python import path (e.g., 'module.submodule.ClassName').
+    data : Any, optional
+        Pre-loaded data (if already located).
+    """
 
     def __init__( self, path, *args, data=None ):
         self.path = path
@@ -39,6 +73,21 @@ class PythonFile:
         ...
 
     def locate( self, reloadmodule=False, **kw ):
+        """
+        Locate and return the Python object.
+
+        Parameters
+        ----------
+        reloadmodule : bool, default=False
+            If True, reload the module before locating.
+        **kw
+            Additional arguments passed to pydoc.locate.
+
+        Returns
+        -------
+        Any
+            The located Python object.
+        """
         if reloadmodule:
             return self._sys_pop_then_locate( **kw )
         else:

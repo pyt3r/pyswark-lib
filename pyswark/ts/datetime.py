@@ -1,3 +1,18 @@
+"""
+Datetime Utilities
+==================
+
+This module provides datetime primitives for time series operations,
+including timezone-aware datetime handling and datetime lists.
+
+Classes
+-------
+Datetime
+    A validated single datetime with timezone support.
+DatetimeList
+    A validated list of datetimes with efficient storage.
+"""
+
 from pydantic import Field, field_validator, model_validator
 from typing import Union, TypeVar
 from functools import cache
@@ -13,6 +28,26 @@ DtypeType  = Union[ str, None ]
 TznameType = Union[ str, None ]
 
 class Datetime( xputs.BaseInputs ):
+    """
+    A validated datetime with timezone support.
+
+    Provides consistent datetime handling with timezone conversion
+    and dtype specification.
+
+    Parameters
+    ----------
+    data : str
+        The datetime string.
+    dtype : str, optional
+        The numpy datetime64 resolution (e.g., 's', 'ms', 'D').
+    tzname : str, optional
+        The timezone name (e.g., 'UTC', 'US/Eastern').
+
+    Example
+    -------
+    >>> dt = Datetime('2024-01-15T10:30:00', dtype='s', tzname='UTC')
+    >>> dt_eastern = dt.toTimezone('US/Eastern')
+    """
     data     : str
     dtype    : DtypeType = Field( default=None )
     tzname   : TznameType = Field( default=None )
@@ -176,6 +211,33 @@ class Inputs( xputs.BaseInputs ):
 
 
 class DatetimeList( converter.ConverterModel ):
+    """
+    A validated list of datetimes.
+
+    Efficiently stores a list of datetimes as a base datetime plus
+    deltas, enabling compact serialization.
+
+    Parameters
+    ----------
+    inputs : Inputs or array-like
+        The datetime data.
+
+    Attributes
+    ----------
+    dt : numpy.ndarray
+        The datetime array (dtype datetime64).
+    basedt : numpy.datetime64
+        The base datetime.
+    deltas : numpy.ndarray
+        The delta offsets from base.
+
+    Example
+    -------
+    >>> from pyswark.ts.datetime import DatetimeList
+    >>> dates = DatetimeList(['2024-01-01', '2024-01-02', '2024-01-03'])
+    >>> print(len(dates))  # 3
+    >>> print(dates.dt)
+    """
     inputs : Inputs
 
     def __len__(self):
@@ -183,18 +245,22 @@ class DatetimeList( converter.ConverterModel ):
 
     @property
     def dt(self):
+        """Return the datetime array."""
         return self.outputs['dt']
 
     @property
     def basedt(self):
+        """Return the base datetime."""
         return self.outputs['basedt']
 
     @property
     def deltas(self):
+        """Return the delta offsets."""
         return self.outputs['deltas']
 
     @property
     def dtype(self):
+        """Return the datetime dtype."""
         return self.inputs.base.dtype
 
     def astype(self, dtype):

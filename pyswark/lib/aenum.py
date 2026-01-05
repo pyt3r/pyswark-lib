@@ -1,13 +1,59 @@
+"""
+Advanced Enum with Aliases
+==========================
+
+This module provides an enhanced enum class that supports aliases,
+allowing multiple names to refer to the same enum member.
+
+Classes
+-------
+AliasEnum
+    Enum class supporting aliases for members.
+Alias
+    Helper class to define aliases for enum members.
+
+Example
+-------
+>>> from pyswark.lib.aenum import AliasEnum, Alias
+>>>
+>>> class Protocol(AliasEnum):
+...     HTTP = 80, Alias('http', 'web')
+...     HTTPS = 443, Alias('https', 'secure')
+...     SSH = 22
+>>>
+>>> Protocol.get('http')  # Returns Protocol.HTTP
+>>> Protocol.get('secure')  # Returns Protocol.HTTPS
+"""
+
 import aenum
 from pyswark.lib.enum import Mixin
 
 
 class Alias:
-    """ Holds a set of aliases
-    >>  Alias( 'a', 'b' ).valueset # --> {'a', 'b'}
-    >>  Alias(['a', 'b']).valueset # --> {'a', 'b'}
-    >>  Alias(('a', 'b')).valueset # --> {'a', 'b'}
-    >>  Alias({'a', 'b'}).valueset # --> {'a', 'b'}
+    """
+    Container for alias values.
+
+    Holds a set of aliases that can be used with AliasEnum to allow
+    multiple names to reference the same enum member.
+
+    Parameters
+    ----------
+    alias : str or list or tuple or set
+        Primary alias or collection of aliases.
+    *aliases : str
+        Additional aliases.
+
+    Attributes
+    ----------
+    valueset : set
+        The set of all aliases.
+
+    Example
+    -------
+    >>> Alias('a', 'b').valueset
+    {'a', 'b'}
+    >>> Alias(['a', 'b']).valueset
+    {'a', 'b'}
     """
     def __init__( self, alias, *aliases ):
 
@@ -29,17 +75,34 @@ class Alias:
 
 
 class AliasEnum( Mixin, aenum.Enum ):
-    """ allows an entry to be aliased:
+    """
+    Enum class supporting aliases for members.
 
-    class Example( AliasEnum ):
-        X = 1, Alias('x')
-        Y = 2
-        Z = 3, Alias('z', 'zz', 'zzz')
+    Allows multiple names to reference the same enum member, enabling
+    flexible lookups by alias, name, or member.
 
-    >> Example.Z.value
-    >> Example.get('zz').value
-    >> Example.get('z').value
-    >> Example.get( Example.Z ).value
+    Methods
+    -------
+    get(aliasOrMember)
+        Get member by alias, name, or member instance.
+    tryGet(aliasOrMember, default=None)
+        Like get() but returns default instead of raising.
+    toMapping(attr='value')
+        Create a dict mapping all aliases to member values.
+
+    Example
+    -------
+    >>> class Protocol(AliasEnum):
+    ...     HTTP = 80, Alias('http', 'web')
+    ...     HTTPS = 443, Alias('https', 'secure')
+    ...     SSH = 22
+    >>>
+    >>> Protocol.get('http').value
+    80
+    >>> Protocol.get('secure').value
+    443
+    >>> Protocol.HTTP.aliases
+    {'HTTP', 'http', 'web'}
     """
 
     _settings_ = aenum.NoAlias
@@ -95,7 +158,24 @@ class AliasEnum( Mixin, aenum.Enum ):
 
     @classmethod
     def get( cls, aliasOrMember ):
-        """ gets the enum member by enum, attr, and finally alias """
+        """
+        Get an enum member by alias, name, or member instance.
+
+        Parameters
+        ----------
+        aliasOrMember : str or AliasEnum
+            The alias, name, or member to look up.
+
+        Returns
+        -------
+        AliasEnum
+            The matching enum member.
+
+        Raises
+        ------
+        AliasEnumError
+            If no member matches the alias.
+        """
         if isinstance( aliasOrMember, cls ):
             return aliasOrMember
 
@@ -115,6 +195,19 @@ class AliasEnum( Mixin, aenum.Enum ):
 
     @classmethod
     def toMapping( cls, attr='value' ):
+        """
+        Create a mapping from all aliases to member attribute values.
+
+        Parameters
+        ----------
+        attr : str, default='value'
+            The attribute to use as the mapping value.
+
+        Returns
+        -------
+        dict
+            Dictionary mapping all aliases (including names) to values.
+        """
         mapping = {}
         for name, member in cls.__members__.items():
             member = getattr( cls, name )
@@ -125,6 +218,21 @@ class AliasEnum( Mixin, aenum.Enum ):
 
     @classmethod
     def tryGet( cls, aliasOrMember, default=None ):
+        """
+        Get member by alias, returning default if not found.
+
+        Parameters
+        ----------
+        aliasOrMember : str or AliasEnum
+            The alias, name, or member to look up.
+        default : Any, optional
+            Value to return if not found.
+
+        Returns
+        -------
+        AliasEnum or default
+            The matching member or the default value.
+        """
         try:
             return cls.get( aliasOrMember )
         except AliasEnumError:
@@ -133,4 +241,5 @@ class AliasEnum( Mixin, aenum.Enum ):
 
 
 class AliasEnumError( Exception ):
+    """Exception raised when an alias lookup fails."""
     pass

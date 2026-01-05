@@ -1,3 +1,12 @@
+"""
+GlueDb Database Models
+======================
+
+This module defines the core GlueDb class and associated models for
+managing data catalogs. A GlueDb stores named records that point to
+data sources, enabling versioned and shareable data catalogs.
+"""
+
 from typing import Optional, Union
 from pydantic import Field, create_model
 
@@ -6,18 +15,27 @@ from pyswark.gluedb import dbmodel, recordmodel
 
 
 class Extractor( contents.Contents ):
+    """Extractor for reading data from URIs within GlueDb."""
     uri              : str
     datahandler      : Optional[ str ] = ""
     kw               : Optional[ dict ] = Field( default_factory=lambda: {} )
 
 
 class Loader( contents.Contents ):
+    """Loader for writing data to URIs within GlueDb."""
     uri              : str
     datahandler      : Optional[ str ] = ""
     kw               : Optional[ dict ] = Field( default_factory=lambda: {} )
 
 
 class Contents( contents.Contents ):
+    """
+    Contents model for GlueDb records.
+
+    Defines how data is extracted (read) and loaded (written) for a
+    GlueDb record. Supports separate configurations for reading and
+    writing operations.
+    """
 
     # for extracting (reading)
     uri              : str
@@ -67,13 +85,68 @@ _GlueDb = _makeDb( Contents, Record, dbmodel.Db )
 
 
 class GlueDb( _GlueDb ):
+    """
+    A database of named data sources.
+
+    GlueDb is the central abstraction for managing data catalogs in pyswark.
+    It stores named records that point to data sources (URIs, Python objects,
+    or inline data), enabling versioned and shareable data management.
+
+    Methods
+    -------
+    post(name, uri_or_data)
+        Add a new record to the database.
+    extract(name)
+        Load and return data by record name.
+    getNames()
+        List all record names in the database.
+    merge(otherDb)
+        Combine records from another GlueDb.
+
+    Example
+    -------
+    >>> from pyswark.gluedb import api
+    >>> db = api.newDb()
+    >>> db.post('prices', 'file:./prices.csv')
+    >>> db.post('config', {'window': 60})
+    >>> print(db.getNames())
+    ['prices', 'config']
+    >>> prices_df = db.extract('prices')
+    """
 
     def merge( self, otherDb ):
-        """ merge the contents of another db """
+        """
+        Merge records from another GlueDb into this one.
+
+        Parameters
+        ----------
+        otherDb : GlueDb
+            Another GlueDb instance to merge.
+
+        Raises
+        ------
+        TypeError
+            If otherDb is not a GlueDb instance.
+        """
         if not isinstance( otherDb, GlueDb ):
             raise TypeError( f"can only add type=GlueDb, got type={ type(otherDb) }" )
         super().merge( otherDb )
 
 
 def makeDb( ContentsModel, RecordModel=Record ):
+    """
+    Factory function to create custom GlueDb classes.
+
+    Parameters
+    ----------
+    ContentsModel : type
+        Custom Contents model for records.
+    RecordModel : type, optional
+        Custom Record model.
+
+    Returns
+    -------
+    type
+        A new GlueDb subclass with the specified models.
+    """
     return _makeDb( ContentsModel, RecordModel, GlueDb  )

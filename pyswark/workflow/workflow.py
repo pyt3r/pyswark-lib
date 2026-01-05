@@ -1,3 +1,37 @@
+"""
+Workflow Orchestration
+======================
+
+This module provides the Workflow class for orchestrating multi-step
+computations with caching and reproducibility. Workflows manage state
+between steps and can skip steps when inputs haven't changed.
+
+Key Concepts
+------------
+- **Workflow**: A sequence of Steps with input/output caching
+- **Step**: A single unit of work with defined inputs and outputs
+- **State**: Shared data store that persists between steps
+
+Example
+-------
+>>> from pyswark.workflow.workflow import Workflow
+>>> from pyswark.workflow.step import Step
+>>> from pyswark.workflow.state import State
+>>>
+>>> workflow = Workflow(steps=[
+...     Step(model='mymodule.PreprocessModel',
+...          inputs={'raw_data': 'data'},
+...          outputs={'processed': 'clean_data'}),
+...     Step(model='mymodule.AnalysisModel',
+...          inputs={'clean_data': 'data'},
+...          outputs={'result': 'analysis'})
+... ])
+>>>
+>>> state = State()
+>>> state.post('data', raw_dataframe)
+>>> result = workflow.run(state)
+"""
+
 #%%
 import logging
 from pydantic import field_validator, Field
@@ -9,7 +43,12 @@ logger = logging.getLogger(__name__)
 
 
 class Extracts( base.BaseModel ):
-    """ extracted model inputs or outputs """
+    """
+    Container for cached model inputs or outputs.
+
+    Used internally by Workflow to store and compare inputs/outputs
+    for skip logic.
+    """
     
     data: dict[int, dict] = Field( default_factory=dict )
 
@@ -27,7 +66,36 @@ class Extracts( base.BaseModel ):
 
 
 class Workflow( base.BaseModel ):
-    """ workflow of steps to be run """
+    """
+    Orchestrates a sequence of computational steps with caching.
+
+    A Workflow manages the execution of multiple Steps, passing data
+    between them via a shared State object. It supports caching of
+    inputs/outputs to skip steps when inputs haven't changed.
+
+    Parameters
+    ----------
+    steps : list[Step]
+        The sequence of steps to execute.
+    useExtracts : bool, default=True
+        Whether to use cached inputs/outputs for skip logic.
+    populateExtracts : bool, default=True
+        Whether to store inputs/outputs for future runs.
+
+    Attributes
+    ----------
+    stepsSkipped : list[int]
+        Indices of steps that were skipped (cached).
+    stepsRan : list[int]
+        Indices of steps that were executed.
+
+    Example
+    -------
+    >>> workflow = Workflow(steps=[step1, step2, step3])
+    >>> state = State()
+    >>> state.post('input_data', my_data)
+    >>> result = workflow.run(state)
+    """
     
     steps : list[ Step ]
 
@@ -63,10 +131,35 @@ class Workflow( base.BaseModel ):
         return extracts
 
     def addStep( self, step: Step ):
+        """
+        Add a step to the workflow.
+
+        Parameters
+        ----------
+        step : Step or dict
+            A Step instance or dictionary with step configuration.
+        """
         step = self._step_before( step )
         self.steps.append( step )
 
     def run( self, state: State ):
+        """
+        Execute all steps in the workflow.
+
+        Steps are executed in order, with each step's outputs posted
+        to the shared State. Steps may be skipped if their inputs
+        match cached values from previous runs.
+
+        Parameters
+        ----------
+        state : State
+            The shared state object containing input data.
+
+        Returns
+        -------
+        Any
+            The output from the final step.
+        """
 
         stateOutput = None
         for i, step in enumerate( self.steps ):

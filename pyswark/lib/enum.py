@@ -1,16 +1,70 @@
+"""
+Enum Utilities
+==============
+
+This module provides enhanced enum classes with additional utility methods
+for introspection, code generation, and dynamic enum creation.
+
+Classes
+-------
+Enum
+    Enhanced enum with utility methods (asDict, asPythonCode, createDynamically).
+Mixin
+    Mixin class providing utility methods for enums.
+"""
+
 import re
 import enum as _enum
 
 class Mixin:
+    """
+    Mixin providing utility methods for enum classes.
+
+    Methods
+    -------
+    asDict()
+        Return a dict mapping member names to values.
+    asPythonCode(name)
+        Generate Python code to recreate the enum.
+    createDynamically(enumMembers, enumName)
+        Create an enum dynamically from a dict.
+    """
 
     @classmethod
     def asDict(cls):
-        """ return a dict of the enum members and their values """
+        """
+        Return a dict mapping member names to values.
+
+        Returns
+        -------
+        dict
+            Dictionary with member names as keys and values as values.
+
+        Example
+        -------
+        >>> class Status(Enum):
+        ...     ACTIVE = 1
+        ...     INACTIVE = 0
+        >>> Status.asDict()
+        {'ACTIVE': 1, 'INACTIVE': 0}
+        """
         return { k: member.value for k, member in cls.__members__.items() }
     
     @classmethod
     def asPythonCode( cls, name="" ):
-        """ return the enum as a python code string """
+        """
+        Generate Python code to recreate the enum.
+
+        Parameters
+        ----------
+        name : str, optional
+            Name for the generated class. Defaults to ``My{ClassName}``.
+
+        Returns
+        -------
+        str
+            Python source code string.
+        """
         
         base = f"{ cls.__module__}.{ cls.__name__ }"
             
@@ -30,7 +84,27 @@ class Mixin:
 
     @classmethod
     def createDynamically( cls, enumMembers, enumName=''):
-        """ create an enum dynamically from a dict of members """
+        """
+        Create an enum dynamically from a dict of members.
+
+        Parameters
+        ----------
+        enumMembers : dict
+            Dictionary mapping member names to values.
+        enumName : str, optional
+            Name for the new enum class.
+
+        Returns
+        -------
+        Enum
+            A new enum class with the specified members.
+
+        Example
+        -------
+        >>> MyEnum = Enum.createDynamically({'A': 1, 'B': 2}, 'MyEnum')
+        >>> MyEnum.A.value
+        1
+        """
         if not enumName:
             enumName = cls.__name__
 
@@ -60,4 +134,21 @@ class Mixin:
     
 
 class Enum( Mixin, _enum.Enum ):
+    """
+    Enhanced enum with utility methods.
+
+    Extends Python's built-in Enum with additional methods for
+    introspection and code generation.
+
+    Example
+    -------
+    >>> from pyswark.lib.enum import Enum
+    >>>
+    >>> class Status(Enum):
+    ...     ACTIVE = 1
+    ...     INACTIVE = 0
+    >>>
+    >>> Status.asDict()
+    {'ACTIVE': 1, 'INACTIVE': 0}
+    """
     pass
