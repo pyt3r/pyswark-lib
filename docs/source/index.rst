@@ -1,5 +1,5 @@
-Welcome to pyswark!
-=============================
+PySwark: my swiss army knife for everyday python
+================================================
 
 **pyswark** is a collection of Python tools I’ve built and found to be
 useful for a wide range of software tasks.
