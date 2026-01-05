@@ -2,7 +2,12 @@
 PySwark: my swiss army knife for everyday python
 =============================================================
 
-PySwark is a collection of Python tools I’ve built and found to be useful for a wide range of software tasks.
+**pyswark** is a collection of Python tools I’ve built and found to be
+useful for a wide range of software tasks.
+The collection contains tools for serialization, unified I/O, data catalogs,
+and workflow orchestration, to name a few.
+
+Documentation may be found on the `Read the Docs`_ page.
 
 
 .. badges
@@ -48,7 +53,7 @@ PySwark is a collection of Python tools I’ve built and found to be useful for 
 
 .. _conda-build: https://docs.conda.io/projects/conda-build/en/latest/
 .. _Azure Pipeline: https://dev.azure.com/pyt3r/pyswark/_build
-.. _Azure Coverage: https://dev.azure.com/pyt3r/pyswark/_build/results?view=codecoverage-tab&buildId=337.. _Anaconda Cloud: https://anaconda.org/pyt3r/pyswark
+.. _Azure Coverage: https://dev.azure.com/pyt3r/pyswark/_build/results?view=codecoverage-tab&buildId=383.. _Anaconda Cloud: https://anaconda.org/pyt3r/pyswark
 .. _Read the Docs: https://pyswark-lib.readthedocs.io/en/latest/
 
 .. _(mini)conda: https://docs.conda.io/en/latest/miniconda.html
@@ -70,62 +75,3 @@ Give it a try:
     $ conda install pyswark -c pyt3r
 
 
-Examples include..
-
-* Simplified I/O APIs
-
-  .. code-block:: python
-
-    from pyswark.core.io import api
-
-    df = api.read( 'pyswark://data/df.csv' )
-    api.write( df, './df-copy.parquet' )
-
-    dump = df.to_json()
-    api.write( dump, './df-copy.json' )
-
-    fn = api.read( 'python://pyswark.core.io.api.read' )
-    assert fn == api.read
-
-* (De)serialization support
-
-  .. code-block:: python
-
-    from pydantic import BaseModel
-    from pyswark.lib.pydantic import ser_des
-
-    class ModelXY( BaseModel ):
-        x: int
-        y: float
-
-    model = ModelXY( x=1.0, y='2.2' )
-
-    ser = ser_des.toJson( model )
-    des = ser_des.fromJson( ser )
-
-    assert isinstance( des, ModelXY )
-
-
-* DataFrame-like structures for tensors, matrices, and vectors
-
-  .. code-block:: python
-
-    from pyswark.tensor.tensorframe import MatrixFrame
-
-    mf = MatrixFrame({
-        'x': [[ 1, 2, 3 ],
-              [ 4, 5, 6] ],
-        'y': [[ 1, -1, 1 ],
-              [ -1, 1, -1] ],
-    })
-    print( mf['x'] * mf['y'] )
-    """
-    [[ 1 -2  3]
-    [ -4  5 -6]]
-    """
-
-
-* A database for managing disorganized data
-
-
-* And many others to explore on the `Read the Docs`_ page..
