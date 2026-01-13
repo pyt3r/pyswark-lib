@@ -108,7 +108,7 @@ class GlueDb( _GlueDb ):
     >>> from pyswark.gluedb import api
     >>> db = api.newDb()
     >>> db.post('prices', 'file:./prices.csv')
-    >>> db.post('config', {'window': 60})
+    >>> db.post('config', 'file:./config.json')
     >>> print(db.getNames())
     ['prices', 'config']
     >>> prices_df = db.extract('prices')
