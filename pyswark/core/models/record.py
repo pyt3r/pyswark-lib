@@ -1,5 +1,5 @@
+from typing import Optional, ClassVar, Union
 from sqlmodel import SQLModel, Field, Relationship
-from typing import Optional, ClassVar
 from pydantic import field_validator
 from pyswark.lib.pydantic import base
 
@@ -9,8 +9,8 @@ from pyswark.core.models import mixin
 
 
 class Record( base.BaseModel, mixin.TypeCheck ):
-    InfoType : ClassVar[ str ] = "pyswark.core.models.info.Info"
-    BodyType : ClassVar[ str ] = "pyswark.core.models.body.Body"
+    InfoType : ClassVar[ Union[str, type] ] = Info
+    BodyType : ClassVar[ Union[str, type] ] = Body
     info     : Info
     body     : Body
 
@@ -37,6 +37,8 @@ class RecordSQLModel( SQLModel, table=True ):
     
     Combines Info (metadata) and Body (content) with database relationships.
     """
+    RecordType : ClassVar[type] = Record
+    
     id      : Optional[int] = Field( default=None, primary_key=True )
     info_id : Optional[int] = Field( default=None, foreign_key="infosqlmodel.id" )
     body_id : Optional[int] = Field( default=None, foreign_key="bodysqlmodel.id" )
@@ -46,7 +48,11 @@ class RecordSQLModel( SQLModel, table=True ):
     body : Optional[BodySQLModel] = Relationship( back_populates="record" )
 
     def asModel( self ):
-        return Record( 
+        return self.RecordType( 
             info = self.info.asModel(), 
             body = self.body.asModel(),
         )
+
+    @classmethod
+    def getUri( cls ):
+        return f"{ cls.__module__ }.{ cls.__qualname__ }"

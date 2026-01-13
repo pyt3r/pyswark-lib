@@ -1,6 +1,6 @@
 import json
-from sqlmodel import SQLModel, Field, Relationship
 from typing import ClassVar, Union, Optional
+from sqlmodel import SQLModel, Field, Relationship
 from pydantic import field_validator, model_validator
 from pyswark.lib.pydantic import base
 
