@@ -13,12 +13,13 @@ dependencies:
   - numpy
   - pandas
   - pyarrow
+  - sqlmodel
+  - sqlalchemy
   - pydantic
   - fsspec
   - requests
   - aiohttp
   - aenum
-  - sqlalchemy
   - holoviews
   - panel
   - bokeh

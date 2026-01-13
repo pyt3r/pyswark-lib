@@ -11,6 +11,7 @@ dependencies:
   - sphinx<7
   - sphinx_rtd_theme
   - sphinx-gallery
+  - roman
   - pip:
       - rst2pdf
   # ./examples dependencies
@@ -18,9 +19,10 @@ dependencies:
   - numpy
   - pandas
   - pyarrow
+  - sqlmodel
+  - sqlalchemy
   - pydantic
   - fsspec
   - requests
   - aiohttp
   - aenum
-  - sqlalchemy
