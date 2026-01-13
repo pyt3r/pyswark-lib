@@ -135,6 +135,43 @@ class TestRecord(unittest.TestCase):
         extracted = restored.body.extract()
         self.assertIsInstance(extracted, DataModel)
 
+    def test_sqlmodel_roundtrip(self):
+        """
+        Complete Record converts to SQLModel and back.
+        
+        This is the full database persistence workflow:
+        1. Create a Pydantic Record (with nested Info + Body)
+        2. Convert to SQLModel (Record, Info, Body all convert)
+        3. Convert back to Pydantic
+        4. All data and types are preserved
+        """
+        # Create a complete Pydantic record
+        original_data = DataModel(x=777, y='persist_me')
+        original_record = record.Record(
+            info=info.Info(name='sql_test'),
+            body=body.Body(model=original_data)
+        )
+        
+        # Convert to SQLModel (cascades to nested objects)
+        sql_record = original_record.asSQLModel()
+        self.assertIsInstance(sql_record, record.RecordSQLModel)
+        self.assertIsInstance(sql_record.info, info.InfoSQLModel)
+        self.assertIsInstance(sql_record.body, body.BodySQLModel)
+        self.assertEqual(sql_record.info.name, 'sql_test')
+        
+        # Convert back to Pydantic (cascades to nested objects)
+        restored_record = sql_record.asModel()
+        self.assertIsInstance(restored_record, record.Record)
+        self.assertIsInstance(restored_record.info, info.Info)
+        self.assertIsInstance(restored_record.body, body.Body)
+        
+        # Verify all data preserved through the roundtrip
+        self.assertEqual(restored_record.info.name, 'sql_test')
+        extracted_data = restored_record.body.extract()
+        self.assertIsInstance(extracted_data, DataModel)
+        self.assertEqual(extracted_data.x, 777)
+        self.assertEqual(extracted_data.y, 'persist_me')
+
 
 if __name__ == '__main__':
     unittest.main()

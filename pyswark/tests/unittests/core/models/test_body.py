@@ -112,6 +112,36 @@ class TestBody(unittest.TestCase):
         self.assertEqual(extracted.a, 5)
         self.assertEqual(extracted.b, 'explicit')
 
+    def test_sqlmodel_roundtrip(self):
+        """
+        Body converts to SQLModel and back, preserving the wrapped model.
+        
+        The full roundtrip:
+        1. Pydantic Body wraps a model
+        2. Convert to SQLModel (for DB storage)
+        3. Convert back to Pydantic Body
+        4. Extract the original model type
+        """
+        # Wrap a model in Body
+        original_data = SampleModel(a=99, b='database')
+        original_body = body.Body(model=original_data)
+        
+        # Convert to SQLModel
+        sql_model = original_body.asSQLModel()
+        self.assertIsInstance(sql_model, body.BodySQLModel)
+        self.assertEqual(sql_model.model, original_body.model)
+        self.assertEqual(sql_model.contents, original_body.contents)
+        
+        # Convert back to Pydantic
+        restored_body = sql_model.asModel()
+        self.assertIsInstance(restored_body, body.Body)
+        
+        # Extract inner model - still works!
+        extracted = restored_body.extract()
+        self.assertIsInstance(extracted, SampleModel)
+        self.assertEqual(extracted.a, 99)
+        self.assertEqual(extracted.b, 'database')
+
 
 if __name__ == '__main__':
     unittest.main()

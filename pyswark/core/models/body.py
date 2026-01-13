@@ -1,6 +1,6 @@
 import json
-
-from typing import ClassVar, Union
+from sqlmodel import SQLModel, Field, Relationship
+from typing import ClassVar, Union, Optional
 from pydantic import field_validator, model_validator
 from pyswark.lib.pydantic import base
 
@@ -36,8 +36,37 @@ class Body( base.BaseModel, mixin.TypeCheck ):
         cls.checkIfAllowedType( model, cls.Allow )
         return model
 
+    def asSQLModel( self ):
+        return BodySQLModel( 
+            model    = self.model, 
+            contents = self.contents,
+        )
+
     def extract( self ):
         return self.fromDict({
             'model'    : self.model,
             'contents' : json.loads( self.contents ),
         })
+
+class BodySQLModel( SQLModel, table=True ):
+    """
+    Record body - SQLModel version of pyswark.core.models.body.Body
+    
+    Stores the model class path and serialized contents.
+    This enables storing arbitrary Pydantic models as JSON strings.
+    
+    Note: SQLModel table validators don't run reliably during ORM operations.
+    Use the `create()` classmethod for auto-serialization of dict contents.
+    """
+    id       : Optional[int] = Field( default=None, primary_key=True )
+    model    : str  # Class path, e.g., "myapp.models.MyModel"
+    contents : str  # JSON-serialized model data (must be a string!)
+    
+    # Relationship back to Record (fully qualified path for cross-module resolution)
+    record : Optional["pyswark.core.models.record.RecordSQLModel"] = Relationship( back_populates="body" )
+    
+    def asModel( self ):
+        return Body( 
+            model    = self.model, 
+            contents = self.contents,
+        )

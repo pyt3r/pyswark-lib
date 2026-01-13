@@ -58,6 +58,27 @@ class TestInfo(unittest.TestCase):
         
         self.assertEqual(obj.name, 'config_settings')
 
+    def test_sqlmodel_roundtrip(self):
+        """
+        Info converts to SQLModel and back without data loss.
+        
+        This enables seamless transition between:
+        - Pydantic models (validation, serialization)
+        - SQLModel tables (database persistence)
+        """
+        # Create Pydantic model
+        original = info.Info(name='db_record')
+        
+        # Convert to SQLModel (for database storage)
+        sql_model = original.asSQLModel()
+        self.assertIsInstance(sql_model, info.InfoSQLModel)
+        self.assertEqual(sql_model.name, 'db_record')
+        
+        # Convert back to Pydantic (for business logic)
+        restored = sql_model.asModel()
+        self.assertIsInstance(restored, info.Info)
+        self.assertEqual(restored.name, original.name)
+
 
 if __name__ == '__main__':
     unittest.main()
