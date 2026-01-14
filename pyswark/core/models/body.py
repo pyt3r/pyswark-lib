@@ -58,6 +58,8 @@ class BodySQLModel( SQLModel, table=True ):
     Note: SQLModel table validators don't run reliably during ORM operations.
     Use the `create()` classmethod for auto-serialization of dict contents.
     """
+    BodyType : ClassVar[ type ] = Body
+
     id       : Optional[int] = Field( default=None, primary_key=True )
     model    : str  # Class path, e.g., "myapp.models.MyModel"
     contents : str  # JSON-serialized model data (must be a string!)
@@ -66,7 +68,7 @@ class BodySQLModel( SQLModel, table=True ):
     record : Optional["pyswark.core.models.record.RecordSQLModel"] = Relationship( back_populates="body" )
     
     def asModel( self ):
-        return Body( 
+        return self.BodyType( 
             model    = self.model, 
             contents = self.contents,
         )

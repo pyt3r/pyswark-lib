@@ -1,8 +1,8 @@
 from sqlmodel import SQLModel, create_engine, Session, select
 from sqlalchemy.orm import selectinload
-from typing import ClassVar, Union
+from typing import ClassVar
 from functools import singledispatchmethod
-from pydantic import field_validator, model_validator, Field
+from pydantic import Field
 from pyswark.lib.pydantic import base
 
 from pyswark.core.models import mixin, record, body, info
@@ -14,7 +14,9 @@ class Db( base.BaseModel, mixin.TypeCheck ):
     records : list[ record.Record ] = Field( default_factory=list )
 
     def post( self, obj, name=None ):
-        return self._post( obj, name=name )
+        rec = self._post( obj, name=name )
+        self.records.append( rec )
+        return rec
 
     @singledispatchmethod
     @classmethod
@@ -52,10 +54,26 @@ class Db( base.BaseModel, mixin.TypeCheck ):
         cls.checkIfInstance( rec, cls.Record )
         return rec
 
+    def getByName( self, name ):
+        sqlModel = self.asSQLModel()
+        result   = sqlModel.getByName( name )
+        return result if result is None else result.asModel()
+
+    def deleteByName( self, name ):
+        sqlModel     = self.asSQLModel()
+        success      = sqlModel.deleteByName( name )
+        self.records = sqlModel.asModel().records
+        return success
+
+    def asSQLModel( self, *a, **kw ):
+        dbModel = DbSQLModel( *a, **kw )
+        dbModel.postAll( self.records )
+        return dbModel
+
 
 class DbSQLModel( mixin.TypeCheck ):
-    RecordType = record.RecordSQLModel.getUri()
-    DbType     = Db.getUri()
+    RecordType : ClassVar[ str ] = record.RecordSQLModel.getUri()
+    DbType     : ClassVar[ str ] = Db.getUri()
 
     def __init__(self, url='sqlite:///:memory:', **kw ):
         self.engine = self._initEngine( url )
@@ -88,11 +106,10 @@ class DbSQLModel( mixin.TypeCheck ):
             return sqlModel
 
     def postAll( self, objs ):
-        models = [ self._dbType._post( o ) for o in objs ]
+        models    = [ self._dbType._post( o ) for o in objs ]
+        sqlModels = [ model.asSQLModel() for model in models ]
 
         with Session( self.engine ) as session:
-
-            sqlModels = [ model.asSQLModel() for model in models ]
 
             session.add_all( sqlModels )
             session.commit()
@@ -106,34 +123,63 @@ class DbSQLModel( mixin.TypeCheck ):
             return sqlModels
 
     def getAll( self ):
-        with Session( self.engine ) as session:
-            stmt = (
-                select( self._recordType )
-                .options( selectinload( self._recordType.info ) )
-                .options( selectinload( self._recordType.body ) )
-            )
+        stmt = self._statement( select( self._recordType ) )
+        with Session( self.engine ) as session:                
             results = session.exec( stmt ).all()
             return results
 
     def getByName( self, name ):
+        return self._get(
+            select( self._recordType )
+            .join( info.InfoSQLModel )
+            .where( info.InfoSQLModel.name == name )
+        )
+
+    def getById( self, id ):
+        return self._get(
+            select( self._recordType )
+            .where( self._recordType.id == id )
+        )
+
+    def _get( self, query ):
+        stmt = self._statement( query )
         with Session( self.engine ) as session:
-            stmt = (
-                select( self._recordType )
-                .join( info.InfoSQLModel )
-                .where( info.InfoSQLModel.name == name )
-                .options( selectinload( self._recordType.info ) )
-                .options( selectinload( self._recordType.body ) )
-            )
             result = session.exec( stmt ).one_or_none()
             return result
 
-    def getById( self, id ):
+    def deleteByName( self, name ):
+        return self._delete(
+            select( self._recordType )
+            .join( info.InfoSQLModel )
+            .where( info.InfoSQLModel.name == name )
+        )
+
+    def deleteById( self, id ):
+        return self._delete(
+            select( self._recordType )
+            .where( self._recordType.id == id )
+        )
+
+    def _delete( self, query ):
+        stmt = self._statement( query )
         with Session( self.engine ) as session:
-            stmt = (
-                select( self._recordType )
-                .where( self._recordType.id == id )
-                .options( selectinload( self._recordType.info ) )
-                .options( selectinload( self._recordType.body ) )
-            )
             result = session.exec( stmt ).one_or_none()
-            return result
+            if result:
+                # Delete related objects first, then the record
+                session.delete( result.info )
+                session.delete( result.body )
+                session.delete( result )
+                session.commit()
+                return True
+            return False
+
+    def _statement( self, query ):
+        return (
+            query
+            .options( selectinload( self._recordType.info ) )
+            .options( selectinload( self._recordType.body ) )
+        )
+
+    def asModel( self ):
+        return self._dbType( records=[ rec.asModel() for rec in self.getAll() ] )
+    
