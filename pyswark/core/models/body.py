@@ -9,8 +9,7 @@ from pyswark.core.models import mixin
 
 class Body( base.BaseModel, mixin.TypeCheck ):
     """Base class for record body."""
-    Base     : ClassVar[ str ] = f"python:{ base.BaseModel.getUri() }"
-    Allow    : ClassVar[ Union[ tuple, list, str, None ]] = None
+    Base     : ClassVar[ Union[ str, type ] ] = base.BaseModel.getUri()
     model    : str
     contents : str
 
@@ -33,7 +32,7 @@ class Body( base.BaseModel, mixin.TypeCheck ):
 
     @field_validator( 'model', mode='after' )
     def _model_after( cls, model ):
-        cls.checkIfAllowedType( model, cls.Allow )
+        cls.checkIfSubclass( model, cls.Base )
         return model
 
     def asSQLModel( self ):
@@ -58,8 +57,6 @@ class BodySQLModel( SQLModel, table=True ):
     Note: SQLModel table validators don't run reliably during ORM operations.
     Use the `create()` classmethod for auto-serialization of dict contents.
     """
-    BodyType : ClassVar[ type ] = Body
-
     id       : Optional[int] = Field( default=None, primary_key=True )
     model    : str  # Class path, e.g., "myapp.models.MyModel"
     contents : str  # JSON-serialized model data (must be a string!)
@@ -68,7 +65,7 @@ class BodySQLModel( SQLModel, table=True ):
     record : Optional["pyswark.core.models.record.RecordSQLModel"] = Relationship( back_populates="body" )
     
     def asModel( self ):
-        return self.BodyType( 
+        return Body( 
             model    = self.model, 
             contents = self.contents,
         )

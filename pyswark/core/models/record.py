@@ -8,21 +8,9 @@ from pyswark.core.models.body import Body, BodySQLModel
 from pyswark.core.models import mixin
 
 
-class Record( base.BaseModel, mixin.TypeCheck ):
-    InfoType : ClassVar[ Union[str, type] ] = Info
-    BodyType : ClassVar[ Union[str, type] ] = Body
+class Record( base.BaseModel ):
     info     : Info
     body     : Body
-
-    @field_validator( 'info', mode='after' )
-    def _info_after( cls, info ):
-        cls.checkIfInstance( info, cls.InfoType )
-        return info
-
-    @field_validator( 'body', mode='after' )
-    def _body_after( cls, body ):
-        cls.checkIfInstance( body, cls.BodyType )
-        return body
 
     def asSQLModel( self ):
         return RecordSQLModel( 
@@ -37,7 +25,6 @@ class RecordSQLModel( SQLModel, table=True ):
     
     Combines Info (metadata) and Body (content) with database relationships.
     """
-    RecordType : ClassVar[type] = Record
     
     id      : Optional[int] = Field( default=None, primary_key=True )
     info_id : Optional[int] = Field( default=None, foreign_key="infosqlmodel.id" )
@@ -48,7 +35,7 @@ class RecordSQLModel( SQLModel, table=True ):
     body : Optional[BodySQLModel] = Relationship( back_populates="record" )
 
     def asModel( self ):
-        return self.RecordType( 
+        return Record( 
             info = self.info.asModel(), 
             body = self.body.asModel(),
         )

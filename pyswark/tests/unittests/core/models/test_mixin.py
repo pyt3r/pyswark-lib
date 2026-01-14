@@ -150,7 +150,7 @@ class TestTypeCheck(unittest.TestCase):
         with self.assertRaises(ValueError) as ctx:
             TypeCheck.checkIfAllowedType(UnrelatedModel, allowed)
         
-        self.assertIn('is not allowed', str(ctx.exception))
+        self.assertIn('is not an allowed type', str(ctx.exception))
 
     def test_check_if_subclass_raises(self):
         """

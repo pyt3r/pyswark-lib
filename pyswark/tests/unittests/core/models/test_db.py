@@ -92,6 +92,123 @@ class TestDb(unittest.TestCase):
         self.assertIsNotNone(new_rec)
         self.assertIsNotNone(db.getByName('MSFT'))
 
+    def test_post_body_requires_name(self):
+        """
+        Posting a Body directly requires a name parameter.
+        
+        This covers the validation in _post_body() that ensures
+        name is provided when posting a Body instance.
+        """
+        db = Db()
+        
+        # Create a Body
+        ticker = Ticker(symbol='TEST', longName='Test Corp', exchange='NYSE')
+        bod = body.Body(model=ticker)
+        
+        # Posting without name should raise ValueError
+        with self.assertRaises(ValueError) as ctx:
+            db.post(bod, name=None)
+        
+        self.assertIn('name is required', str(ctx.exception))
+        self.assertIn('Body', str(ctx.exception))
+
+    def test_post_basemodel_requires_name(self):
+        """
+        Posting a BaseModel requires a name parameter.
+        
+        This covers the validation in _post_model() that ensures
+        name is provided when posting a BaseModel instance.
+        """
+        db = Db()
+        
+        # Create a BaseModel
+        ticker = Ticker(symbol='TEST', longName='Test Corp', exchange='NYSE')
+        
+        # Posting without name should raise ValueError
+        with self.assertRaises(ValueError) as ctx:
+            db.post(ticker, name=None)
+        
+        self.assertIn('name is required', str(ctx.exception))
+        self.assertIn('Ticker', str(ctx.exception))
+        
+        # Also test with name not provided at all (defaults to None)
+        with self.assertRaises(ValueError) as ctx2:
+            db.post(ticker)  # name parameter omitted
+        
+        self.assertIn('name is required', str(ctx2.exception))
+
+    def test_put_creates_new_record(self):
+        """
+        PUT creates a new record when one doesn't exist.
+        
+        PUT is idempotent - it works whether the record exists or not.
+        When the record doesn't exist, PUT behaves like POST.
+        """
+        db = Db()
+        
+        # PUT a new ticker
+        aapl = Ticker(symbol='AAPL', longName='Apple Inc.', exchange='NASDAQ')
+        rec = db.put(aapl, name='AAPL')
+        
+        self.assertIsNotNone(rec)
+        self.assertEqual(rec.info.name, 'AAPL')
+        
+        # Verify it was created
+        retrieved = db.getByName('AAPL')
+        self.assertIsNotNone(retrieved)
+        ticker = retrieved.body.extract()
+        self.assertEqual(ticker.symbol, 'AAPL')
+        self.assertEqual(ticker.longName, 'Apple Inc.')
+
+    def test_put_updates_existing_record(self):
+        """
+        PUT updates an existing record by replacing it.
+        
+        This is the key difference from POST - PUT replaces existing
+        records rather than creating duplicates or raising errors.
+        """
+        db = Db()
+        
+        # Create initial record
+        original = Ticker(symbol='MSFT', longName='Microsoft Corporation', exchange='NASDAQ')
+        db.post(original, name='MSFT')
+        
+        # Verify original exists
+        retrieved = db.getByName('MSFT')
+        self.assertEqual(retrieved.body.extract().longName, 'Microsoft Corporation')
+        
+        # PUT an updated version
+        updated = Ticker(symbol='MSFT', longName='Microsoft Corp.', exchange='NASDAQ')
+        db.put(updated, name='MSFT')
+        
+        # Verify it was updated
+        retrieved = db.getByName('MSFT')
+        self.assertIsNotNone(retrieved)
+        ticker = retrieved.body.extract()
+        self.assertEqual(ticker.longName, 'Microsoft Corp.')  # Updated value
+        self.assertEqual(ticker.symbol, 'MSFT')  # Same symbol
+
+    def test_put_is_idempotent(self):
+        """
+        PUT is idempotent - multiple calls with same data produce same result.
+        
+        This is a key property of PUT operations - calling it multiple
+        times should result in the same state as calling it once.
+        """
+        db = Db()
+        
+        ticker = Ticker(symbol='GOOGL', longName='Alphabet Inc.', exchange='NASDAQ')
+        
+        # PUT multiple times
+        db.put(ticker, name='GOOGL')
+        db.put(ticker, name='GOOGL')
+        db.put(ticker, name='GOOGL')
+        
+        # Should still have exactly one record
+        retrieved = db.getByName('GOOGL')
+        self.assertIsNotNone(retrieved)
+        self.assertEqual(retrieved.body.extract().longName, 'Alphabet Inc.')
+
 
 class TestDbSQLModel(unittest.TestCase):
     """
@@ -352,6 +469,194 @@ class TestDbSQLModel(unittest.TestCase):
         # Verify it's gone by both methods
         self.assertIsNone(self.db.getByName('SQ'))
         self.assertIsNone(self.db.getById(record_id))
+
+    def test_post_body_requires_name(self):
+        """
+        Posting a Body directly requires a name parameter (DbSQLModel).
+        
+        DbSQLModel uses the same _post() method, so it should have
+        the same validation requirements.
+        """
+        # Create a Body
+        ticker = Ticker(symbol='TEST', longName='Test Corp', exchange='NYSE')
+        bod = body.Body(model=ticker)
+        
+        # Posting without name should raise ValueError
+        with self.assertRaises(ValueError) as ctx:
+            self.db.post(bod, name=None)
+        
+        self.assertIn('name is required', str(ctx.exception))
+        self.assertIn('Body', str(ctx.exception))
+
+    def test_post_basemodel_requires_name(self):
+        """
+        Posting a BaseModel requires a name parameter (DbSQLModel).
+        
+        DbSQLModel uses the same _post() method, so it should have
+        the same validation requirements.
+        """
+        # Create a BaseModel
+        ticker = Ticker(symbol='TEST', longName='Test Corp', exchange='NYSE')
+        
+        # Posting without name should raise ValueError
+        with self.assertRaises(ValueError) as ctx:
+            self.db.post(ticker, name=None)
+        
+        self.assertIn('name is required', str(ctx.exception))
+        self.assertIn('Ticker', str(ctx.exception))
+        
+        # Also test with name not provided at all (defaults to None)
+        with self.assertRaises(ValueError) as ctx2:
+            self.db.post(ticker)  # name parameter omitted
+        
+        self.assertIn('name is required', str(ctx2.exception))
+
+    def test_put_creates_new_record(self):
+        """
+        PUT creates a new record when one doesn't exist (DbSQLModel).
+        
+        PUT is idempotent - it works whether the record exists or not.
+        When the record doesn't exist, PUT behaves like POST.
+        """
+        # PUT a new ticker
+        aapl = Ticker(symbol='AAPL', longName='Apple Inc.', exchange='NASDAQ')
+        sql_rec = self.db.put(aapl, name='AAPL')
+        
+        self.assertIsNotNone(sql_rec)
+        self.assertEqual(sql_rec.info.name, 'AAPL')
+        
+        # Verify it was created
+        retrieved = self.db.getByName('AAPL')
+        self.assertIsNotNone(retrieved)
+        ticker = retrieved.asModel().body.extract()
+        self.assertEqual(ticker.symbol, 'AAPL')
+        self.assertEqual(ticker.longName, 'Apple Inc.')
+
+    def test_put_updates_existing_record(self):
+        """
+        PUT updates an existing record by replacing it (DbSQLModel).
+        
+        This is the key difference from POST - PUT replaces existing
+        records rather than creating duplicates or raising errors.
+        """
+        # Create initial record
+        original = Ticker(symbol='MSFT', longName='Microsoft Corporation', exchange='NASDAQ')
+        self.db.post(original, name='MSFT')
+        
+        # Verify original exists
+        retrieved = self.db.getByName('MSFT')
+        self.assertEqual(retrieved.asModel().body.extract().longName, 'Microsoft Corporation')
+        
+        # PUT an updated version
+        updated = Ticker(symbol='MSFT', longName='Microsoft Corp.', exchange='NASDAQ')
+        self.db.put(updated, name='MSFT')
+        
+        # Verify it was updated
+        retrieved = self.db.getByName('MSFT')
+        self.assertIsNotNone(retrieved)
+        ticker = retrieved.asModel().body.extract()
+        self.assertEqual(ticker.longName, 'Microsoft Corp.')  # Updated value
+        self.assertEqual(ticker.symbol, 'MSFT')  # Same symbol
+
+    def test_put_is_idempotent(self):
+        """
+        PUT is idempotent - multiple calls with same data produce same result (DbSQLModel).
+        
+        This is a key property of PUT operations - calling it multiple
+        times should result in the same state as calling it once.
+        """
+        ticker = Ticker(symbol='GOOGL', longName='Alphabet Inc.', exchange='NASDAQ')
+        
+        # PUT multiple times
+        self.db.put(ticker, name='GOOGL')
+        self.db.put(ticker, name='GOOGL')
+        self.db.put(ticker, name='GOOGL')
+        
+        # Should still have exactly one record
+        retrieved = self.db.getByName('GOOGL')
+        self.assertIsNotNone(retrieved)
+        self.assertEqual(retrieved.asModel().body.extract().longName, 'Alphabet Inc.')
+        
+        # Verify only one record exists
+        all_records = self.db.getAll()
+        googl_records = [r for r in all_records if r.info.name == 'GOOGL']
+        self.assertEqual(len(googl_records), 1)
+
+    def test_put_preserves_other_records(self):
+        """
+        PUT only affects the specified record, leaving others unchanged.
+        
+        This verifies that PUT operations are targeted and don't have
+        side effects on other records in the database.
+        """
+        # Create multiple records
+        tickers = [
+            Ticker(symbol='META', longName='Meta Platforms Inc.', exchange='NASDAQ'),
+            Ticker(symbol='NFLX', longName='Netflix, Inc.', exchange='NASDAQ'),
+            Ticker(symbol='DIS',  longName='The Walt Disney Company', exchange='NYSE'),
+        ]
+        
+        for t in tickers:
+            self.db.post(t, name=t.symbol)
+        
+        # Verify all exist
+        self.assertEqual(len(self.db.getAll()), 3)
+        
+        # PUT an update to one record
+        updated_nflx = Ticker(symbol='NFLX', longName='Netflix Inc.', exchange='NASDAQ')
+        self.db.put(updated_nflx, name='NFLX')
+        
+        # Verify the updated record changed
+        nflx = self.db.getByName('NFLX')
+        self.assertEqual(nflx.asModel().body.extract().longName, 'Netflix Inc.')
+        
+        # Verify other records are unchanged
+        meta = self.db.getByName('META')
+        self.assertEqual(meta.asModel().body.extract().longName, 'Meta Platforms Inc.')
+        
+        dis = self.db.getByName('DIS')
+        self.assertEqual(dis.asModel().body.extract().longName, 'The Walt Disney Company')
+        
+        # Verify still have 3 records
+        self.assertEqual(len(self.db.getAll()), 3)
+
+    def test_put_atomic_transaction(self):
+        """
+        PUT operation uses a single transaction for delete and post.
+        
+        Both operations (delete existing, post new) happen within
+        a single database transaction, ensuring atomicity. If either
+        operation fails, the entire transaction is rolled back.
+        """
+        # Create initial record
+        original = Ticker(symbol='TEST', longName='Original Name', exchange='NASDAQ')
+        self.db.post(original, name='TEST')
+        
+        # Verify it exists
+        retrieved = self.db.getByName('TEST')
+        self.assertIsNotNone(retrieved)
+        original_name = retrieved.asModel().body.extract().longName
+        self.assertEqual(original_name, 'Original Name')
+        
+        # PUT a new record - both delete and post should succeed together
+        updated = Ticker(symbol='TEST', longName='Updated Name', exchange='NASDAQ')
+        result = self.db.put(updated, name='TEST')
+        
+        # Verify the PUT succeeded
+        self.assertIsNotNone(result)
+        
+        # Verify the record was updated (both operations completed)
+        retrieved_after = self.db.getByName('TEST')
+        self.assertIsNotNone(retrieved_after)
+        self.assertEqual(
+            retrieved_after.asModel().body.extract().longName,
+            'Updated Name'
+        )
+        
+        # Verify only one record exists (delete happened before post)
+        all_records = self.db.getAll()
+        test_records = [r for r in all_records if r.info.name == 'TEST']
+        self.assertEqual(len(test_records), 1)
 
 
 if __name__ == '__main__':

@@ -17,7 +17,6 @@ class InfoSQLModel( SQLModel, table=True ):
     
     Stores identifying information about a record.
     """
-    InfoType : ClassVar[ type ] = Info
 
     id     : Optional[int] = Field( default=None, primary_key=True )
     name   : str = Field( index=True, unique=True )  # Indexed for fast lookups
@@ -26,4 +25,4 @@ class InfoSQLModel( SQLModel, table=True ):
     record : Optional["pyswark.core.models.record.RecordSQLModel"] = Relationship( back_populates="info" )
 
     def asModel( self ):
-        return self.InfoType( name=self.name )
+        return Info( name=self.name )

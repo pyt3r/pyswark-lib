@@ -10,7 +10,24 @@ class TypeCheck:
         allowed = allowed if isinstance( allowed, list ) else [ allowed ]
         match = [ cls.isSameType( base, a ) for a in allowed ]
         if allowed and not any( match ):
-            raise ValueError( f"type={ base } is not allowed" )
+            raise ValueError( f"type={ base } is not an allowed type: {allowed=}" )
+
+    @classmethod
+    def checkIfAllowedSubType( cls, base, allowed=None ):
+        base = cls.importType( base )
+        allowed = allowed or []
+        allowed = allowed if isinstance( allowed, list ) else [ allowed ]
+        match = [ cls.isSubclass( base, a ) for a in allowed ]
+        if allowed and not any( match ):
+            raise ValueError( f"type={ base } is not an allowed subclass: {allowed=}" )
+
+    @classmethod
+    def checkIfAllowedInstance( cls, obj, allowed=None ):
+        allowed = allowed or []
+        allowed = allowed if isinstance( allowed, list ) else [ allowed ]
+        match = [ cls.isInstance( obj, a ) for a in allowed ]
+        if allowed and not any( match ):
+            raise ValueError( f"object={ obj } is not an allowed instance: {allowed=}" )
 
     @classmethod
     def isSameType( cls, one, other ):
@@ -43,5 +60,6 @@ class TypeCheck:
     def importType( klass ):
         if isinstance( klass, str ):
             return api.read( klass, datahandler='python' )
+        klass = klass if isinstance( klass, type ) else type( klass )
         return klass
 
