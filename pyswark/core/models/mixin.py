@@ -1,6 +1,3 @@
-from pyswark.core.io import api
-
-
 class TypeCheck:
 
     @classmethod
@@ -58,6 +55,8 @@ class TypeCheck:
 
     @staticmethod
     def importType( klass ):
+        from pyswark.core.io import api
+        
         if isinstance( klass, str ):
             return api.read( klass, datahandler='python' )
         klass = klass if isinstance( klass, type ) else type( klass )

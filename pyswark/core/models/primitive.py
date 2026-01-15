@@ -1,5 +1,6 @@
 from typing import Any
-from pyswark.core.models import extractor
+#from pyswark.lib.pydantic import base
+from pyswark.core import extractor # to be removed
 
 
 class Interface( extractor.Extractor ):

@@ -10,25 +10,25 @@ data sources, enabling versioned and shareable data catalogs.
 from typing import Optional, Union
 from pydantic import Field, create_model
 
-from pyswark.core.io import contents
+from pyswark.core.io import iohandler
 from pyswark.gluedb import dbmodel, recordmodel
 
 
-class Extractor( contents.Contents ):
+class Extractor( iohandler.IoHandler ):
     """Extractor for reading data from URIs within GlueDb."""
     uri              : str
     datahandler      : Optional[ str ] = ""
     kw               : Optional[ dict ] = Field( default_factory=lambda: {} )
 
 
-class Loader( contents.Contents ):
+class Loader( iohandler.IoHandler ):
     """Loader for writing data to URIs within GlueDb."""
     uri              : str
     datahandler      : Optional[ str ] = ""
     kw               : Optional[ dict ] = Field( default_factory=lambda: {} )
 
 
-class Contents( contents.Contents ):
+class Contents( iohandler.IoHandler ):
     """
     Contents model for GlueDb records.
 

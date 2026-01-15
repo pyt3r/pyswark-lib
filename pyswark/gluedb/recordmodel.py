@@ -3,7 +3,7 @@ import pydantic
 from pydantic import field_validator, Field
 
 from pyswark.lib.pydantic import base, ser_des
-from pyswark.core.models import extractor
+from pyswark.core import extractor
 from pyswark.ts.datetime import Datetime
 from pyswark.core.io import api
 

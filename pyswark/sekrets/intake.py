@@ -3,7 +3,7 @@ from typing import Any, Optional
 from pyswark.gluedb import db
 
 from pyswark.lib.pydantic import base
-from pyswark.core.io import contents, api
+from pyswark.core.io import iohandler, api
 from pyswark.core.models import infer
 
 
@@ -167,7 +167,7 @@ class Intake(base.BaseModel):
             as_records: If True, exports as sekret records format
         """
         data = self.asSekretRecords() if as_records else self.raw
-        c = contents.Contents(uri=uri, datahandler=datahandler, kw=kw)
+        c = iohandler.IoHandler(uri=uri, datahandler=datahandler, kw=kw)
         c.write(data)
         return uri
     

@@ -25,8 +25,8 @@ Example
 >>> io.write(df, 'file:./output.csv')
 """
 
-from pyswark.core.io.contents import Contents
-from pyswark.core.io import guess
+from pyswark.core.io.iohandler import IoHandler
+from pyswark.core.io import guess as _guess
 
 
 def read( uri, datahandler=None, **kw ):
@@ -63,7 +63,7 @@ def read( uri, datahandler=None, **kw ):
     >>> df = read('pyswark:/data/ohlc-jpm.csv.gz')
     >>> config = read('file:./config.yaml')
     """
-    contents = Contents( uri=uri, datahandler=datahandler, kw=kw )
+    contents = IoHandler( uri=uri, datahandler=datahandler, kw=kw )
     return contents.read()
 
 
@@ -92,7 +92,7 @@ def write( data, uri, datahandler=None, **kw ):
     >>> write(df, 'file:./output.csv', index=False)
     >>> write(config, 'file:./config.yaml')
     """
-    contents = Contents( uri=uri, datahandler=datahandler, kw=kw )
+    contents = IoHandler( uri=uri, datahandler=datahandler, kw=kw )
     return contents.write( data )
 
 
@@ -115,7 +115,7 @@ def acquire( uri, datahandler=None ):
     Any
         A file-like object or connection handle.
     """
-    contents = Contents( uri=uri, datahandler=datahandler )
+    contents = IoHandler( uri=uri, datahandler=datahandler )
     return contents.acquire()
 
 
@@ -141,7 +141,10 @@ def isUri( uri ):
     False
     """
     try:
-        guess.api( uri )
+        guess( uri )
         return True
     except ValueError:
         return False
+
+def guess( uri ):
+    return _guess.api( uri )

@@ -35,17 +35,18 @@ class Body( base.BaseModel, mixin.TypeCheck ):
         cls.checkIfSubclass( model, cls.Base )
         return model
 
+    def extract( self ):
+        return self.fromDict({
+            'model'    : self.model,
+            'contents' : json.loads( self.contents ),
+        })
+
     def asSQLModel( self ):
         return BodySQLModel( 
             model    = self.model, 
             contents = self.contents,
         )
 
-    def extract( self ):
-        return self.fromDict({
-            'model'    : self.model,
-            'contents' : json.loads( self.contents ),
-        })
 
 class BodySQLModel( SQLModel, table=True ):
     """

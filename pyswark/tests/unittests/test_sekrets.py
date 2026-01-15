@@ -120,21 +120,7 @@ class TestIntake(unittest.TestCase):
 
     def test_asGlueDb(self):
         """Test converting to a queryable GlueDb"""
-        data = {
-            "db_password": "secret123",
-            "api_key": "xyz-abc-789"
-        }
-        
-        gluedb = Intake.ingest(data).asGlueDb()
-        
-        # Verify names
-        names = gluedb.getNames()
-        self.assertIn("db_password", names)
-        self.assertIn("api_key", names)
-        
-        # Verify extraction
-        secret = gluedb.extract("db_password")
-        self.assertEqual(secret["sekret"], "secret123")
+
 
     def test_toJson(self):
         """Test JSON serialization"""

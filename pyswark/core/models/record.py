@@ -10,6 +10,9 @@ class Record( base.BaseModel ):
     info     : Info
     body     : Body
 
+    def extractBody( self ):
+        return self.body.extract()
+
     def asSQLModel( self ):
         return RecordSQLModel( 
             info = self.info.asSQLModel(), 

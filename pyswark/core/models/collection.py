@@ -1,5 +1,5 @@
 from typing import Any, Union
-from pydantic import field_validator, model_validator
+from pydantic import field_validator
 from pyswark.lib.pydantic import base, ser_des
 from pyswark.core.models import primitive
 
