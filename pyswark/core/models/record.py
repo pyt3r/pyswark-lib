@@ -1,11 +1,9 @@
-from typing import Optional, ClassVar, Union
+from typing import Optional
 from sqlmodel import SQLModel, Field, Relationship
-from pydantic import field_validator
 from pyswark.lib.pydantic import base
 
 from pyswark.core.models.info import Info, InfoSQLModel
 from pyswark.core.models.body import Body, BodySQLModel
-from pyswark.core.models import mixin
 
 
 class Record( base.BaseModel ):
@@ -39,7 +37,3 @@ class RecordSQLModel( SQLModel, table=True ):
             info = self.info.asModel(), 
             body = self.body.asModel(),
         )
-
-    @classmethod
-    def getUri( cls ):
-        return f"{ cls.__module__ }.{ cls.__qualname__ }"

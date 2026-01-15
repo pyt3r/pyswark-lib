@@ -1,4 +1,4 @@
-from typing import Optional, ClassVar
+from typing import Optional
 from sqlmodel import SQLModel, Field, Relationship
 from pyswark.lib.pydantic import base
 

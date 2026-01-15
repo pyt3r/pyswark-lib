@@ -92,6 +92,98 @@ class TestDb(unittest.TestCase):
         self.assertIsNotNone(new_rec)
         self.assertIsNotNone(db.getByName('MSFT'))
 
+    def test_getByName_retrieves_existing_record(self):
+        """
+        getByName() retrieves a record by name.
+        
+        This tests the getByName() method which uses SQLModel internally
+        via asSQLModel() to query and retrieve records.
+        """
+        db = Db()
+        
+        # Post a record
+        aapl = Ticker(symbol='AAPL', longName='Apple Inc.', exchange='NASDAQ')
+        db.post(aapl, name='AAPL')
+        
+        # Retrieve by name
+        retrieved = db.getByName('AAPL')
+        
+        self.assertIsNotNone(retrieved)
+        self.assertIsInstance(retrieved, record.Record)
+        self.assertEqual(retrieved.info.name, 'AAPL')
+        
+        # Verify data integrity
+        ticker = retrieved.body.extract()
+        self.assertIsInstance(ticker, Ticker)
+        self.assertEqual(ticker.symbol, 'AAPL')
+
+    def test_getByName_returns_none_for_nonexistent(self):
+        """
+        getByName() returns None when record doesn't exist.
+        
+        This ensures safe behavior - no exceptions raised for missing records.
+        """
+        db = Db()
+        
+        # Try to get a non-existent record
+        result = db.getByName('DOESNOTEXIST')
+        
+        self.assertIsNone(result)
+
+    def test_deleteByName_removes_record_and_updates_records(self):
+        """
+        deleteByName() removes a record and updates self.records.
+        
+        This tests that deleteByName() not only deletes from SQLModel
+        but also updates the in-memory records list.
+        """
+        db = Db()
+        
+        # Post multiple records
+        tickers = [
+            Ticker(symbol='JPM', longName='JPMorgan Chase', exchange='NYSE'),
+            Ticker(symbol='BAC', longName='Bank of America', exchange='NYSE'),
+        ]
+        
+        for t in tickers:
+            db.post(t, name=t.symbol)
+        
+        # Verify both exist
+        self.assertEqual(len(db.records), 2)
+        self.assertIsNotNone(db.getByName('JPM'))
+        self.assertIsNotNone(db.getByName('BAC'))
+        
+        # Delete one
+        result = db.deleteByName('JPM')
+        
+        # Verify deletion succeeded
+        self.assertTrue(result)
+        
+        # Verify records list was updated
+        self.assertEqual(len(db.records), 1)
+        
+        # Verify it's gone from database
+        self.assertIsNone(db.getByName('JPM'))
+        
+        # Verify other record still exists
+        self.assertIsNotNone(db.getByName('BAC'))
+
+    def test_deleteByName_returns_false_for_nonexistent(self):
+        """
+        deleteByName() returns False when record doesn't exist.
+        
+        This ensures safe behavior - no exceptions raised for missing records.
+        """
+        db = Db()
+        
+        # Try to delete a non-existent record
+        result = db.deleteByName('DOESNOTEXIST')
+        
+        self.assertFalse(result)
+        
+        # Verify records list unchanged
+        self.assertEqual(len(db.records), 0)
+
     def test_post_body_requires_name(self):
         """
         Posting a Body directly requires a name parameter.

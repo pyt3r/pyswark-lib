@@ -76,38 +76,10 @@ class Db( base.BaseModel, mixin.TypeCheck ):
         return success
 
     def put( self, obj, name=None ):
-        """
-        Put (update or create) a record atomically.
-        
-        If a record with the given name exists, it is replaced.
-        If it doesn't exist, a new record is created.
-        This is idempotent - calling put() multiple times with the same
-        name results in the same state.
-        
-        The operation is atomic: if either delete or post fails,
-        the database state remains unchanged.
-        """
-        # Prepare the new record first
-        new_rec = self._post( obj, name=name )
-        
-        # Get existing record before deletion (for rollback if needed)
-        existing_rec = self.getByName( name )
-        
-        try:
-            # Delete existing record if it exists (idempotent - no error if missing)
-            self.deleteByName( name )
-            # Add the new record
-            self.records.append( new_rec )
-            return new_rec
-        except Exception:
-            # Rollback: restore existing record if it existed
-            if existing_rec is not None:
-                # Remove any partially added record
-                if new_rec in self.records:
-                    self.records.remove( new_rec )
-                # Restore the original
-                self.records.append( existing_rec )
-            raise
+        dbModel = self.asSQLModel()
+        sqlModel = dbModel.put( obj, name=name )
+        self.records = dbModel.asModel().records
+        return sqlModel.asModel()
 
     def asSQLModel( self, *a, **kw ):
         dbModel = DbSQLModel( *a, **kw )
@@ -135,9 +107,7 @@ class DbSQLModel:
 
             session.add( sqlModel )
             session.commit()
-            
-            # Refresh to get generated ids, including nested relationships
-            self._refresh( session, sqlModel )
+            self._refreshWithSession( session, sqlModel )
 
             return sqlModel
 
@@ -151,7 +121,7 @@ class DbSQLModel:
             session.commit()
             
             for sqlModel in sqlModels:
-                self._refresh( session, sqlModel )
+                self._refreshWithSession( session, sqlModel )
 
             return sqlModels
 
@@ -217,7 +187,7 @@ class DbSQLModel:
                 
                 # Commit both operations together
                 session.commit()
-                self._refresh( session, sqlModelNew )
+                self._refreshWithSession( session, sqlModelNew )
                 
                 return sqlModelNew
 
@@ -226,7 +196,7 @@ class DbSQLModel:
                 raise
 
     @staticmethod
-    def _refresh( session, sqlModel ):
+    def _refreshWithSession( session, sqlModel ):
         """ Refresh to get generated ids, including nested relationships """
         session.refresh( sqlModel )
         session.refresh( sqlModel.info )
@@ -236,7 +206,6 @@ class DbSQLModel:
         with Session( self.engine ) as session:
             sqlModel = session.exec( query ).one_or_none()
             if sqlModel:
-                # Delete related objects first, then the record
                 self._deleteWithSession( session, sqlModel )
                 session.commit()
                 return True
@@ -244,6 +213,7 @@ class DbSQLModel:
 
     @staticmethod
     def _deleteWithSession( session, sqlModel ):
+        """ Delete related objects first, then the record """
         session.delete( sqlModel.info )
         session.delete( sqlModel.body )
         session.delete( sqlModel )
