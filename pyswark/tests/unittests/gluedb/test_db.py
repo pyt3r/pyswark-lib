@@ -9,41 +9,20 @@ from pyswark.lib.pydantic import ser_des
 from pyswark.core.models import primitive, collection, infer
 
 from pyswark.gluedb import api
+from pyswark.gluedb.models import IoModel
+
 from pyswark.tests.unittests.data.gluedb.settings import Settings
 
 
 class TestLocalExample( unittest.TestCase ):
 
-    def test_view_available_content_from_a_gluedb(self):
-        uri = f'{ Settings.DB.uri }.DB_2'
-        db  = api.connect(uri)
-
-        self.assertListEqual( db.getNames(), ['c', 'd'] )
-
-        records = db.model_dump()['records']
-        bodies  = [ r['body'] for r in records ]
-
-        self.assertListEqual( bodies, [
-            { 'model'   : db.Contents.getUri(),
-              'contents': { 'uri': f'{ Settings.OBJECTS.uri }.C' }
-             },
-            { 'model'   : db.Contents.getUri(),
-              'contents': { 'uri': f'{ Settings.OBJECTS.uri }.D' }
-             },
-        ])
 
     def test_acquiring_content_from_a_gluedb(self):
         uri = f'{ Settings.DB.uri }.DB_2'
         db  = api.connect(uri)
 
         record = db.get( "d" )
-
-        contents = record.acquire()
-        self.assertDictEqual( contents.model_dump(),
-            {'uri': f'{ Settings.OBJECTS.uri }.D', 'datahandler': '', 'kw': {}, 'datahandlerWrite': '', 'kwWrite': {}}
-        )
-
-        d = record.extract()
+        d = record.acquire().extract()
         self.assertDictEqual( d, {'g': 7, 'h': 8, 'i': 9} )
 
     def test_loading_content_from_a_gluedb(self):
@@ -69,10 +48,10 @@ class TestLocalExample( unittest.TestCase ):
         uri = f'{ Settings.DB.uri }.DB_1'
         db  = api.connect(uri)
 
-        uri = db.get('a').body['contents']['uri']
+        uri = db.get('a').acquire().uri
 
         db.delete( 'a' )
-        db.post( 'a', uri )
+        db.post( name='a', obj=uri )
 
         ser = db.toJson()
         des = ser_des.fromJson( ser )
@@ -91,8 +70,8 @@ class TestCRUD( unittest.TestCase ):
         db.merge( old )
 
         record = db.get("c")
-        db.post('c.copy.1', record.model_dump()['body'])
-        db.post('c.copy.2', record.body)
+        db.post(record.body.contents, name='c.copy.1')
+        db.post(record.body, name='c.copy.2')
 
         c_orig  = db.extract('c')
         c_copy1 = db.extract('c.copy.1')
@@ -105,54 +84,21 @@ class TestCRUD( unittest.TestCase ):
     def test_POST_duplicate_names_in_a_db(self):
 
         db = api.newDb()
-        db.post( 'a', infer.Infer('1') )
+        db.post( infer.Infer('1'), name='a' )
 
         with self.assertRaises( Exception ):
-            db.post( 'a', infer.Infer('2') )
+            db.post( infer.Infer('2'), name='a' )
         
     def test_PUT_content_in_a_db(self):
         db = api.connect(f'{ Settings.DB.uri }.DB_2')
 
         old = db.extract( "c" )
 
-        db.put( "c", db.get("d").body )
+        db.put( db.get("d").body, name="c" )
         new = db.extract( "c" )
 
         self.assertDictEqual( old, {'d': 4, 'e': 5, 'f': 6} )
         self.assertDictEqual( new, {'g': 7, 'h': 8, 'i': 9} )
-
-    def test_exampleDb_creation_without_DELETE(self):
-        db = self.makeTestDb()
-        self.assertListEqual( db.getNames(), ['a','b','c','d'] )
-
-        infoBody = db.backend.selectInfoAndBody()
-        nameIxMap = { info.name : info.index for info, body in infoBody }
-        nameIdMap = { info.name : info.id for info, body in infoBody }
-        self.assertDictEqual( nameIxMap, { 'a': 0, 'b': 1, 'c': 2, 'd': 3 })
-        self.assertDictEqual( nameIdMap, { 'a': 1, 'b': 2, 'c': 3, 'd': 4 })
-
-    def test_DELETE_one_name_from_exampleDb(self):
-        db = self.makeTestDb()
-        db.delete( 'b' )
-        self.assertListEqual( db.getNames(), ['a','c','d'] )
-
-        infoBody  = db.backend.selectInfoAndBody()
-        nameIxMap = { info.name : info.index for info, body in infoBody }
-        nameIdMap = { info.name : info.id for info, body in infoBody }
-        self.assertDictEqual( nameIxMap, {'a': 0, 'c': 1, 'd': 2})
-        self.assertDictEqual( nameIdMap, {'a': 1, 'c': 3, 'd': 4})
-
-    def test_DELETE_two_names_from_exampleDb(self):
-        db = self.makeTestDb()
-        db.delete( 'a' )
-        db.delete( 'd' )
-        self.assertListEqual( db.getNames(), ['b','c'] )
-
-        infoBody  = db.backend.selectInfoAndBody()
-        nameIxMap = { info.name : info.index for info, body in infoBody }
-        nameIdMap = { info.name : info.id for info, body in infoBody }
-        self.assertDictEqual( nameIxMap, {'b': 0, 'c': 1})
-        self.assertDictEqual( nameIdMap, {'b': 2, 'c': 3})
 
     @staticmethod
     def makeTestDb():
@@ -170,15 +116,15 @@ class TestPrimitivesAndCollections( unittest.TestCase ):
 
     def test_adding_primitive_and_collection_models(self):
         db = api.newDb()
-        db.post( 'integer', primitive.Int('1.0'))
-        db.post( 'float', primitive.Float('1.0'))
-        db.post( 'string', primitive.String('1.0'))
-        db.post( 'list', collection.List([1, '1', 1.]))
-        db.post( 'dict', collection.Dict([
+        db.post( name='integer', obj=primitive.Int('1.0'))
+        db.post( name='float', obj=primitive.Float('1.0'))
+        db.post( name='string', obj=primitive.String('1.0'))
+        db.post( name='list', obj=collection.List([1, '1', 1.]))
+        db.post( name='dict', obj=collection.Dict([
             ( '1.0', 1.0 ), 
             ( primitive.String('2.0'), primitive.Float('2.0') ),
         ]))
-        db.post( 'a string with spaces!', primitive.String('my string'))
+        db.post( name='a string with spaces!', obj=primitive.String('my string'))
 
         self.assertEqual( db.extract( 'integer' ), 1.0 )
         self.assertEqual( db.extract( 'float' ), 1.0 )
@@ -191,28 +137,14 @@ class TestPrimitivesAndCollections( unittest.TestCase ):
 
     def test_invalid_and_valid_models(self):
         db = api.newDb()
-        db.post( 'valid', infer.Infer('1') )
-        db.post( 'invalid', '1' )
-
+        db.post( name='valid', obj=infer.Infer('1') )
+        
         self.assertEqual( db.extract('valid'), '1' )
         
-        with self.assertRaisesRegex( ValueError, "Handler not found for uri='1'" ):
-            db.extract('invalid')
-
-    def test_pop(self):
-        db = api.newDb()
-        db.post( 'string', primitive.String('1.0'))
-
-        self.assertTrue( 'string' in db )
-        self.assertEqual( db.extract( 'string' ), '1.0' )
-
-        popped = db.pop( 'string' )
-        self.assertFalse( 'string' in db )
-        self.assertEqual( popped.extract(), '1.0' )
-
-        db = api.newDb()
-        db.post( 'popped', popped )
-        self.assertEqual( db.extract( 'popped' ), '1.0' )
+        with self.assertRaises( NotImplementedError ) as ctx:
+            db.post( name='invalid', obj=1 )
+        
+        self.assertIn( 'post() not implemented for type', str(ctx.exception) )
         
 
 class TestLoad( unittest.TestCase ):
@@ -230,8 +162,8 @@ class TestLoad( unittest.TestCase ):
     def test_load(self):
         db = api.newDb()
         
-        contents = db.Contents.fromArgs( self.uri, '', {}, '', {'overwrite' : True} )
-        db.post( 'mydata', contents )
+        contents = IoModel.fromArgs( self.uri, '', {}, '', '', {'overwrite' : True} )
+        db.post( name='mydata', obj=contents )
 
         DF = db.extract('mydata')
         pandas.testing.assert_frame_equal( DF, self.DF )

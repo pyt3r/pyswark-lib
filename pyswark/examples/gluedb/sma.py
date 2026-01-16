@@ -3,8 +3,10 @@
 def main():
 
     # connect to a db
+    from pyswark.core.io import api as io_api
     from pyswark.gluedb import api
-    db = api.connect( 'pyswark:/data/sma-example.gluedb' )
+    
+    db = io_api.read( 'pyswark:/data/sma-example.gluedb', datahandler='pjson' )
 
     # view the names
     print( db.getNames() )
@@ -13,7 +15,7 @@ def main():
     record = db.get( 'JPM' )
     print( record.body )
 
-    # acquire the contents
+    # acquire the model
     contents = record.acquire()
     print( type(contents) )
 
@@ -28,20 +30,22 @@ def main():
     Enum = db.enum
     JPM  = db.extract( Enum.JPM.value )
 
-    # get records by query
-    from sqlalchemy import select
-    from pyswark.gluedb import table
+    # TO DO: get records by query
+    """
+    from sqlmodel import select
+    from pyswark.core.models import import info, record
 
-    recordsBefore2025 = db.getByQuery( select( table.Info ).where( 
-        table.Info.date_created < '2025-01-01' 
+    recordsBefore2025 = db.getByQuery( select( record.RecordSQLModel ).where( 
+        info.InfoSQLModel.date_created < '2025-01-01' 
     ))
     recordsAfter2025 = db.getByQuery( select( table.Info ).where( 
-        table.Info.date_created > '2025-01-01' 
+        info.InfoSQLModel.date_created > '2025-01-01' 
     ))
     print([ r.info.name for r in recordsBefore2025 ])
     # ['JPM', 'BAC']
     print([ r.info.name for r in recordsAfter2025 ])
     # ['kwargs']
+    """
 
 
     # == create a new db ==
@@ -49,10 +53,10 @@ def main():
     from pyswark.core.models import collection, primitive
 
     db = api.newDb()
-    db.post( 'JPM', 'pyswark:/data/ohlc-jpm.csv.gz' )
-    db.post( 'BAC', 'pyswark:/data/ohlc-bac.csv.gz' )
-    db.post( 'window', primitive.Int("60.0") )
-    db.post( 'kwargs', collection.Dict({ "window": 60 }))
+    db.post( 'pyswark:/data/ohlc-jpm.csv.gz', name='JPM' )
+    db.post( 'pyswark:/data/ohlc-bac.csv.gz', name='BAC' )
+    db.post( primitive.Int("60.0"), name='window' )
+    db.post( collection.Dict({ "window": 60 }), name='kwargs' )
     db.delete( 'window' )
 
     from pyswark.core.io.api import write

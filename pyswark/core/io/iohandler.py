@@ -1,5 +1,5 @@
 from typing import Optional
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 
 from pyswark.core import extractor
 from pyswark.core.io import guess
@@ -16,6 +16,14 @@ class IoHandler( extractor.Extractor ):
         if isinstance( datahandler, DataHandler ):
             return datahandler.name
         return datahandler
+
+    @model_validator( mode='after' )
+    def _validate(self):
+        if self.uri.startswith( "python:" ):
+            alreadySet = self.kw and 'reloadmodule' in self.kw
+            if not alreadySet:
+                self.kw.update({ "reloadmodule": True })
+        return self
 
     def extract( self ):
         return self.read()

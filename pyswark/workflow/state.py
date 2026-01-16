@@ -16,7 +16,7 @@ class Interface( base.BaseModel ):
     def extract(self, name: str ):
         """ extracts the data from the state """
 
-    def post( self, name: str, data: Any ):
+    def post( self, data: Any, name: str ):
         """ posts the data into the state """
 
     def delete( self, name: str ):
@@ -32,7 +32,7 @@ class State( Interface ):
     def extract( self, name: str ):
         return self.backend[ name ]
     
-    def post( self, name: str, data: Any ):
+    def post( self, data: Any, name: str ):
         """
         posts the data into the state.
         If the state is immutable, the data is validated to ensure that it does not contain any keys that are already in the state.
@@ -49,27 +49,27 @@ class State( Interface ):
 
 
 class StateWithGlueDb( Interface ):
-    backend : db.GlueDb = Field( default_factory=dict )
+    backend : db.Db = Field( default_factory=dict )
 
     def __init__( self, backend=None, **kw ):
         backend = backend or {}
         isDict  = isinstance( backend, dict )
         super().__init__( backend=api.newDb() if isDict else backend, **kw )
         if isDict:
-            [ self.post( k, v ) for k, v in backend.items() ]
+            [ self.post( v, name=k ) for k, v in backend.items() ]
 
     def extract( self, name: str ):
         return self.backend.extract( name )
     
-    def post( self, name: str, data: Any ):
+    def post( self, data: Any, name: str ):
 
         if not isinstance( data, BaseModel ):
             data = Infer( data )
 
         if name in self and self.mutable:
-            self.backend.put( name, data )
+            self.backend.put( data, name=name )
         else:
-            self.backend.post( name, data )
+            self.backend.post( data, name=name )
 
     def delete( self, name: str ):
         """ deletes the data from the state """

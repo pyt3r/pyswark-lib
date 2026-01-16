@@ -47,7 +47,7 @@ class TestCRUD( unittest.TestCase ):
         hub.merge( old )
 
         record = hub.get("db_2")
-        hub.post('db_2.copy', record.body)
+        hub.post( name='db_2.copy', obj=record.body)
 
         db_orig = hub.extract('db_2')
         db_copy = hub.extract('db_2.copy')
@@ -62,12 +62,8 @@ class TestCRUD( unittest.TestCase ):
 
         old = hub.extract( 'db_2' )
 
-        hub.put( 'db_2', hub.get("db_1").body )
+        hub.put( name='db_2', obj=hub.get("db_1").body )
         new = hub.extract('db_2')
 
         self.assertListEqual( old.getNames(), ['c', 'd'] )
         self.assertListEqual( new.getNames(), ['a', 'b'] )
-
-    def test_DELETE_content_in_a_hub(self):
-        pass
-

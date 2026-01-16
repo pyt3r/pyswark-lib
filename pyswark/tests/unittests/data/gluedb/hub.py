@@ -7,4 +7,6 @@ DBs = {
 }
 
 HUB = hub.GlueHub()
-_ = [ HUB.post( name, gluedb ) for name, gluedb in DBs.items() ]
+_ = [ HUB.post( gluedb, name=name ) for name, gluedb in DBs.items() ]
+
+print()

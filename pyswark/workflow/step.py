@@ -109,7 +109,7 @@ class Step( base.BaseModel ):
     def postStateOutputToState( self, state, outputData ):
         """ loads output to state """
         for name, contents in outputData.items():
-            state.post( name, contents )
+            state.post( contents, name=name )
 
     def extractStateOutputFromModelOutput( self, modelOutput ):
         """ extracts outputs from model """

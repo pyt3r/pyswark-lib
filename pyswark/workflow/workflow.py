@@ -28,11 +28,10 @@ Example
 ... ])
 >>>
 >>> state = State()
->>> state.post('data', raw_dataframe)
+>>> state.post(raw_dataframe, name='data')
 >>> result = workflow.run(state)
 """
 
-#%%
 import logging
 from pydantic import field_validator, Field
 from pyswark.lib.pydantic import base

@@ -2,8 +2,10 @@ from sqlmodel import SQLModel, create_engine, Session, select
 from sqlalchemy.orm import selectinload
 from typing import ClassVar, Union
 from functools import singledispatchmethod
+
 from pydantic import Field
 from pyswark.lib.pydantic import base
+from pyswark.lib import enum
 
 from pyswark.core.models import mixin, record, body, info
 
@@ -15,10 +17,22 @@ class Db( base.BaseModel, mixin.TypeCheck ):
 
     records : list[ record.Record ] = Field( default_factory=list )
 
+    @property
+    def enum(self):
+        return enum.Enum.createDynamically({ n: n for n in self.getNames() })
+
+    def postAll( self, objs ):
+        sqlModel = self.asSQLModel()
+        sqlModel.postAll( objs )
+        self.records = sqlModel.asModel().records
+        return self
+
     def post( self, obj, name=None ):
-        rec = self._post( obj, name=name )
-        self.records.append( rec )
-        return rec
+        dbModel = self.asSQLModel()
+        rec = dbModel.post( obj, name=name )
+        model = rec.asModel()
+        self.records.append( model )
+        return model
 
     @singledispatchmethod
     @classmethod
@@ -82,15 +96,16 @@ class Db( base.BaseModel, mixin.TypeCheck ):
         return sqlModel.asModel()
 
     def asSQLModel( self, *a, **kw ):
-        dbModel = DbSQLModel( *a, **kw )
+        dbModel = DbSQLModel( *a, **kw, dbType=type(self) )
         dbModel.postAll( self.records )
         return dbModel
 
 
 class DbSQLModel:
 
-    def __init__(self, url='sqlite:///:memory:', **kw ):
+    def __init__(self, url='sqlite:///:memory:', dbType=Db, **kw ):
         self.engine = self._initEngine( url )
+        self.dbType = dbType
         
     @classmethod
     def _initEngine( cls, url, **kw ):
@@ -100,7 +115,7 @@ class DbSQLModel:
             return engine
 
     def post( self, obj, name=None ):
-        model = Db._post( obj, name=name )
+        model = self._post( obj, name=name )
 
         with Session( self.engine ) as session:
             sqlModel = model.asSQLModel()
@@ -111,8 +126,11 @@ class DbSQLModel:
 
             return sqlModel
 
+    def _post( self, obj, name=None ):
+        return self.dbType._post( obj, name=name )
+
     def postAll( self, objs ):
-        models    = [ Db._post( o ) for o in objs ]
+        models    = [ self._post( o ) for o in objs ]
         sqlModels = [ model.asSQLModel() for model in models ]
 
         with Session( self.engine ) as session:
@@ -168,7 +186,7 @@ class DbSQLModel:
         is rolled back and the database state remains unchanged.
         """
         # Prepare the new record model first (validate before transaction)
-        model = Db._post( obj, name=name )
+        model = self._post( obj, name=name )
         
         # Use a single transaction for both delete and post
         with Session( self.engine ) as session:
@@ -242,5 +260,5 @@ class DbSQLModel:
         )
 
     def asModel( self ):
-        return Db( records=[ rec.asModel() for rec in self.getAll() ] )
+        return self.dbType( records=[ rec.asModel() for rec in self.getAll() ] )
     

@@ -1,23 +1,13 @@
 {
-  "model": "pyswark.gluedb.db.GlueDb",
+  "model": "pyswark.gluedb.db.Db",
   "contents": {
     "records": [
       {
         "info": {
-          "name": "JPM",
-          "date_created": {
-            "data": "2020-03-01T00:07:17",
-            "dtype": "datetime64[s]",
-            "tzname": "UTC"
-          },
-          "date_modified": {
-            "data": "2025-06-04T15:14:05",
-            "dtype": "datetime64[s]",
-            "tzname": "UTC"
-          }
+          "name": "JPM"
         },
         "body": {
-          "model": "pyswark.gluedb.db.Contents",
+          "model": "pyswark.gluedb.models.IoModel",
           "contents": {
             "uri": "pyswark:/data/ohlc-jpm.csv.gz",
             "datahandler": "",
@@ -29,20 +19,10 @@
       },
       {
         "info": {
-          "name": "BAC",
-          "date_created": {
-            "data": "2020-03-01T00:07:24",
-            "dtype": "datetime64[s]",
-            "tzname": "UTC"
-          },
-          "date_modified": {
-            "data": "2025-06-04T15:14:05",
-            "dtype": "datetime64[s]",
-            "tzname": "UTC"
-          }
+          "name": "BAC"
         },
         "body": {
-          "model": "pyswark.gluedb.db.Contents",
+          "model": "pyswark.gluedb.models.IoModel",
           "contents": {
             "uri": "pyswark:/data/ohlc-bac.csv.gz",
             "datahandler": "",
@@ -54,17 +34,7 @@
       },
       {
         "info": {
-          "name": "kwargs",
-          "date_created": {
-            "data": "2025-06-04T15:14:05",
-            "dtype": "datetime64[s]",
-            "tzname": "UTC"
-          },
-          "date_modified": {
-            "data": "2025-06-04T15:14:05",
-            "dtype": "datetime64[s]",
-            "tzname": "UTC"
-          }
+          "name": "kwargs"
         },
         "body": {
           "model": "pyswark.core.models.collection.Dict",

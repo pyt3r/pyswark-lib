@@ -10,7 +10,7 @@ class Record( base.BaseModel ):
     info     : Info
     body     : Body
 
-    def extractBody( self ):
+    def acquire( self ):
         return self.body.extract()
 
     def asSQLModel( self ):

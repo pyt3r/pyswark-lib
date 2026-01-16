@@ -48,8 +48,8 @@ def connect( uri ):
     >>> db = connect('pyswark:/data/sma-example.gluedb')
     >>> db = connect('python://mymodule.MY_GLUEDB')
     """
-    from pyswark.gluedb import extractor
-    return extractor.Contents( uri=uri ).extract()
+    from pyswark.core.io import api
+    return api.read( uri )
 
 def newDb():
     """
@@ -67,7 +67,7 @@ def newDb():
     >>> db.post('config', {'window': 60})
     """
     from pyswark.gluedb import db
-    return db.GlueDb()
+    return db.Db()
 
 def newHub():
     """

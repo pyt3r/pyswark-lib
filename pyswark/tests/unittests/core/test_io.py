@@ -150,11 +150,11 @@ class LocalTestCasePython( unittest.TestCase ):
         from pyswark.tests.unittests.core import test_io
 
         uri = f"python://{ test_io.__name__}.PYTHON_DATA"
-        data = api.read(uri)
+        data = api.read(uri,)
         self.assertListEqual( data, [1,2,3] )
 
         data.append(4)
-        data = api.read(uri)
+        data = api.read(uri, reloadmodule=False)
         self.assertListEqual( data, [1,2,3,4] )
 
         data = api.read(uri, reloadmodule=True)
