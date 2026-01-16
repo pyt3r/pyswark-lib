@@ -29,11 +29,11 @@ Documentation may be found on the `Read the Docs`_ page.
 
 .. |build| image:: https://img.shields.io/azure-devops/build/pyt3r/pyswark/6
     :alt: Build
-    :target: `Azure Pipeline`_
+    :target: `Azure`_
 
 .. |coverage| image:: https://img.shields.io/azure-devops/coverage/pyt3r/pyswark/6
     :alt: Coverage
-    :target: `Azure Coverage`_
+    :target: `Azure`_
 
 .. |version| image:: https://img.shields.io/conda/v/pyt3r/pyswark
     :alt: Version
@@ -51,20 +51,9 @@ Documentation may be found on the `Read the Docs`_ page.
 
 .. links
 
-.. _conda-build: https://docs.conda.io/projects/conda-build/en/latest/
-.. _Azure Pipeline: https://dev.azure.com/pyt3r/pyswark/_build
-.. _Azure Coverage: https://dev.azure.com/pyt3r/pyswark/_build/results?view=codecoverage-tab&buildId=383
+.. _Azure: https://dev.azure.com/pyt3r/pyswark/_build/latest?definitionId=6
 .. _Anaconda Cloud: https://anaconda.org/pyt3r/pyswark
 .. _Read the Docs: https://pyswark-lib.readthedocs.io/en/latest/
-
-.. _(mini)conda: https://docs.conda.io/en/latest/miniconda.html
-.. _conda-recipe/meta.yaml: conda-recipe/meta.yaml
-.. _azure-pipelines.yml: azure-pipelines.yml
-.. _https://dev.azure.com/pyt3r/pyswark/_build: https://dev.azure.com/pyt3r/pyswark/_build
-.. _https://anaconda.org/pyt3r/pyswark: https://anaconda.org/pyt3r/pyswark
-.. _.readthedocs.yml: .readthedocs.yml
-.. _https://pyswark-package.readthedocs.io: https://pyswark-package.readthedocs.io
-.. _MIT License: LICENSE
 
 .. end links
 
