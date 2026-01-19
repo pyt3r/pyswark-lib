@@ -21,7 +21,7 @@ Documentation may be found on the `Read the Docs`_ page.
     * - tests
       - |build| |coverage|
     * - package
-      - |version| |platform| |downloads|
+      - |version| |platform|
 
 .. |docs| image:: https://readthedocs.org/projects/pyswark-lib/badge/?version=latest
     :target: `Read the Docs`_
@@ -43,9 +43,9 @@ Documentation may be found on the `Read the Docs`_ page.
     :alt: Platform
     :target: `Anaconda Cloud`_
 
-.. |downloads| image:: https://img.shields.io/conda/dn/pyt3r/pyswark
-    :alt: Platform
-    :target: `Anaconda Cloud`_
+.. .. |downloads| image:: https://img.shields.io/conda/dn/pyt3r/pyswark
+..     :alt: Platform
+..     :target: `Anaconda Cloud`_
 
 .. end badges
 
