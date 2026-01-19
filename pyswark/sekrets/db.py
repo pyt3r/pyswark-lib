@@ -1,7 +1,39 @@
-from pyswark.sekrets.models import generic, sgdrive2
-from pyswark.sekrets.settings import Settings
+from pyswark.core.io import api
+from pyswark.core.models import db # note the change from gluedb to core.models
+from pyswark.sekrets.models import base, generic
 
-SGDRIVE2      = sgdrive2.Db( Settings.SGDRIVE2.uri )
-PRIVATE_CONDA = generic.Db(  Settings.PRIVATE_CONDA.uri )
-REDIS         = generic.Db(  Settings.REDIS.uri )
-EXAMPLE_IAC   = generic.Db(  Settings.EXAMPLE_IAC.uri )
+
+class Db( db.Db ):
+    AllowedInstances = [ base.Sekret ]
+
+    @classmethod
+    def _post_fallback( cls, obj, name=None ):
+        success = False
+        success, obj, name = cls._post_fallback_string( obj, name, success )
+        success, obj, name = cls._post_fallback_generic( obj, name, success )
+        return obj, name
+
+    @classmethod
+    def _post_fallback_string( cls, obj, name=None, success=False ):
+        if isinstance( obj, str ):
+            try:
+                obj = api.read( obj, datahander='string' )
+                success = True
+            except:
+                success = False
+        return success, obj, name
+
+    @classmethod
+    def _post_fallback_generic( cls, obj, name=None, success=False ):
+
+        if isinstance( obj, dict ):
+            name = obj.get( 'name', name )
+
+            try:
+                obj = { k: v for k, v in obj.items() if k != 'name' }
+                obj = generic.Sekret( **obj )
+                success = True
+            except:
+                success = False
+
+        return success, obj, name

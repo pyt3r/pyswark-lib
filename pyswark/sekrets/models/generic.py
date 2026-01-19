@@ -1,13 +1,7 @@
 from typing import Optional, Any
-from pyswark.lib.pydantic import base
-from pyswark.gluedb import db
+from pyswark.sekrets import base
 
-class Contents( base.BaseModel ):
+
+class Sekret( base.Sekret ):
     sekret      : Any
     description : Optional[ str ] = ""
-
-    def extract( self ):
-        return self.model_dump()
-
-
-Db = db.makeDb( Contents )
