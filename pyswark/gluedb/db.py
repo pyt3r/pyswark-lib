@@ -12,35 +12,41 @@ class Db( db.Db ):
     AllowedInstances = [ IoModel, base.BaseModel ]
 
     @classmethod
-    def _post( cls, obj, name=None ):
+    def _post_fallback( cls, obj, name=None ):
+        _, obj, name = cls._post_fallback_ioModel( obj, name=name )
+        return obj, name
 
-        try:
-            return super()._post( obj, name=name ) # parent's dispatched handlers
-            
-        except NotImplementedError:
+    @classmethod
+    def _post_fallback_ioModel( cls, obj, name=None, success=False ):
+        success, obj, name = cls._post_fallback_uri( obj, name )
 
-            if isinstance( obj, Path ):
-                obj = str( obj )
-
-            if isinstance( obj, str ):
-                
-                if api.isUri( obj ):
-                    obj = { 'uri' : str( obj ) }
-                
-                else:
-                    try:
-                        obj = json.loads( obj )
-                    except:
-                        pass
-
+        if success:
             if isinstance( obj, dict ):
+                name = obj.get( 'name', name )
                 obj = IoModel( **obj )
-
             elif isinstance( obj, (list, tuple) ):
                 obj = IoModel.fromArgs( *obj )
 
-            
-            return super()._post( obj, name=name )
+        return success, obj, name
+
+    @classmethod
+    def _post_fallback_uri( cls, obj, name=None, success=False ):
+
+        if isinstance( obj, Path ):
+            obj = str( obj )
+
+        if isinstance( obj, str ):
+            if api.isUri( obj ):
+                obj = { 'uri' : str( obj ) }
+                success = True
+            else:
+                try:
+                    obj = api.read( obj, datahandler='string' )
+                    success = True
+                except:
+                    success = False
+
+        return success, obj, name
 
     def extract( self, name ):        
         record = self.getByName( name )

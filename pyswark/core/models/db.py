@@ -10,12 +10,20 @@ from pyswark.lib import enum
 from pyswark.core.models import mixin, record, body, info
 
 
-class Db( base.BaseModel, mixin.TypeCheck ):
+class MixinDb( base.BaseModel ):
     """Base class for a database."""
     AllowedTypes     : ClassVar[ list[ Union[ str, type ] ] ] = []
     AllowedInstances : ClassVar[ list[ Union[ str, type ] ] ] = []
 
     records : list[ record.Record ] = Field( default_factory=list )
+
+    @classmethod
+    def _post( cls, obj, name=None ):
+        try:
+            return super()._post( obj, name=name ) # parent's dispatched handlers
+        except NotImplementedError:
+            obj, name = cls._post_fallback( obj, name=name )
+            return super()._post( obj, name=name )
 
     @property
     def enum(self):
@@ -34,11 +42,44 @@ class Db( base.BaseModel, mixin.TypeCheck ):
         self.records.append( model )
         return model
 
+    def getByName( self, name ): 
+        sqlModel = self.asSQLModel()
+        result   = sqlModel.getByName( name )
+        return result if result is None else result.asModel()
+
+    def deleteByName( self, name ):
+        sqlModel     = self.asSQLModel()
+        success      = sqlModel.deleteByName( name )
+        self.records = sqlModel.asModel().records
+        return success
+
+    def put( self, obj, name=None ):
+        dbModel = self.asSQLModel()
+        sqlModel = dbModel.put( obj, name=name )
+        self.records = dbModel.asModel().records
+        return sqlModel.asModel()
+
+    def asSQLModel( self, *a, **kw ):
+        dbModel = DbSQLModel( *a, **kw, dbType=type(self) )
+        dbModel.postAll( self.records )
+        return dbModel
+
+
+class MixinPost( mixin.TypeCheck ):
+
+    @classmethod
+    def _post_fallback( cls, obj, name=None ):
+        cls._raise( obj, name )
+
+    @classmethod
+    def _raise( cls, obj, name ):
+        raise NotImplementedError( f"post() not implemented for type { type(obj) } (name='{ name })'" )
+
     @singledispatchmethod
     @classmethod
     def _post( cls, obj, name=None ):
         """Post an object to the database. Dispatches based on type."""
-        raise NotImplementedError( f"post() not implemented for type { type(obj) }" )
+        cls._raise( obj, name )
 
     @_post.register( record.Record )
     @classmethod
@@ -78,27 +119,10 @@ class Db( base.BaseModel, mixin.TypeCheck ):
         cls.checkIfAllowedType( model, cls.AllowedTypes )
         cls.checkIfAllowedSubType( model, cls.AllowedInstances )
 
-    def getByName( self, name ): 
-        sqlModel = self.asSQLModel()
-        result   = sqlModel.getByName( name )
-        return result if result is None else result.asModel()
 
-    def deleteByName( self, name ):
-        sqlModel     = self.asSQLModel()
-        success      = sqlModel.deleteByName( name )
-        self.records = sqlModel.asModel().records
-        return success
-
-    def put( self, obj, name=None ):
-        dbModel = self.asSQLModel()
-        sqlModel = dbModel.put( obj, name=name )
-        self.records = dbModel.asModel().records
-        return sqlModel.asModel()
-
-    def asSQLModel( self, *a, **kw ):
-        dbModel = DbSQLModel( *a, **kw, dbType=type(self) )
-        dbModel.postAll( self.records )
-        return dbModel
+class Db( MixinDb, MixinPost ):
+    AllowedTypes     : ClassVar[ list[ Union[ str, type ] ] ] = []
+    AllowedInstances : ClassVar[ list[ Union[ str, type ] ] ] = []
 
 
 class DbSQLModel:
