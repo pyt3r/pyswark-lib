@@ -16,6 +16,7 @@ DatetimeList
 from pydantic import Field, field_validator, model_validator
 from typing import Union, TypeVar
 from functools import cache
+import warnings
 import numpy as np
 import datetime
 from dateutil import parser, tz
@@ -106,7 +107,9 @@ class Datetime( xputs.BaseInputs ):
     @classmethod
     def after_data_dtype( cls, data, dtype ):
         try:
-            dt     = np.datetime64( data )
+            with warnings.catch_warnings():
+                warnings.filterwarnings('ignore', message='.*no explicit representation of timezones.*', category=UserWarning)
+                dt     = np.datetime64( data )
             _dtype = dt.dtype
         except:
             dt     = parser.parse( data )
@@ -233,7 +236,7 @@ class DatetimeList( converter.ConverterModel ):
 
     Example
     -------
-    >>> from pyswark.ts.datetime import DatetimeList
+    >>> from pyswark.core.models.datetime import DatetimeList
     >>> dates = DatetimeList(['2024-01-01', '2024-01-02', '2024-01-03'])
     >>> print(len(dates))  # 3
     >>> print(dates.dt)

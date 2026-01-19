@@ -1,4 +1,3 @@
-import json
 from pathlib import Path
 from pyswark.lib.pydantic import base
 from pyswark.core import extractor
@@ -8,7 +7,7 @@ from pyswark.core.models import db
 from pyswark.gluedb.models import IoModel
 
 
-class Db( db.Db ):
+class Db( db.Db ):   
     AllowedInstances = [ IoModel, base.BaseModel ]
 
     @classmethod

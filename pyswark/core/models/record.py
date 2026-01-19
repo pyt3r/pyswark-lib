@@ -1,5 +1,6 @@
 from typing import Optional
 from sqlmodel import SQLModel, Field, Relationship
+from pydantic import field_validator
 from pyswark.lib.pydantic import base
 
 from pyswark.core.models.info import Info, InfoSQLModel
@@ -9,6 +10,12 @@ from pyswark.core.models.body import Body, BodySQLModel
 class Record( base.BaseModel ):
     info     : Info
     body     : Body
+
+    @field_validator( 'info', mode='before' )
+    def _info_before( cls, info ):
+        if isinstance( info, dict ):
+            info = Info(**info)
+        return info
 
     def acquire( self ):
         return self.body.extract()
@@ -32,8 +39,8 @@ class RecordSQLModel( SQLModel, table=True ):
     body_id : Optional[int] = Field( default=None, foreign_key="bodysqlmodel.id" )
     
     # Relationships (module aliases avoid shadowing)
-    info : Optional[InfoSQLModel] = Relationship( back_populates="record" )
-    body : Optional[BodySQLModel] = Relationship( back_populates="record" )
+    info : InfoSQLModel = Relationship( back_populates="record" )
+    body : BodySQLModel = Relationship( back_populates="record" )
 
     def asModel( self ):
         return Record( 

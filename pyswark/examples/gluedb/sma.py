@@ -30,23 +30,31 @@ def main():
     Enum = db.enum
     JPM  = db.extract( Enum.JPM.value )
 
-    # TO DO: get records by query
-    """
-    from sqlmodel import select
-    from pyswark.core.models import import info, record
+    # get records by query
+    from sqlmodel import Session, select
 
-    recordsBefore2025 = db.getByQuery( select( record.RecordSQLModel ).where( 
-        info.InfoSQLModel.date_created < '2025-01-01' 
-    ))
-    recordsAfter2025 = db.getByQuery( select( table.Info ).where( 
-        info.InfoSQLModel.date_created > '2025-01-01' 
-    ))
-    print([ r.info.name for r in recordsBefore2025 ])
-    # ['JPM', 'BAC']
-    print([ r.info.name for r in recordsAfter2025 ])
-    # ['kwargs']
-    """
+    sqlDb = db.asSQLModel() # convert gluedb to sqlmodel
 
+    with Session( sqlDb.engine ) as session:
+
+        recordsBefore2026 = session.exec( 
+            select( sqlDb.RECORD )
+            .where( 
+                sqlDb.INFO.date_created < '2026-01-01' 
+            )
+        ).all()
+
+        recordsAfter2026 = session.exec( 
+            select( sqlDb.RECORD )
+            .where( 
+                sqlDb.INFO.date_created >= '2026-01-01' 
+            )
+        ).all()
+
+        print([ r.asModel().info.name for r in recordsBefore2026 ])
+        # ['JPM', 'BAC']
+        print([ r.asModel().info.name for r in recordsAfter2026 ])
+        # ['kwargs']
 
     # == create a new db ==
     from pyswark.gluedb import api
