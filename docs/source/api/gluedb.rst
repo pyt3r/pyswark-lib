@@ -22,8 +22,16 @@ API Functions
 GlueDb Class
 ------------
 
-.. autoclass:: pyswark.gluedb.db.GlueDb
-   :members: merge
+.. autoclass:: pyswark.gluedb.db.Db
+   :members: extract, get, delete, getNames, merge, __contains__
+   :undoc-members:
+   :show-inheritance:
+
+GlueHub Class
+-------------
+
+.. autoclass:: pyswark.gluedb.hub.GlueHub
+   :members: toDb, extract
    :undoc-members:
    :show-inheritance:
 

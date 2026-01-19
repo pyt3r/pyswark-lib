@@ -40,8 +40,8 @@ def connect( uri ):
 
     Returns
     -------
-    GlueDb
-        The loaded GlueDb instance.
+    Db
+        The loaded GlueDb instance (pyswark.gluedb.db.Db).
 
     Example
     -------
@@ -57,8 +57,8 @@ def newDb():
 
     Returns
     -------
-    GlueDb
-        An empty GlueDb instance ready for populating with records.
+    Db
+        An empty GlueDb instance ready for populating with records (pyswark.gluedb.db.Db).
 
     Example
     -------

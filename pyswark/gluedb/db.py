@@ -7,7 +7,38 @@ from pyswark.core.models import db
 from pyswark.gluedb.models import IoModel
 
 
-class Db( db.Db ):   
+class Db( db.Db ):
+    """
+    GlueDb - A database of named records pointing to data sources.
+    
+    A GlueDb is a collection of named records, where each record can point to
+    a data source via URI or contain inline data. Records can be extracted,
+    loaded, and managed through a simple API.
+    
+    Key Features
+    -----------
+    - Store records by name with URI or inline data
+    - Extract data from records automatically
+    - Merge multiple databases together
+    - Serialize to/from .gluedb files
+    
+    Example
+    -------
+    >>> from pyswark.gluedb import api
+    >>> 
+    >>> # Create a new database
+    >>> db = api.newDb()
+    >>> 
+    >>> # Post records
+    >>> db.post('prices', 'file:./prices.csv')
+    >>> db.post('config', {'window': 60})
+    >>> 
+    >>> # Extract data
+    >>> prices = db.extract('prices')
+    >>> 
+    >>> # List all names
+    >>> print(db.getNames())  # ['prices', 'config']
+    """   
     AllowedInstances = [ IoModel, base.BaseModel ]
 
     @classmethod
@@ -47,7 +78,29 @@ class Db( db.Db ):
 
         return success, obj, name
 
-    def extract( self, name ):        
+    def extract( self, name ):
+        """
+        Extract data from a record by name.
+        
+        This method retrieves the record and extracts its data. If the record
+        points to a URI, the data will be loaded from that URI. If the record
+        contains inline data, it will be returned directly.
+        
+        Parameters
+        ----------
+        name : str
+            The name of the record to extract.
+        
+        Returns
+        -------
+        Any
+            The extracted data (type depends on the record's data source).
+        
+        Example
+        -------
+        >>> db.post('prices', 'file:./prices.csv')
+        >>> prices_df = db.extract('prices')
+        """
         record = self.getByName( name )
         model = self._handle( record, IoModel.extract )
 
