@@ -1,4 +1,3 @@
-import json
 from pathlib import Path
 from pyswark.lib.pydantic import base
 from pyswark.core import extractor

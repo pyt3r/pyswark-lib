@@ -9,4 +9,4 @@ DBs = {
 }
  
 HUB = api.newHub()
-_ = [ HUB.post( const.name, gluedb ) for const, gluedb in DBs.items() ]
+_ = [ HUB.post( uri, name=const.name ) for const, uri in DBs.items() ]
