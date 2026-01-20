@@ -98,10 +98,74 @@ Validating URIs
 Core Models
 -----------
 
-The ``models`` submodule provides base classes for data handling:
+The ``models`` submodule provides base classes for data handling, database operations,
+and model patterns.
 
-- ``xputs.BaseInputs``: Base class for model inputs
-- ``xputs.BaseOutputs``: Base class for model outputs
-- ``collection.Dict``, ``collection.List``: Serializable collections
-- ``converter.ConverterModel``: Models that convert inputs to outputs
+Input/Output Base Classes
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automodule:: pyswark.core.models.xputs
+   :members: BaseInputs, BaseOutputs
+   :undoc-members:
+   :show-inheritance:
+
+Collection Models
+^^^^^^^^^^^^^^^^^
+
+Serializable collections that preserve type information:
+
+.. automodule:: pyswark.core.models.collection
+   :members: List, Dict, Tuple, Set
+   :undoc-members:
+   :show-inheritance:
+
+Model Patterns
+^^^^^^^^^^^^^^
+
+Base classes for different model patterns:
+
+.. automodule:: pyswark.core.models.converter
+   :members: ConverterModel
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: pyswark.core.models.function
+   :members: FunctionModel
+   :undoc-members:
+   :show-inheritance:
+
+Database Models
+^^^^^^^^^^^^^^^
+
+Base classes for database operations:
+
+.. automodule:: pyswark.core.models.db
+   :members: Db, MixinDb
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: pyswark.core.models.record
+   :members: Record
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: pyswark.core.models.info
+   :members: Info
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: pyswark.core.models.body
+   :members: Body
+   :undoc-members:
+   :show-inheritance:
+
+Primitive Models
+^^^^^^^^^^^^^^^^
+
+Type-safe wrappers for primitive values:
+
+.. automodule:: pyswark.core.models.primitive
+   :members: Int, Float, String, Bool
+   :undoc-members:
+   :show-inheritance:
 

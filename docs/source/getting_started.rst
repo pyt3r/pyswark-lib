@@ -56,9 +56,6 @@ Read and write data from any URI:
    # Read from package data
    df = io.read('pyswark:/data/ohlc-jpm.csv.gz')
 
-   # Read from local file
-   config = io.read('file:./config.yaml')
-
    # Write to file
    io.write(df, 'file:./output.csv')
 
@@ -71,6 +68,7 @@ Create and use data catalogs:
 .. code-block:: python
 
    from pyswark.gluedb import api
+   from pyswark.core.models import collection
 
    # Connect to existing catalog
    db = api.connect('pyswark:/data/sma-example.gluedb')
@@ -78,24 +76,115 @@ Create and use data catalogs:
 
    # Extract data by name
    jpm_data = db.extract('JPM')
+   kwargs   = db.extract('kwargs')
+
 
    # Create a new catalog
    new_db = api.newDb()
-   new_db.post('prices', 'file:./prices.csv')
-   new_db.post('config', {'window': 60})
+   new_db.post("pyswark:/data/ohlc-jpm.csv.gz", name='JPM')
+   new_db.post(collection.Dict({'window': 60}), name='kwargs')
+
+   # Extract from a new catalog
+   new_jpm_data = new_db.extract('JPM')
+   new_kwargs   = new_db.extract('kwargs')
+
+   # persist the new catalog
+   from pyswark.core.io import api
+   api.write( new_db, 'file:./new.gluedb' )
 
 
-4. Validated Arrays
-^^^^^^^^^^^^^^^^^^^
+4. Time Series with DatetimeList and TsVector
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Use type-safe, serializable arrays:
+Work with validated time series data:
 
 .. code-block:: python
 
-   from pyswark.tensor.tensor import Vector, Matrix
+   from pyswark.core.models.datetime import DatetimeList
+   from pyswark.ts.tsvector import TsVector
 
-   v = Vector([1.0, 2.0, 3.0, 4.0, 5.0])
-   print(v.shape)  # (5,)
+   # Create a DatetimeList from strings
+   dates = DatetimeList(['2024-01-01', '2024-01-02', '2024-01-03'])
+   print(dates.dt)      # array of datetime64
 
-   m = Matrix([[1, 2, 3], [4, 5, 6]])
-   print(m.shape)  # (2, 3)
+   # Resample to different time resolution
+   monthly = dates.resample('M')  # Convert to monthly resolution (lags to next month)
+   print( monthly.dt ) # array(['2024-02', '2024-02', '2024-02'], dtype='datetime64[M]')
+
+   # Create a time series vector
+   ts = TsVector(
+      index=['2024-01-01', '2024-01-02', '2024-01-03'],
+      values=[100.0, 101.5, 99.8]
+   )
+   print(ts.dt)          # datetime64 array
+   print(ts.values.vector)  # numpy array of values
+
+   # DatetimeList efficiently stores as base + deltas
+   dates = DatetimeList([2020, 2021, 2022, 2023])
+   print(dates.basedt)   # 2020
+   print(dates.deltas)   # [0, 1, 2, 3]
+
+   # Fully serializable
+   from pyswark.lib.pydantic import ser_des
+   json_str = ser_des.toJson(ts)
+   restored = ser_des.fromJson(json_str)
+
+
+5. Workflow Orchestration
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Orchestrate multi-step computations with automatic caching:
+
+.. code-block:: python
+
+   from from pyswark.workflow.workflow import Workflow
+   from pyswark.workflow.step import Step
+   from pyswark.workflow.state import State
+   from pyswark.lib.pydantic import base
+
+   # Define models with run() methods
+   class AddModel(base.BaseModel):
+      a: int
+      b: int
+      def run(self):
+         return {'sum': self.a + self.b}
+
+   class MultiplyModel(base.BaseModel):
+      sum: int
+      factor: int
+      def run(self):
+         return {'product': self.sum * self.factor}
+
+   # Create workflow steps
+   step0 = Step(
+      model=AddModel,
+      inputs={'x': 'a', 'y': 'b'},      # state → model inputs
+      outputs={'sum': 'result'}          # model outputs → state
+   )
+
+   step1 = Step(
+      model=MultiplyModel,
+      inputs={'result': 'sum', 'z': 'factor'},
+      outputs={'product': 'final'}
+   )
+
+   workflow = Workflow(steps=[step0, step1])
+
+   # Initialize state with input data
+   inputData = {'x': 2, 'y': 3, 'z': 4}
+   state = State(backend=inputData)
+
+   # Run workflow - steps execute in order
+   result = workflow.run(state)
+   print(result)  # {'final': 20}  # (2+3)*4
+
+   # Workflows cache inputs/outputs - rerun skips unchanged steps
+   print(workflow.stepsRan)      # [0, 1] - both ran
+   print(workflow.stepsSkipped)  # []
+
+   # Second run with same inputs - steps are skipped! 
+   # - workflow cached its previous results and sees no need to recompute
+   state2 = State(backend=inputData)
+   workflow.run(state2)
+   print(workflow.stepsSkipped)  # [0, 1] - both skipped!
+

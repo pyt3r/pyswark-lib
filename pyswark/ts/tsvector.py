@@ -10,7 +10,7 @@ from pydantic import model_validator, field_validator
 from pyswark.lib.pydantic import base
 
 from pyswark.tensor import tensor
-from pyswark.ts.datetime import DatetimeList
+from pyswark.core.models.datetime import DatetimeList
 
 
 class TsVector( base.BaseModel ):

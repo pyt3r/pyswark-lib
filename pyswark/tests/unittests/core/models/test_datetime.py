@@ -3,7 +3,7 @@ import numpy as np
 import datetime
 
 from pyswark.lib.pydantic import ser_des
-from pyswark.ts.datetime import Datetime, DatetimeList
+from pyswark.core.models.datetime import Datetime, DatetimeList
 
 
 class DatetimeTestCase( unittest.TestCase ):

@@ -1,4 +1,4 @@
-lib - Serialization Primitives
+lib
 ==============================
 
 The ``lib`` module provides foundational serialization and utility classes.

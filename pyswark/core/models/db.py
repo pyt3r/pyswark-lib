@@ -68,43 +68,50 @@ class MixinDb( base.BaseModel ):
 class MixinPost( mixin.TypeCheck ):
 
     @classmethod
-    def _post_fallback( cls, obj, name=None ):
-        cls._raise( obj, name )
+    def _post_fallback( cls, obj, name=None, **infoKw ):
+        cls._raise( obj, name, **infoKw )
 
     @classmethod
-    def _raise( cls, obj, name ):
+    def _raise( cls, obj, name, **infoKw ):
         raise NotImplementedError( f"post() not implemented for type { type(obj) } (name='{ name })'" )
 
     @singledispatchmethod
     @classmethod
-    def _post( cls, obj, name=None ):
+    def _post( cls, obj, name=None, **infoKw ):
         """Post an object to the database. Dispatches based on type."""
         cls._raise( obj, name )
 
     @_post.register( record.Record )
     @classmethod
-    def _post_record( cls, rec: record.Record, name=None ):
+    def _post_record( cls, rec: record.Record, name=None, **infoKw ):
         """Post a Record directly."""
         if name:
-            rec.info.name = name
+            infoKw['name'] = name
+            
+        if infoKw:
+            for k, v in infoKw.items():
+                setattr( rec.info, k, v )
+
         return cls._post_after( rec )
 
     @_post.register( body.Body )
     @classmethod
-    def _post_body( cls, bod: body.Body, name=None ):
+    def _post_body( cls, bod: body.Body, name=None, **infoKw ):
         """Post a Body directly."""
         if name is None:
             raise ValueError( f"name is required for type={ type(bod) }" )
-        rec = record.Record( info={ 'name': name }, body=bod )
+        infoKw['name'] = name
+        rec = record.Record( info=infoKw, body=bod )
         return cls._post_after( rec )
 
     @_post.register( base.BaseModel )
     @classmethod
-    def _post_model( cls, model: base.BaseModel, name=None ):
+    def _post_model( cls, model: base.BaseModel, name=None, **infoKw ):
         """Post a BaseModel (wraps in a Record)."""
         if not name:
             raise ValueError( f"name is required for type={ type(model) }" )
-        rec = record.Record( info={ 'name': name }, body={ 'model': model } )
+        infoKw['name'] = name
+        rec = record.Record( info=infoKw, body={ 'model': model } )
         return cls._post_after( rec )
 
     @classmethod
@@ -126,7 +133,10 @@ class Db( MixinDb, MixinPost ):
 
 
 class DbSQLModel:
-
+    INFO   = info.InfoSQLModel
+    BODY   = body.BodySQLModel
+    RECORD = record.RecordSQLModel
+ 
     def __init__(self, url='sqlite:///:memory:', dbType=Db, **kw ):
         self.engine = self._initEngine( url )
         self.dbType = dbType
@@ -169,7 +179,7 @@ class DbSQLModel:
 
     def getAll( self ):
         query = self._makeQuery( 
-            select( record.RecordSQLModel ) 
+            select( self.RECORD ) 
         )
         with Session( self.engine ) as session:                
             results = session.exec( query ).all()
@@ -263,24 +273,24 @@ class DbSQLModel:
     @classmethod
     def _makeNameQuery( cls, name ):
         return cls._makeQuery( 
-            select( record.RecordSQLModel )
-            .join( info.InfoSQLModel )
-            .where( info.InfoSQLModel.name == name )
+            select( cls.RECORD )
+            .join( cls.INFO )
+            .where( cls.INFO.name == name )
         )
             
     @classmethod
     def _makeIdQuery( cls, id ):
         return cls._makeQuery( 
-            select( record.RecordSQLModel )
-            .where( record.RecordSQLModel.id == id ) 
+            select( cls.RECORD )
+            .where( cls.RECORD.id == id ) 
         )
 
-    @staticmethod
-    def _makeQuery( query ):
+    @classmethod
+    def _makeQuery( cls, query ):
         return (
             query
-            .options( selectinload( record.RecordSQLModel.info ) )
-            .options( selectinload( record.RecordSQLModel.body ) )
+            .options( selectinload( cls.RECORD.info ) )
+            .options( selectinload( cls.RECORD.body ) )
         )
 
     def asModel( self ):

@@ -4,7 +4,9 @@
     "records": [
       {
         "info": {
-          "name": "JPM"
+          "name": "JPM",
+          "date_created": "2025-12-31",
+          "date_modified": "2025-12-31"
         },
         "body": {
           "model": "pyswark.gluedb.models.IoModel",
@@ -19,7 +21,9 @@
       },
       {
         "info": {
-          "name": "BAC"
+          "name": "BAC",
+          "date_created": "2025-12-31",
+          "date_modified": "2025-12-31"
         },
         "body": {
           "model": "pyswark.gluedb.models.IoModel",
@@ -34,7 +38,9 @@
       },
       {
         "info": {
-          "name": "kwargs"
+          "name": "kwargs",
+          "date_created": "2026-01-02",
+          "date_modified": "2026-01-02"
         },
         "body": {
           "model": "pyswark.core.models.collection.Dict",

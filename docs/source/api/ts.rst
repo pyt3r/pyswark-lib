@@ -26,7 +26,7 @@ TsVector
 DatetimeList
 ^^^^^^^^^^^^
 
-.. autoclass:: pyswark.ts.datetime.DatetimeList
+.. autoclass:: pyswark.core.models.datetime.DatetimeList
    :members:
    :undoc-members:
    :show-inheritance:
@@ -34,7 +34,7 @@ DatetimeList
 Datetime
 ^^^^^^^^
 
-.. autoclass:: pyswark.ts.datetime.Datetime
+.. autoclass:: pyswark.core.models.datetime.Datetime
    :members:
    :undoc-members:
    :show-inheritance:
@@ -64,7 +64,7 @@ Working with DatetimeList
 
 .. code-block:: python
 
-   from pyswark.ts.datetime import DatetimeList
+   from pyswark.core.models.datetime import DatetimeList
 
    # Create from strings
    dates = DatetimeList(['2024-01-01', '2024-01-02', '2024-01-03'])
@@ -86,7 +86,7 @@ Working with Datetime
 
 .. code-block:: python
 
-   from pyswark.ts.datetime import Datetime
+   from pyswark.core.models.datetime import Datetime
 
    # Create with timezone
    dt = Datetime('2024-01-15T10:30:00', dtype='s', tzname='UTC')
