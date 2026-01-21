@@ -1,3 +1,4 @@
+import enum as _enum
 from sqlmodel import SQLModel, create_engine, Session, select
 from sqlalchemy.orm import selectinload
 from typing import ClassVar, Union
@@ -10,7 +11,16 @@ from pyswark.lib import enum
 from pyswark.core.models import mixin, record, body, info
 
 
-class MixinDb( base.BaseModel ):
+class MixinName:
+
+    @staticmethod
+    def _processName( name ):
+        if isinstance( name, _enum.Enum ):
+            return name.value
+        return name
+
+
+class MixinDb( base.BaseModel, MixinName ):
     """Base class for a database."""
     AllowedTypes     : ClassVar[ list[ Union[ str, type ] ] ] = []
     AllowedInstances : ClassVar[ list[ Union[ str, type ] ] ] = []
@@ -36,6 +46,7 @@ class MixinDb( base.BaseModel ):
         return self
 
     def post( self, obj, name=None ):
+        name = self._processName( name )
         dbModel = self.asSQLModel()
         rec = dbModel.post( obj, name=name )
         model = rec.asModel()
@@ -43,17 +54,19 @@ class MixinDb( base.BaseModel ):
         return model
 
     def getByName( self, name ): 
+        name = self._processName( name )
         sqlModel = self.asSQLModel()
         result   = sqlModel.getByName( name )
         return result if result is None else result.asModel()
 
     def deleteByName( self, name ):
+        name = self._processName( name )
         sqlModel     = self.asSQLModel()
         success      = sqlModel.deleteByName( name )
         self.records = sqlModel.asModel().records
         return success
 
-    def put( self, obj, name=None ):
+    def put( self, obj, name=None ):    
         dbModel = self.asSQLModel()
         sqlModel = dbModel.put( obj, name=name )
         self.records = dbModel.asModel().records
@@ -132,7 +145,7 @@ class Db( MixinDb, MixinPost ):
     AllowedInstances : ClassVar[ list[ Union[ str, type ] ] ] = []
 
 
-class DbSQLModel:
+class DbSQLModel( MixinName ):
     INFO   = info.InfoSQLModel
     BODY   = body.BodySQLModel
     RECORD = record.RecordSQLModel
@@ -149,6 +162,7 @@ class DbSQLModel:
             return engine
 
     def post( self, obj, name=None ):
+        name = self._processName( name )
         model = self._post( obj, name=name )
 
         with Session( self.engine ) as session:
@@ -161,6 +175,7 @@ class DbSQLModel:
             return sqlModel
 
     def _post( self, obj, name=None ):
+        name = self._processName( name )
         return self.dbType._post( obj, name=name )
 
     def postAll( self, objs ):
@@ -186,6 +201,7 @@ class DbSQLModel:
             return results
 
     def getByName( self, name ):
+        name = self._processName( name )
         query = self._makeNameQuery( name )
         return self._get( query )
 
@@ -199,6 +215,7 @@ class DbSQLModel:
             return result
 
     def deleteByName( self, name ):
+        name = self._processName( name )
         query = self._makeNameQuery( name )
         return self._delete( query )
 
@@ -220,6 +237,7 @@ class DbSQLModel:
         is rolled back and the database state remains unchanged.
         """
         # Prepare the new record model first (validate before transaction)
+        name = self._processName( name )
         model = self._post( obj, name=name )
         
         # Use a single transaction for both delete and post
