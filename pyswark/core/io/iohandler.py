@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Optional
 from pydantic import Field, field_validator, model_validator
 
@@ -10,6 +11,12 @@ class IoHandler( extractor.Extractor ):
     uri         : str
     datahandler : Optional[ str ] = ""
     kw          : Optional[ dict ] = Field( default_factory=lambda: {} )
+
+    @field_validator( 'uri', mode='before' )
+    def _uri( cls, uri ):
+        if isinstance( uri, Path ):
+            return str( uri )
+        return uri
 
     @field_validator( 'datahandler', mode='before' )
     def _datahandler( cls, datahandler ):

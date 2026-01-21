@@ -140,11 +140,10 @@ class GlueHub(db.Db):
         >>> consolidated = hub.toDb()
         >>> print(consolidated.getNames())  # All names from all databases
         """
-        from pyswark.gluedb import db as db_module
         
-        consolidated = db_module.Db()
+        new = db.Db()
         for name in self.getNames():
-            db_instance = self.extract(name)
-            consolidated.merge(db_instance)
+            other = self.extract( name )
+            new.merge( other )
         
-        return consolidated
+        return new

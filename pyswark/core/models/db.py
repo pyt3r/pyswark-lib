@@ -72,6 +72,15 @@ class MixinDb( base.BaseModel, MixinName ):
         self.records = dbModel.asModel().records
         return sqlModel.asModel()
 
+    def __contains__( self, name ):
+        name = self._processName( name )
+        try:
+            sqlModel = self.asSQLModel()
+            return name in sqlModel
+        except Exception:
+            # If check fails, assume not present
+            return False
+
     def asSQLModel( self, *a, **kw ):
         dbModel = DbSQLModel( *a, **kw, dbType=type(self) )
         dbModel.postAll( self.records )
@@ -310,6 +319,10 @@ class DbSQLModel( MixinName ):
             .options( selectinload( cls.RECORD.info ) )
             .options( selectinload( cls.RECORD.body ) )
         )
+
+    def __contains__( self, name ):
+        name = self._processName( name )
+        return self.getByName( name ) is not None
 
     def asModel( self ):
         return self.dbType( records=[ rec.asModel() for rec in self.getAll() ] )

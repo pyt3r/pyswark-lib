@@ -1,10 +1,16 @@
+from typing import ClassVar
 from pyswark.core.io import api
-from pyswark.core.models import db # note the change from gluedb to core.models
+from pyswark.gluedb import db # note the change from gluedb to core.models
 from pyswark.sekrets.models import base, generic
 
 
-class Db( db.Db ):
+class Db( db.Base ):
+    FALLBACK : ClassVar[ type[ base.Sekret ] ] = generic.Sekret
     AllowedInstances = [ base.Sekret ]
+
+    def _init( self, fallback=generic.Sekret, **kw ):
+        self.FALLBACK = fallback
+        return super()._init( *a, **kw )
 
     @classmethod
     def _post_fallback( cls, obj, name=None ):
@@ -17,8 +23,17 @@ class Db( db.Db ):
     def _post_fallback_string( cls, obj, name=None, success=False ):
         if isinstance( obj, str ):
             try:
-                obj = api.read( obj, datahander='string' )
-                success = True
+                tmp = api.read( obj, 'string' )
+
+                success = False
+                if isinstance( tmp, ( list, tuple ) ):
+                    if len( tmp ) == 1:
+                        obj = tmp[0]
+                        success = True
+                else:
+                    obj = tmp
+                    success = True
+                
             except:
                 success = False
         return success, obj, name
@@ -31,7 +46,7 @@ class Db( db.Db ):
 
             try:
                 obj = { k: v for k, v in obj.items() if k != 'name' }
-                obj = generic.Sekret( **obj )
+                obj = cls.FALLBACK( **obj )
                 success = True
             except:
                 success = False

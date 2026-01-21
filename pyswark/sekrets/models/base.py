@@ -1,4 +1,4 @@
-from pyswark.core.models import extractor
+from pyswark.core import extractor
 
 
 class Sekret( extractor.Extractor ):

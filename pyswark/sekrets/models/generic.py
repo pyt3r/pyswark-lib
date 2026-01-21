@@ -1,5 +1,5 @@
 from typing import Optional, Any
-from pyswark.sekrets import base
+from pyswark.sekrets.models import base
 
 
 class Sekret( base.Sekret ):
