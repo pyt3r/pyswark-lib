@@ -58,7 +58,8 @@ class TypeCheck:
         from pyswark.core.io import api
         
         if isinstance( klass, str ):
-            return api.read( klass, datahandler='python' )
+            with api.verbosity('WARNING'):
+                return api.read( klass, datahandler='python' )
         klass = klass if isinstance( klass, type ) else type( klass )
         return klass
 

@@ -23,10 +23,24 @@ Example
 >>>
 >>> # Write data
 >>> io.write(df, 'file:./output.csv')
+>>>
+>>> # Control logging verbosity (can be set/unset at runtime)
+>>> io.set_verbosity('WARNING')  # Suppress INFO messages
+>>> io.set_verbosity('INFO')    # Show I/O operations (default)
+>>> 
+>>> # Temporarily change verbosity for specific operations
+>>> with io.verbosity('INFO'):
+...     df = io.read('file:./important.csv')  # Shows logging
+>>> # Verbosity automatically restored
 """
 
 from pyswark.core.io.iohandler import IoHandler
 from pyswark.core.io import guess as _guess
+from pyswark.util.log import (
+    set_verbosity as _set_verbosity,
+    get_verbosity as _get_verbosity,
+    verbosity as _verbosity,
+)
 
 
 def read( uri, datahandler=None, **kw ):
@@ -148,3 +162,104 @@ def isUri( uri ):
 
 def guess( uri ):
     return _guess.api( uri )
+
+
+def set_verbosity( level ):
+    """
+    Set the verbosity level for I/O logging operations.
+    
+    Controls when logging information is sent to the console. By default,
+    all I/O operations log at INFO level, which includes messages like
+    "Reading uri='...'..." and "done.".
+    
+    This can be called multiple times at runtime to change the verbosity
+    level. The change takes effect immediately.
+    
+    Parameters
+    ----------
+    level : str or int
+        Logging level. Can be one of:
+        - 'DEBUG' or logging.DEBUG (10) - Most verbose, shows all messages
+        - 'INFO' or logging.INFO (20) - Default, shows I/O operations
+        - 'WARNING' or logging.WARNING (30) - Only warnings and errors
+        - 'ERROR' or logging.ERROR (40) - Only errors
+        - 'CRITICAL' or logging.CRITICAL (50) - Only critical errors
+        
+        Can also be a string like 'debug', 'info', 'warning', 'error', 'critical'
+        (case-insensitive).
+    
+    Examples
+    --------
+    >>> from pyswark.core.io import api as io
+    >>> 
+    >>> # Suppress I/O logging messages
+    >>> io.set_verbosity('WARNING')
+    >>> df = io.read('file:./data.csv')  # No logging output
+    >>> 
+    >>> # Show all messages
+    >>> io.set_verbosity('DEBUG')
+    >>> 
+    >>> # Restore default
+    >>> io.set_verbosity('INFO')
+    >>> 
+    >>> # Use logging constants
+    >>> import logging
+    >>> io.set_verbosity(logging.ERROR)
+    """
+    return _set_verbosity( level )
+
+
+def get_verbosity():
+    """
+    Get the current verbosity level.
+    
+    Returns
+    -------
+    int
+        The current logging level (e.g., logging.INFO, logging.WARNING).
+    
+    Examples
+    --------
+    >>> from pyswark.core.io import api as io
+    >>> import logging
+    >>> level = io.get_verbosity()
+    >>> level == logging.INFO
+    True
+    """
+    return _get_verbosity()
+
+
+def verbosity( level ):
+    """
+    Context manager for temporarily setting verbosity level.
+    
+    The verbosity level is changed for the duration of the context
+    and automatically restored when exiting. This is useful for
+    selectively enabling logging for specific operations.
+    
+    Parameters
+    ----------
+    level : str or int
+        Logging level to use temporarily. See set_verbosity() for details.
+    
+    Examples
+    --------
+    >>> from pyswark.core.io import api as io
+    >>> 
+    >>> # Most operations are quiet
+    >>> io.set_verbosity('WARNING')
+    >>> 
+    >>> with io.verbosity('INFO'):
+    ...     df = io.read('file:./important.csv')  # Shows logging
+    ... 
+    >>> # Verbosity automatically restored to WARNING
+    >>> df2 = io.read('file:./other.csv')  # No logging
+    >>> 
+    >>> # Or suppress logging for specific operations
+    >>> io.set_verbosity('INFO')
+    >>> with io.verbosity('WARNING'):
+    ...     df3 = io.read('file:./quiet.csv')  # No logging
+    ... 
+    >>> # Verbosity restored to INFO
+    """
+    return _verbosity( level )
