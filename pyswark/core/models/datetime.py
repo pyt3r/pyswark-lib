@@ -16,10 +16,10 @@ DatetimeList
 from pydantic import Field, field_validator, model_validator
 from typing import Union, TypeVar
 from functools import cache
-import warnings
+
 import numpy as np
 import datetime
-from dateutil import parser, tz
+from dateutil import parser
 
 from pyswark.core.models import converter, xputs
 from pyswark.ts.tzinfos import TzInfos, OffsetUTC
@@ -107,14 +107,12 @@ class Datetime( xputs.BaseInputs ):
     @classmethod
     def after_data_dtype( cls, data, dtype ):
         try:
-            with warnings.catch_warnings():
-                warnings.filterwarnings('ignore', message='.*no explicit representation of timezones.*', category=UserWarning)
-                dt     = np.datetime64( data )
+            dt     = cls._np_datetime64( data )
             _dtype = dt.dtype
         except:
             dt     = parser.parse( data )
             dt     = dt.combine( dt.date(), dt.time() ) # remove tzinfo
-            dt     = np.datetime64( str(dt) )
+            dt     = cls._np_datetime64( str(dt) )
             _dtype = None
 
         if dtype and _dtype and _dtype < dtype:
@@ -124,6 +122,16 @@ class Datetime( xputs.BaseInputs ):
         dt = dt.astype( dtype ) if dtype else dt
 
         return ( dt, dtype )
+
+    @staticmethod
+    def _np_datetime64( data ):
+        """ fix UTC with Z notation: 2025-01-08T12:30:00Z """
+        if isinstance( data, str ) and 'Z' in data:
+            data = data.replace('Z', '+00:00')
+            data = datetime.datetime.fromisoformat( data )
+            data = data.astimezone( datetime.timezone.utc ).replace( tzinfo=None )
+
+        return np.datetime64( data )
 
     def toDtype( self, dtype ):
         if self.after_dtype( self.dtype ) == self.after_dtype( dtype ):
