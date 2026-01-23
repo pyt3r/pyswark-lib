@@ -9,7 +9,8 @@ from pyswark.lib.pydantic import ser_des
 from pyswark.core.models import primitive, collection, infer
 
 from pyswark.gluedb import api
-from pyswark.gluedb.models import IoModel
+from pyswark.gluedb import db as db_module
+from pyswark.gluedb.models.iomodel import IoModel
 
 from pyswark.tests.unittests.data.gluedb.settings import Settings
 
@@ -66,7 +67,7 @@ class TestCRUD( unittest.TestCase ):
         uri = f'{ Settings.DB.uri }.DB_2'
         old = api.connect( uri )
 
-        db = api.newDb()
+        db = db_module.Db()
         db.merge( old )
 
         record = db.get("c")
@@ -83,7 +84,7 @@ class TestCRUD( unittest.TestCase ):
 
     def test_POST_duplicate_names_in_a_db(self):
 
-        db = api.newDb()
+        db = db_module.Db()
         db.post( infer.Infer('1'), name='a' )
 
         with self.assertRaises( Exception ):
@@ -105,7 +106,7 @@ class TestCRUD( unittest.TestCase ):
         db_1 = api.connect(f'{ Settings.DB.uri }.DB_1')
         db_2 = api.connect(f'{ Settings.DB.uri }.DB_2')
 
-        db = api.newDb()
+        db = db_module.Db()
         db.merge( db_1 )
         db.merge( db_2 )
         return db
@@ -115,7 +116,7 @@ class TestCRUD( unittest.TestCase ):
 class TestPrimitivesAndCollections( unittest.TestCase ):
 
     def test_adding_primitive_and_collection_models(self):
-        db = api.newDb()
+        db = db_module.Db()
         db.post( name='integer', obj=primitive.Int('1.0'))
         db.post( name='float', obj=primitive.Float('1.0'))
         db.post( name='string', obj=primitive.String('1.0'))
@@ -136,7 +137,7 @@ class TestPrimitivesAndCollections( unittest.TestCase ):
         self.assertEqual( db.extract( db.enum.a_string_with_spaces_.value ), 'my string' ) 
 
     def test_invalid_and_valid_models(self):
-        db = api.newDb()
+        db = db_module.Db()
         db.post( name='valid', obj=infer.Infer('1') )
         
         self.assertEqual( db.extract('valid'), '1' )
@@ -160,7 +161,7 @@ class TestLoad( unittest.TestCase ):
         shutil.rmtree( self.tempdir )
 
     def test_load(self):
-        db = api.newDb()
+        db = db_module.Db()
         
         contents = IoModel.fromArgs( self.uri, '', {}, '', '', {'overwrite' : True} )
         db.post( name='mydata', obj=contents )

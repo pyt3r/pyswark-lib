@@ -80,7 +80,8 @@ Create and use data catalogs:
 
 
    # Create a new catalog
-   new_db = api.newDb()
+   from pyswark.gluedb import db
+   new_db = db.Db()
    new_db.post("pyswark:/data/ohlc-jpm.csv.gz", name='JPM')
    new_db.post(collection.Dict({'window': 60}), name='kwargs')
 

@@ -24,7 +24,8 @@ Example
 >>> jpm_data = db.extract('JPM')
 >>>
 >>> # Create a new GlueDb
->>> new_db = api.newDb()
+>>> from pyswark.gluedb import db
+>>> new_db = db.Db()
 >>> new_db.post('prices', 'file:./prices.csv')
 """
 
@@ -50,42 +51,3 @@ def connect( uri ):
     """
     from pyswark.core.io import api
     return api.read( uri )
-
-def newDb():
-    """
-    Create a new empty GlueDb.
-
-    Returns
-    -------
-    Db
-        An empty GlueDb instance ready for populating with records (pyswark.gluedb.db.Db).
-
-    Example
-    -------
-    >>> db = newDb()
-    >>> db.post('prices', 'file:./prices.csv')
-    >>> db.post('config', {'window': 60})
-    """
-    from pyswark.gluedb import db
-    return db.Db()
-
-def newHub():
-    """
-    Create a new empty GlueHub.
-
-    A GlueHub is a collection of GlueDb instances, useful for organizing
-    multiple related databases.
-
-    Returns
-    -------
-    GlueHub
-        An empty GlueHub instance.
-
-    Example
-    -------
-    >>> hub = newHub()
-    >>> hub.post('market_data', market_db)
-    >>> hub.post('config', config_db)
-    """
-    from pyswark.gluedb import hub
-    return hub.GlueHub()

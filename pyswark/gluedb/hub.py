@@ -7,10 +7,10 @@ organize and manage related databases together.
 
 Example
 -------
->>> from pyswark.gluedb import api
+>>> from pyswark.gluedb import hub
 >>>
 >>> # Create a hub
->>> hub = api.newHub()
+>>> hub = hub.GlueHub()
 >>> hub.post('market_data', market_db)
 >>> hub.post('config', config_db)
 >>>
@@ -75,7 +75,8 @@ class GlueHub(db.Db):
     
     Example
     -------
-    >>> hub = api.newHub()
+    >>> from pyswark.gluedb import hub
+    >>> hub = hub.GlueHub()
     >>> hub.post('market_data', market_db)
     >>> hub.post('config', 'pyswark:/data/config.gluedb')
     >>> 

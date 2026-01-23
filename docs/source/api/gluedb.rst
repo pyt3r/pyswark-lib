@@ -15,7 +15,7 @@ API Functions
 -------------
 
 .. automodule:: pyswark.gluedb.api
-   :members: connect, newDb, newHub
+   :members: connect
    :undoc-members:
    :show-inheritance:
 
@@ -60,12 +60,12 @@ Creating a New GlueDb
 
 .. code-block:: python
 
-   from pyswark.gluedb import api
+   from pyswark.gluedb import db
    from pyswark.core.models import collection
    from pyswark.core.io import api as io
 
    # Create a new empty database
-   db = api.newDb()
+   db = db.Db()
 
    # Post records pointing to data sources
    db.post('JPM', 'pyswark:/data/ohlc-jpm.csv.gz')
@@ -87,12 +87,12 @@ Merging Databases
 
 .. code-block:: python
 
-   from pyswark.gluedb import api
+   from pyswark.gluedb import db
 
-   db1 = api.newDb()
+   db1 = db.Db()
    db1.post('data1', 'file:./data1.csv')
 
-   db2 = api.newDb()
+   db2 = db.Db()
    db2.post('data2', 'file:./data2.csv')
 
    # Merge db2 into db1
@@ -104,9 +104,9 @@ Using GlueHub for Multiple Databases
 
 .. code-block:: python
 
-   from pyswark.gluedb import api
+   from pyswark.gluedb import hub
 
-   hub = api.newHub()
+   hub = hub.GlueHub()
    hub.post('market_data', market_db)
    hub.post('config', config_db)
 

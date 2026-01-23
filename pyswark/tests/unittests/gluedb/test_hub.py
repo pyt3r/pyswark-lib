@@ -3,6 +3,7 @@ import unittest
 from pyswark.lib.pydantic import ser_des
 
 from pyswark.gluedb import api
+from pyswark.gluedb import hub as hub_module
 from pyswark.tests.unittests.data.gluedb.settings import Settings
 
 
@@ -43,7 +44,7 @@ class TestCRUD( unittest.TestCase ):
         uri = f'{ Settings.HUB.uri }.HUB'
         old = api.connect(uri)
 
-        hub = api.newHub()
+        hub = hub_module.GlueHub()
         hub.merge( old )
 
         record = hub.get("db_2")

@@ -1,4 +1,4 @@
-from pyswark.gluedb import api
+from pyswark.gluedb import hub
 from pyswark.sekrets.settings import Settings
 
 DBs = [
@@ -8,5 +8,5 @@ DBs = [
     Settings.EXAMPLE_IAC,
 ]
  
-HUB = api.newHub()
+HUB = hub.GlueHub()
 _ = [ HUB.post( setting.uri, name=setting.name ) for setting in DBs ]

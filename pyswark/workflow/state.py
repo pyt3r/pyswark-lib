@@ -2,7 +2,7 @@ from typing import Union, Any
 from pydantic import BaseModel, Field
 from pyswark.lib.pydantic import base
 
-from pyswark.gluedb import api, db
+from pyswark.gluedb import db
 from pyswark.core.models.infer import Infer
 
 
@@ -54,7 +54,7 @@ class StateWithGlueDb( Interface ):
     def __init__( self, backend=None, **kw ):
         backend = backend or {}
         isDict  = isinstance( backend, dict )
-        super().__init__( backend=api.newDb() if isDict else backend, **kw )
+        super().__init__( backend=db.Db() if isDict else backend, **kw )
         if isDict:
             [ self.post( v, name=k ) for k, v in backend.items() ]
 

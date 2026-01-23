@@ -5,7 +5,7 @@ import shutil
 
 from pyswark.core.io import api as io_api
 from pyswark.sekrets import api, settings, db
-from pyswark.gluedb import api as gluedb_api
+from pyswark.gluedb import hub as gluedb_hub
 
 
 def buildDb():
@@ -55,7 +55,7 @@ class TestSekrets(unittest.TestCase):
     def test_hub(self):
         """Test creating a hub and posting the test database."""
         Settings = self.Settings
-        hub = gluedb_api.newHub()
+        hub = gluedb_hub.GlueHub()
         hub.post(Settings.TEST.uri, name=Settings.TEST.name)
         
         # Verify the hub contains the test database

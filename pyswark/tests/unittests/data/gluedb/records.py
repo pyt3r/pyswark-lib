@@ -1,5 +1,5 @@
 from pyswark.tests.unittests.data.gluedb.settings import Settings
-from pyswark.gluedb.models import IoModel
+from pyswark.gluedb.models.iomodel import IoModel
 
 RECORDS_1 = [
     { "info" : {

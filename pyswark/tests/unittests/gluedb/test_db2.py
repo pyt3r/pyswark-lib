@@ -15,7 +15,7 @@ Key Features
 Example Usage
 -------------
 >>> from pyswark.gluedb.db import Db
->>> from pyswark.gluedb.models import IoModel
+>>> from pyswark.gluedb.models.iomodel import IoModel
 >>> from pyswark.core.models import primitive
 >>>
 >>> db = Db()
@@ -39,7 +39,7 @@ import shutil
 import pandas
 
 from pyswark.gluedb.db import Db
-from pyswark.gluedb.models import IoModel
+from pyswark.gluedb.models.iomodel import IoModel
 from pyswark.core.models import primitive, collection
 from pyswark.lib.pydantic import base
 

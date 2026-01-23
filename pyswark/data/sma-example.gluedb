@@ -9,7 +9,7 @@
           "date_modified": "2025-12-31"
         },
         "body": {
-          "model": "pyswark.gluedb.models.IoModel",
+          "model": "pyswark.gluedb.models.iomodel.IoModel",
           "contents": {
             "uri": "pyswark:/data/ohlc-jpm.csv.gz",
             "datahandler": "",
@@ -26,7 +26,7 @@
           "date_modified": "2025-12-31"
         },
         "body": {
-          "model": "pyswark.gluedb.models.IoModel",
+          "model": "pyswark.gluedb.models.iomodel.IoModel",
           "contents": {
             "uri": "pyswark:/data/ohlc-bac.csv.gz",
             "datahandler": "",

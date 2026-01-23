@@ -5,7 +5,7 @@ from pyswark.core import extractor
 from pyswark.core.io import api
 from pyswark.core.models import db
 
-from pyswark.gluedb.models import IoModel
+from pyswark.gluedb.models.iomodel import IoModel
 
 
 class Base( db.Db ):
@@ -99,10 +99,10 @@ class Db( Base ):
     
     Example
     -------
-    >>> from pyswark.gluedb import api
+    >>> from pyswark.gluedb import db
     >>> 
     >>> # Create a new database
-    >>> db = api.newDb()
+    >>> db = db.Db()
     >>> 
     >>> # Post records
     >>> db.post('prices', 'file:./prices.csv')

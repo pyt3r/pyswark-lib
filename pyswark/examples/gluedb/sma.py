@@ -57,10 +57,10 @@ def main():
         # ['kwargs']
 
     # == create a new db ==
-    from pyswark.gluedb import api
+    from pyswark.gluedb import db
     from pyswark.core.models import collection, primitive
 
-    db = api.newDb()
+    db = db.Db()
     db.post( 'pyswark:/data/ohlc-jpm.csv.gz', name='JPM' )
     db.post( 'pyswark:/data/ohlc-bac.csv.gz', name='BAC' )
     db.post( primitive.Int("60.0"), name='window' )

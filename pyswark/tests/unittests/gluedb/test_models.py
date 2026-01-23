@@ -13,7 +13,7 @@ Key Features
 
 Example Usage
 -------------
->>> from pyswark.gluedb.models import IoModel
+>>> from pyswark.gluedb.models.iomodel import IoModel
 >>> import pandas
 >>>
 >>> # Create a model pointing to a CSV file
@@ -33,7 +33,7 @@ import json
 
 import pandas
 
-from pyswark.gluedb.models import IoModel
+from pyswark.gluedb.models.iomodel import IoModel
 
 
 class TestIoModel(unittest.TestCase):
