@@ -45,7 +45,7 @@ class MixinDb( base.BaseModel, MixinName ):
         self.records = sqlModel.asModel().records
         return self
 
-    def post( self, obj, name=None ):
+    def post( self, obj, name=None, **infoKw ):
         name = self._processName( name )
         dbModel = self.asSQLModel()
         rec = dbModel.post( obj, name=name )
@@ -74,12 +74,8 @@ class MixinDb( base.BaseModel, MixinName ):
 
     def __contains__( self, name ):
         name = self._processName( name )
-        try:
-            sqlModel = self.asSQLModel()
-            return name in sqlModel
-        except Exception:
-            # If check fails, assume not present
-            return False
+        sqlModel = self.asSQLModel()
+        return name in sqlModel
 
     def asSQLModel( self, *a, **kw ):
         dbModel = DbSQLModel( *a, **kw, dbType=type(self) )

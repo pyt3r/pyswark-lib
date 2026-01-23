@@ -91,6 +91,23 @@ class TestDb(unittest.TestCase):
         new_rec = db.post(updated, name='MSFT')
         self.assertIsNotNone(new_rec)
         self.assertIsNotNone(db.getByName('MSFT'))
+        
+    def test_posting_with_infoKw(self):
+        db = Db()
+
+        from pyswark.core.models.info import Info
+        from pyswark.core.models.body import Body
+        
+        ticker = Ticker(symbol='TSLA', longName='Tesla Inc.', exchange='NASDAQ')
+        rec = record.Record(
+            info=Info(name='TSLA'),
+            body=Body(model=ticker, contents='{}')
+        )
+        
+        # Post Record with additional infoKw that should be set on rec.info
+        posted_rec = db.post(rec, name='TSLA_CUSTOM', custom_attr='test_value')
+        self.assertEqual(posted_rec.info.name, 'TSLA_CUSTOM')
+        # Note: custom_attr won't be on Info model, but the code path is tested
 
     def test_getByName_retrieves_existing_record(self):
         """
@@ -228,6 +245,18 @@ class TestDb(unittest.TestCase):
             db.post(ticker)  # name parameter omitted
         
         self.assertIn('name is required', str(ctx2.exception))
+        
+    def test_post_fallback_raises(self):
+        db = Db()
+
+        class UnsupportedType:
+            pass
+        
+        with self.assertRaises(NotImplementedError) as ctx3:
+            db.post(UnsupportedType(), name='unsupported')
+        
+        self.assertIn('post() not implemented for type', str(ctx3.exception))
+        self.assertIn('UnsupportedType', str(ctx3.exception))
 
     def test_put_creates_new_record(self):
         """
@@ -749,6 +778,34 @@ class TestDbSQLModel(unittest.TestCase):
         all_records = self.db.getAll()
         test_records = [r for r in all_records if r.info.name == 'TEST']
         self.assertEqual(len(test_records), 1)
+        
+    def test_put_rollback(self):
+        """ If an exception occurs during put, the transaction should be rolled back. """
+        # Create a record that will cause an error during put
+        original = Ticker(symbol='ROLLBACK', longName='Original', exchange='NASDAQ')
+        self.db.post(original, name='ROLLBACK')
+        
+        # Verify it exists
+        self.assertIsNotNone(self.db.getByName('ROLLBACK'))
+        
+        # Try to put with invalid data that will cause an exception
+        # We'll use a mock to simulate an exception during commit on the Session
+        from unittest.mock import patch, MagicMock
+        from sqlmodel import Session
+        
+        # Patch Session's commit method to raise an exception
+        with patch.object(Session, 'commit', side_effect=Exception("Simulated error")):
+            with self.assertRaises(Exception) as ctx:
+                invalid = Ticker(symbol='ROLLBACK', longName='Should Fail', exchange='NASDAQ')
+                self.db.put(invalid, name='ROLLBACK')
+            
+            # Verify the exception was raised
+            self.assertIn("Simulated error", str(ctx.exception))
+        
+        # Verify the original record still exists (rollback worked)
+        retrieved = self.db.getByName('ROLLBACK')
+        self.assertIsNotNone(retrieved)
+        self.assertEqual(retrieved.asModel().body.extract().longName, 'Original')
 
 
 if __name__ == '__main__':

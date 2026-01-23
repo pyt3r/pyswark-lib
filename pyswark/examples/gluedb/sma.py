@@ -28,7 +28,7 @@ def main():
 
     # extract the data via enum
     Enum = db.enum
-    JPM  = db.extract( Enum.JPM.value )
+    JPM  = db.extract( Enum.JPM )
 
     # get records by query
     from sqlmodel import Session, select
@@ -78,9 +78,9 @@ def main():
 
     # extract the data
     Enum   = db.enum
-    JPM    = db.extract( Enum.JPM.value )
-    BAC    = db.extract( Enum.BAC.value )
-    kwargs = db.extract( Enum.kwargs.value )
+    JPM    = db.extract( Enum.JPM )
+    BAC    = db.extract( Enum.BAC )
+    kwargs = db.extract( Enum.kwargs )
 
     # Calculate the simple moving average (SMA)
     JPM_SMA = JPM.rolling( **kwargs ).mean()
