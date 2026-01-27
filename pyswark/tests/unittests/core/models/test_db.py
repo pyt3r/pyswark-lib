@@ -23,10 +23,15 @@ Example Usage
 >>> record = db.getByName('AAPL')
 """
 
+import os
+import shutil
+import tempfile
 import unittest
+
 from pyswark.lib.pydantic import base
 from pyswark.core.models.db import Db, DbSQLModel
 from pyswark.core.models import record, body
+from pyswark.core.io import api
 
 
 class Ticker(base.BaseModel):
@@ -331,6 +336,74 @@ class TestDb(unittest.TestCase):
         self.assertEqual(retrieved.body.extract().longName, 'Alphabet Inc.')
 
 
+class TestMixinDbConnect(unittest.TestCase):
+    """
+    Tests for MixinDb.connect() - load from .pjson/.gluedb, optional persist on exit.
+
+    Mirrors the setUp/tearDown pattern from TestDbSQLModelConnect: temp_dir in
+    setUp, shutil.rmtree in tearDown. Covers connect(url, datahandler, persist),
+    loading when api.read returns a Db, and persistToFile when loaded is not a Db.
+    """
+
+    def setUp(self):
+        """Set up temp dir and paths for file-based connect tests."""
+        self.temp_dir = tempfile.mkdtemp()
+        self.catalog_path = os.path.join(self.temp_dir, 'catalog.pjson')
+
+    def tearDown(self):
+        """Remove temp dir."""
+        if os.path.exists(self.temp_dir):
+            shutil.rmtree(self.temp_dir)
+
+    def test_connect_loads_db_from_file(self):
+        """connect() loads a Db when api.read returns a Db (isinstance(loaded, cls))."""
+        db = Db()
+        db.post(
+            Ticker(symbol='AAPL', longName='Apple Inc.', exchange='NASDAQ'),
+            name='AAPL',
+        )
+        api.write(db, self.catalog_path, datahandler='pjson')
+
+        o = Db.connect(self.catalog_path, datahandler='pjson')
+
+        self.assertIsInstance(o, Db)
+        rec = o.getByName('AAPL')
+        self.assertIsNotNone(rec)
+        self.assertEqual(rec.info.name, 'AAPL')
+        ticker = rec.body.extract()
+        self.assertEqual(ticker.symbol, 'AAPL')
+
+    def test_connect_context_manager_returns_self(self):
+        """With connect() as db, __enter__ returns the Db instance."""
+        api.write(Db(), self.catalog_path, datahandler='pjson')
+
+        with Db.connect(self.catalog_path, datahandler='pjson') as db:
+            self.assertIsInstance(db, Db)
+
+    def test_connect_persist_on_exit(self):
+        """With persist=True, __exit__ writes to url when loaded is not a Db (o is kept)."""
+        # Pre-existing file that deserializes to a non-Db so o is not replaced
+
+        db = Db()
+        api.write(
+            db,
+            self.catalog_path,
+            datahandler='pjson',
+        )
+
+        with Db.connect(self.catalog_path, datahandler='pjson', persist=True) as db:
+            db.post(
+                Ticker(symbol='X', longName='X Corp', exchange='NYSE'),
+                name='X',
+            )
+
+        loaded = api.read(self.catalog_path, datahandler='pjson')
+        self.assertIsInstance(loaded, Db)
+        rec = loaded.getByName('X')
+        self.assertIsNotNone(rec)
+        self.assertEqual(rec.body.extract().symbol, 'X')
+
+
 class TestDbSQLModel(unittest.TestCase):
     """
     Tests for DbSQLModel - SQLite-backed persistence without context manager.
@@ -341,7 +414,12 @@ class TestDbSQLModel(unittest.TestCase):
 
     def setUp(self):
         """Create a fresh in-memory database for each test."""
-        self.db = DbSQLModel()
+        self.db = DbSQLModel( 'sqlite:///:memory:' )
+
+    def tearDown(self):
+        """Dispose the engine to avoid ResourceWarnings."""
+        if getattr( self, 'db', None ) is not None:
+            self.db.dispose()
 
     # ========================================================================
     # GET Operations (Read)
@@ -359,7 +437,7 @@ class TestDbSQLModel(unittest.TestCase):
         self.assertEqual(result.info.name, 'AAPL')
         
         # Verify data integrity
-        pydantic_record = result.asModel()
+        pydantic_record = result
         ticker = pydantic_record.body.extract()
         self.assertIsInstance(ticker, Ticker)
         self.assertEqual(ticker.symbol, 'AAPL')
@@ -417,7 +495,7 @@ class TestDbSQLModel(unittest.TestCase):
         
         # Retrieve and verify
         sql_record = self.db.getByName('NVDA')
-        pydantic_record = sql_record.asModel()
+        pydantic_record = sql_record
         restored = pydantic_record.body.extract()
         
         self.assertEqual(restored.symbol, original.symbol)
@@ -439,7 +517,7 @@ class TestDbSQLModel(unittest.TestCase):
         # Verify it was created
         retrieved = self.db.getByName('MSFT')
         self.assertIsNotNone(retrieved)
-        self.assertEqual(retrieved.asModel().body.extract().symbol, 'MSFT')
+        self.assertEqual(retrieved.body.extract().symbol, 'MSFT')
     
     def test_post_multiple_records(self):
         """POST: Create multiple records."""
@@ -572,7 +650,7 @@ class TestDbSQLModel(unittest.TestCase):
         # Verify new record exists
         result = self.db.getByName('UBER')
         self.assertIsNotNone(result)
-        self.assertEqual(result.asModel().body.extract().longName, 'Uber Technologies, Inc.')
+        self.assertEqual(result.body.extract().longName, 'Uber Technologies, Inc.')
 
     def test_delete_by_id_after_get_by_name(self):
         """DELETE: Delete by ID after retrieving by name."""
@@ -607,7 +685,7 @@ class TestDbSQLModel(unittest.TestCase):
         # Verify created
         retrieved = self.db.getByName('AAPL')
         self.assertIsNotNone(retrieved)
-        ticker = retrieved.asModel().body.extract()
+        ticker = retrieved.body.extract()
         self.assertEqual(ticker.symbol, 'AAPL')
         self.assertEqual(ticker.longName, 'Apple Inc.')
 
@@ -617,7 +695,7 @@ class TestDbSQLModel(unittest.TestCase):
         original = Ticker(symbol='MSFT', longName='Microsoft Corporation', exchange='NASDAQ')
         self.db.post(original, name='MSFT')
         self.assertEqual(
-            self.db.getByName('MSFT').asModel().body.extract().longName,
+            self.db.getByName('MSFT').body.extract().longName,
             'Microsoft Corporation'
         )
         
@@ -628,7 +706,7 @@ class TestDbSQLModel(unittest.TestCase):
         # Verify updated
         retrieved = self.db.getByName('MSFT')
         self.assertIsNotNone(retrieved)
-        ticker = retrieved.asModel().body.extract()
+        ticker = retrieved.body.extract()
         self.assertEqual(ticker.longName, 'Microsoft Corp.')  # Updated
         self.assertEqual(ticker.symbol, 'MSFT')  # Same
 
@@ -644,7 +722,7 @@ class TestDbSQLModel(unittest.TestCase):
         # Should still have exactly one record
         retrieved = self.db.getByName('GOOGL')
         self.assertIsNotNone(retrieved)
-        self.assertEqual(retrieved.asModel().body.extract().longName, 'Alphabet Inc.')
+        self.assertEqual(retrieved.body.extract().longName, 'Alphabet Inc.')
         
         all_records = self.db.getAll()
         googl_records = [r for r in all_records if r.info.name == 'GOOGL']
@@ -669,14 +747,14 @@ class TestDbSQLModel(unittest.TestCase):
         
         # Verify updated record changed
         nflx = self.db.getByName('NFLX')
-        self.assertEqual(nflx.asModel().body.extract().longName, 'Netflix Inc.')
+        self.assertEqual(nflx.body.extract().longName, 'Netflix Inc.')
         
         # Verify other records unchanged
         meta = self.db.getByName('META')
-        self.assertEqual(meta.asModel().body.extract().longName, 'Meta Platforms Inc.')
+        self.assertEqual(meta.body.extract().longName, 'Meta Platforms Inc.')
         
         dis = self.db.getByName('DIS')
-        self.assertEqual(dis.asModel().body.extract().longName, 'The Walt Disney Company')
+        self.assertEqual(dis.body.extract().longName, 'The Walt Disney Company')
         
         # Verify still have 3 records
         self.assertEqual(len(self.db.getAll()), 3)
@@ -687,7 +765,7 @@ class TestDbSQLModel(unittest.TestCase):
         original = Ticker(symbol='TEST', longName='Original Name', exchange='NASDAQ')
         self.db.post(original, name='TEST')
         self.assertEqual(
-            self.db.getByName('TEST').asModel().body.extract().longName,
+            self.db.getByName('TEST').body.extract().longName,
             'Original Name'
         )
         
@@ -700,7 +778,7 @@ class TestDbSQLModel(unittest.TestCase):
         retrieved_after = self.db.getByName('TEST')
         self.assertIsNotNone(retrieved_after)
         self.assertEqual(
-            retrieved_after.asModel().body.extract().longName,
+            retrieved_after.body.extract().longName,
             'Updated Name'
         )
         
@@ -750,7 +828,7 @@ class TestDbSQLModelConnect(unittest.TestCase):
             self.assertIsNotNone(result)
             self.assertEqual(result.info.name, 'AAPL')
             
-            ticker = result.asModel().body.extract()
+            ticker = result.body.extract()
             self.assertIsInstance(ticker, Ticker)
             self.assertEqual(ticker.symbol, 'AAPL')
             self.assertEqual(ticker.longName, 'Apple Inc.')
@@ -812,7 +890,7 @@ class TestDbSQLModelConnect(unittest.TestCase):
         # Retrieve and verify
         with DbSQLModel.connect(self.db_url) as db:
             sql_record = db.getByName('NVDA')
-            pydantic_record = sql_record.asModel()
+            pydantic_record = sql_record
             restored = pydantic_record.body.extract()
             
             self.assertEqual(restored.symbol, original.symbol)
@@ -835,7 +913,7 @@ class TestDbSQLModelConnect(unittest.TestCase):
             # Verify it was created
             retrieved = db.getByName('MSFT')
             self.assertIsNotNone(retrieved)
-            self.assertEqual(retrieved.asModel().body.extract().symbol, 'MSFT')
+            self.assertEqual(retrieved.body.extract().symbol, 'MSFT')
     
     def test_post_auto_commits_on_success(self):
         """POST: Auto-commits on successful context exit."""
@@ -849,7 +927,7 @@ class TestDbSQLModelConnect(unittest.TestCase):
         with DbSQLModel.connect(self.db_url) as db:
             retrieved = db.getByName('GOOGL')
             self.assertIsNotNone(retrieved)
-            self.assertEqual(retrieved.asModel().body.extract().symbol, 'GOOGL')
+            self.assertEqual(retrieved.body.extract().symbol, 'GOOGL')
     
     def test_post_rolls_back_on_exception(self):
         """POST: Rolls back on exception."""
@@ -929,7 +1007,7 @@ class TestDbSQLModelConnect(unittest.TestCase):
             # Verify individual records can be retrieved
             jpm = db.getByName('JPM')
             self.assertIsNotNone(jpm)
-            self.assertEqual(jpm.asModel().body.extract().symbol, 'JPM')
+            self.assertEqual(jpm.body.extract().symbol, 'JPM')
     
     def test_post_requires_name(self):
         """POST: Requires name parameter for BaseModel."""
@@ -1033,7 +1111,7 @@ class TestDbSQLModelConnect(unittest.TestCase):
             result = db.getByName('UBER')
             self.assertIsNotNone(result)
             self.assertEqual(
-                result.asModel().body.extract().longName,
+                result.body.extract().longName,
                 'Uber Technologies Inc.'
             )
     
@@ -1054,7 +1132,7 @@ class TestDbSQLModelConnect(unittest.TestCase):
         with DbSQLModel.connect(self.db_url) as db:
             retrieved = db.getByName('AAPL')
             self.assertIsNotNone(retrieved)
-            self.assertEqual(retrieved.asModel().body.extract().symbol, 'AAPL')
+            self.assertEqual(retrieved.body.extract().symbol, 'AAPL')
     
     def test_put_updates_existing_record(self):
         """PUT: Updates existing record by replacing it."""
@@ -1071,7 +1149,7 @@ class TestDbSQLModelConnect(unittest.TestCase):
         # Verify updated
         with DbSQLModel.connect(self.db_url) as db:
             retrieved = db.getByName('MSFT')
-            ticker = retrieved.asModel().body.extract()
+            ticker = retrieved.body.extract()
             self.assertEqual(ticker.longName, 'Microsoft Corp.')  # Updated
             self.assertEqual(ticker.symbol, 'MSFT')  # Same
     
@@ -1115,14 +1193,14 @@ class TestDbSQLModelConnect(unittest.TestCase):
         # Verify the updated record changed
         with DbSQLModel.connect(self.db_url) as db:
             nflx = db.getByName('NFLX')
-            self.assertEqual(nflx.asModel().body.extract().longName, 'Netflix Inc.')
+            self.assertEqual(nflx.body.extract().longName, 'Netflix Inc.')
             
             # Verify other records unchanged
             meta = db.getByName('META')
-            self.assertEqual(meta.asModel().body.extract().longName, 'Meta Platforms Inc.')
+            self.assertEqual(meta.body.extract().longName, 'Meta Platforms Inc.')
             
             dis = db.getByName('DIS')
-            self.assertEqual(dis.asModel().body.extract().longName, 'The Walt Disney Company')
+            self.assertEqual(dis.body.extract().longName, 'The Walt Disney Company')
             
             # Verify still have 3 records
             self.assertEqual(len(db.getAll()), 3)
@@ -1144,7 +1222,7 @@ class TestDbSQLModelConnect(unittest.TestCase):
         with DbSQLModel.connect(self.db_url) as db:
             retrieved = db.getByName('TEST')
             self.assertEqual(
-                retrieved.asModel().body.extract().longName,
+                retrieved.body.extract().longName,
                 'Updated Name'
             )
             
@@ -1169,15 +1247,21 @@ class TestDbSQLModelConnect(unittest.TestCase):
         """
         # Test 1: commit() outside context manager raises RuntimeError
         db = DbSQLModel.connect(self.db_url)
-        with self.assertRaises(RuntimeError) as ctx:
-            db.commit()
-        self.assertIn("context manager", str(ctx.exception).lower())
-        
+        try:
+            with self.assertRaises(RuntimeError) as ctx:
+                db.commit()
+            self.assertIn("context manager", str(ctx.exception).lower())
+        finally:
+            db.dispose()
+
         # Test 2: rollback() outside context manager raises RuntimeError
         db = DbSQLModel.connect(self.db_url)
-        with self.assertRaises(RuntimeError) as ctx:
-            db.rollback()
-        self.assertIn("context manager", str(ctx.exception).lower())
+        try:
+            with self.assertRaises(RuntimeError) as ctx:
+                db.rollback()
+            self.assertIn("context manager", str(ctx.exception).lower())
+        finally:
+            db.dispose()
         
         # Test 3: put() exception handling in context manager triggers rollback
         # Setup - create initial record
@@ -1206,31 +1290,37 @@ class TestDbSQLModelConnect(unittest.TestCase):
         with DbSQLModel.connect(self.db_url) as db:
             retrieved = db.getByName('ERROR_TEST')
             self.assertIsNotNone(retrieved)
-            self.assertEqual(retrieved.asModel().body.extract().longName, 'Original')
+            self.assertEqual(retrieved.body.extract().longName, 'Original')
         
         # Test 4: put() exception handling outside context manager triggers rollback
         # Setup - create initial record
         db = DbSQLModel(self.db_url)
-        original2 = Ticker(symbol='ERROR_TEST2', longName='Original2', exchange='NASDAQ')
-        db.post(original2, name='ERROR_TEST2')
-        
-        # Verify it exists
-        self.assertIsNotNone(db.getByName('ERROR_TEST2'))
-        
-        # Mock Session.add to raise an exception (non-context manager path)
-        # This tests the exception handling in put() when not using context manager
-        with patch.object(Session, 'add', side_effect=Exception("Simulated put error 2")):
-            db2 = DbSQLModel(self.db_url)
-            updated2 = Ticker(symbol='ERROR_TEST2', longName='Should Fail', exchange='NASDAQ')
-            with self.assertRaises(Exception) as ctx:
-                db2.put(updated2, name='ERROR_TEST2')
-            self.assertIn("Simulated put error 2", str(ctx.exception))
-        
-        # Verify original record still exists and unchanged (rollback prevented update)
-        db3 = DbSQLModel(self.db_url)
-        retrieved2 = db3.getByName('ERROR_TEST2')
-        self.assertIsNotNone(retrieved2)
-        self.assertEqual(retrieved2.asModel().body.extract().longName, 'Original2')
+        try:
+            original2 = Ticker(symbol='ERROR_TEST2', longName='Original2', exchange='NASDAQ')
+            db.post(original2, name='ERROR_TEST2')
+            self.assertIsNotNone(db.getByName('ERROR_TEST2'))
+
+            # Mock Session.add to raise an exception (non-context manager path)
+            with patch.object(Session, 'add', side_effect=Exception("Simulated put error 2")):
+                db2 = DbSQLModel(self.db_url)
+                try:
+                    updated2 = Ticker(symbol='ERROR_TEST2', longName='Should Fail', exchange='NASDAQ')
+                    with self.assertRaises(Exception) as ctx:
+                        db2.put(updated2, name='ERROR_TEST2')
+                    self.assertIn("Simulated put error 2", str(ctx.exception))
+                finally:
+                    db2.dispose()
+
+            # Verify original record still exists and unchanged (rollback prevented update)
+            db3 = DbSQLModel(self.db_url)
+            try:
+                retrieved2 = db3.getByName('ERROR_TEST2')
+                self.assertIsNotNone(retrieved2)
+                self.assertEqual(retrieved2.body.extract().longName, 'Original2')
+            finally:
+                db3.dispose()
+        finally:
+            db.dispose()
 
 
 if __name__ == '__main__':

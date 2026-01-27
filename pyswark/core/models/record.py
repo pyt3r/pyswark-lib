@@ -10,6 +10,7 @@ from pyswark.core.models.body import Body, BodySQLModel
 class Record( base.BaseModel ):
     info     : Info
     body     : Body
+    id       : Optional[ int ] = None
 
     @field_validator( 'info', mode='before' )
     def _info_before( cls, info ):
@@ -43,7 +44,8 @@ class RecordSQLModel( SQLModel, table=True ):
     body : BodySQLModel = Relationship( back_populates="record" )
 
     def asModel( self ):
-        return Record( 
-            info = self.info.asModel(), 
+        return Record(
+            id   = self.id,
+            info = self.info.asModel(),
             body = self.body.asModel(),
         )

@@ -77,7 +77,7 @@ class Model( function.FunctionModel ):
 
     @property
     def path(self):
-        return str( self.Path )
+        return str( self.Path ) if self.Path else None
 
     @property
     def query(self):
