@@ -28,12 +28,12 @@ class MixinDb( base.BaseModel, MixinName ):
     records : list[ record.Record ] = Field( default_factory=list )
 
     @classmethod
-    def _post( cls, obj, name=None ):
+    def _post( cls, obj, name=None, **infoKw ):
         try:
-            return super()._post( obj, name=name ) # parent's dispatched handlers
+            return super()._post( obj, name=name, **infoKw ) # parent's dispatched handlers
         except NotImplementedError:
-            obj, name = cls._post_fallback( obj, name=name )
-            return super()._post( obj, name=name )
+            obj, name = cls._post_fallback( obj, name=name, **infoKw )
+            return super()._post( obj, name=name, **infoKw )
 
     @property
     def enum(self):
@@ -107,8 +107,7 @@ class MixinPost( mixin.TypeCheck ):
             infoKw['name'] = name
             
         if infoKw:
-            for k, v in infoKw.items():
-                setattr( rec.info, k, v )
+            rec.info = rec.info.clone( **infoKw )
 
         return cls._post_after( rec )
 
@@ -145,12 +144,70 @@ class MixinPost( mixin.TypeCheck ):
         cls.checkIfAllowedSubType( model, cls.AllowedInstances )
 
 
+class MixinConnect:
+    """Mixin providing context manager functionality for database connections."""
+    
+    def __init__(self, *args, **kwargs):
+        """Initialize context manager state."""
+        super().__init__(*args, **kwargs)
+        self._session = None  # Track active session when used as context manager
+        self._in_context = False  # Track if we're in a context manager
+    
+    def __enter__(self):
+        """Enter context manager - create and store session."""
+        if self._session is not None:
+            raise RuntimeError("Already in a context manager")
+        self._session = Session(self.engine)
+        self._in_context = True
+        return self
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Exit context manager - commit or rollback, then close session."""
+        if self._session is None:
+            return False
+        
+        try:
+            if exc_type is None:
+                # Success - commit changes
+                self._session.commit()
+            else:
+                # Exception occurred - rollback
+                self._session.rollback()
+        finally:
+            self._session.close()
+            self._session = None
+            self._in_context = False
+        
+        return False  # Don't suppress exceptions
+    
+    def _get_session(self):
+        """Get the current session, returning None if not in context manager."""
+        if self._in_context and self._session is not None:
+            return self._session
+        # Not in context manager - return None to use with Session() pattern
+        return None
+    
+    def commit(self):
+        """Explicitly commit the current transaction."""
+        session = self._get_session()
+        if session is None:
+            raise RuntimeError("commit() can only be called within a context manager")
+        session.commit()
+    
+    def rollback(self):
+        """Explicitly rollback the current transaction."""
+        session = self._get_session()
+        if session is None:
+            raise RuntimeError("rollback() can only be called within a context manager")
+        session.rollback()
+
+
 class Db( MixinDb, MixinPost ):
     AllowedTypes     : ClassVar[ list[ Union[ str, type ] ] ] = []
     AllowedInstances : ClassVar[ list[ Union[ str, type ] ] ] = []
 
 
-class DbSQLModel( MixinName ):
+class DbSQLModel( MixinConnect, MixinName ):
     INFO   = info.InfoSQLModel
     BODY   = body.BodySQLModel
     RECORD = record.RecordSQLModel
@@ -158,52 +215,111 @@ class DbSQLModel( MixinName ):
     def __init__(self, url='sqlite:///:memory:', dbType=Db, **kw ):
         self.engine = self._initEngine( url )
         self.dbType = dbType
+        super().__init__()  # Initialize MixinConnect
+    
+    @classmethod
+    def connect(cls, url='sqlite:///:memory:', dbType=Db, **kw):
+        """
+        Connect to a database and return a context manager.
+        
+        Parameters
+        ----------
+        url : str, optional
+            Database URL. Defaults to in-memory SQLite.
+            Examples:
+            - 'sqlite:///:memory:' (in-memory, default)
+            - 'sqlite:///./mydb.db' (file-based, relative path)
+            - 'sqlite:////absolute/path/to/db.db' (absolute path)
+        dbType : type, optional
+            The Db class to use. Defaults to Db.
+        **kw
+            Additional arguments passed to create_engine().
+            
+        Returns
+        -------
+        DbSQLModel
+            A DbSQLModel instance that can be used as a context manager.
+            
+        Example
+        -------
+        >>> # File-based database with auto-commit
+        >>> with DbSQLModel.connect('sqlite:///./data.db') as db:
+        ...     db.post(ticker, name='AAPL')
+        ...     # Auto-commits on successful exit
+        ...
+        >>> # In-memory database (default)
+        >>> with DbSQLModel.connect() as db:
+        ...     db.post(ticker, name='AAPL')
+        """
+        instance = cls(url=url, dbType=dbType, **kw)
+        return instance
         
     @classmethod
     def _initEngine( cls, url, **kw ):
-        if ':memory:' in url:
-            engine = create_engine( url, **kw )
-            SQLModel.metadata.create_all( engine )
-            return engine
+        engine = create_engine( url, **kw )
+        SQLModel.metadata.create_all( engine )
+        return engine
 
-    def post( self, obj, name=None ):
+    def post( self, obj, name=None, **infokw ):
         name = self._processName( name )
-        model = self._post( obj, name=name )
+        model = self._post( obj, name=name, **infokw )
 
-        with Session( self.engine ) as session:
+        session = self._get_session()
+        if session is not None:
+            # In context manager - use existing session
             sqlModel = model.asSQLModel()
-
             session.add( sqlModel )
-            session.commit()
+            session.flush()  # Flush to make object persistent so we can refresh
+            # Don't commit here - let context manager handle it
             self._refreshWithSession( session, sqlModel )
-
             return sqlModel
+        else:
+            # Not in context manager - create new session (backward compatible)
+            with Session( self.engine ) as session:
+                sqlModel = model.asSQLModel()
+                session.add( sqlModel )
+                session.commit()
+                self._refreshWithSession( session, sqlModel )
+                return sqlModel
 
-    def _post( self, obj, name=None ):
+    def _post( self, obj, name=None, **infokw ):
         name = self._processName( name )
-        return self.dbType._post( obj, name=name )
+        return self.dbType._post( obj, name=name, **infokw )
 
     def postAll( self, objs ):
         models    = [ self._post( o ) for o in objs ]
         sqlModels = [ model.asSQLModel() for model in models ]
 
-        with Session( self.engine ) as session:
-
+        session = self._get_session()
+        if session is not None:
+            # In context manager - use existing session
             session.add_all( sqlModels )
-            session.commit()
-            
+            session.flush()  # Flush to make objects persistent so we can refresh
+            # Don't commit here - let context manager handle it
             for sqlModel in sqlModels:
                 self._refreshWithSession( session, sqlModel )
-
             return sqlModels
+        else:
+            # Not in context manager - create new session (backward compatible)
+            with Session( self.engine ) as session:
+                session.add_all( sqlModels )
+                session.commit()
+                for sqlModel in sqlModels:
+                    self._refreshWithSession( session, sqlModel )
+                return sqlModels
 
     def getAll( self ):
         query = self._makeQuery( 
             select( self.RECORD ) 
         )
-        with Session( self.engine ) as session:                
-            results = session.exec( query ).all()
-            return results
+        session = self._get_session()
+        if session is not None:
+            # In context manager - use existing session
+            return session.exec( query ).all()
+        else:
+            # Not in context manager - create new session (backward compatible)
+            with Session( self.engine ) as session:                
+                return session.exec( query ).all()
 
     def getByName( self, name ):
         name = self._processName( name )
@@ -215,9 +331,14 @@ class DbSQLModel( MixinName ):
         return self._get( query )
 
     def _get( self, query ):
-        with Session( self.engine ) as session:
-            result = session.exec( query ).one_or_none()
-            return result
+        session = self._get_session()
+        if session is not None:
+            # In context manager - use existing session
+            return session.exec( query ).one_or_none()
+        else:
+            # Not in context manager - create new session (backward compatible)
+            with Session( self.engine ) as session:
+                return session.exec( query ).one_or_none()
 
     def deleteByName( self, name ):
         name = self._processName( name )
@@ -245,8 +366,9 @@ class DbSQLModel( MixinName ):
         name = self._processName( name )
         model = self._post( obj, name=name )
         
-        # Use a single transaction for both delete and post
-        with Session( self.engine ) as session:
+        session = self._get_session()
+        if session is not None:
+            # In context manager - use existing session
             try:
                 # Delete existing record if it exists
                 query    = self._makeNameQuery( name )
@@ -259,9 +381,8 @@ class DbSQLModel( MixinName ):
                 # Add the new record
                 sqlModelNew = model.asSQLModel()
                 session.add( sqlModelNew )
-                
-                # Commit both operations together
-                session.commit()
+                session.flush()  # Flush to make object persistent so we can refresh
+                # Don't commit here - let context manager handle it
                 self._refreshWithSession( session, sqlModelNew )
                 
                 return sqlModelNew
@@ -269,6 +390,31 @@ class DbSQLModel( MixinName ):
             except Exception:
                 session.rollback() # Rollback the entire transaction on any error
                 raise
+        else:
+            # Not in context manager - create new session (backward compatible)
+            with Session( self.engine ) as session:
+                try:
+                    # Delete existing record if it exists
+                    query    = self._makeNameQuery( name )
+                    sqlModel = session.exec( query ).one_or_none()
+
+                    if sqlModel:
+                        self._deleteWithSession( session, sqlModel )
+                        session.flush() # Flush to ensure delete is processed before insert
+                    
+                    # Add the new record
+                    sqlModelNew = model.asSQLModel()
+                    session.add( sqlModelNew )
+                    
+                    # Commit both operations together
+                    session.commit()
+                    self._refreshWithSession( session, sqlModelNew )
+                    
+                    return sqlModelNew
+
+                except Exception:
+                    session.rollback() # Rollback the entire transaction on any error
+                    raise
 
     @staticmethod
     def _refreshWithSession( session, sqlModel ):
@@ -278,13 +424,24 @@ class DbSQLModel( MixinName ):
         session.refresh( sqlModel.body )
 
     def _delete( self, query ):
-        with Session( self.engine ) as session:
+        session = self._get_session()
+        if session is not None:
+            # In context manager - use existing session
             sqlModel = session.exec( query ).one_or_none()
             if sqlModel:
                 self._deleteWithSession( session, sqlModel )
-                session.commit()
+                # Don't commit here - let context manager handle it
                 return True
             return False
+        else:
+            # Not in context manager - create new session (backward compatible)
+            with Session( self.engine ) as session:
+                sqlModel = session.exec( query ).one_or_none()
+                if sqlModel:
+                    self._deleteWithSession( session, sqlModel )
+                    session.commit()
+                    return True
+                return False
 
     @staticmethod
     def _deleteWithSession( session, sqlModel ):

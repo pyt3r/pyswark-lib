@@ -333,320 +333,278 @@ class TestDb(unittest.TestCase):
 
 class TestDbSQLModel(unittest.TestCase):
     """
-    Tests for DbSQLModel - SQLite-backed persistence.
+    Tests for DbSQLModel - SQLite-backed persistence without context manager.
     
-    Each test gets a fresh in-memory database.
+    Each test gets a fresh in-memory database. All operations are organized
+    by HTTP-like methods: GET, POST, DELETE, PUT.
     """
 
     def setUp(self):
         """Create a fresh in-memory database for each test."""
         self.db = DbSQLModel()
 
-    def test_post_and_retrieve_by_name(self):
-        """
-        Post a Ticker and retrieve it by name.
-        
-        This is the primary use case: store a model, get it back by name.
-        The symbol serves as the unique identifier (info.name).
-        """
-        # Create and post a ticker
+    # ========================================================================
+    # GET Operations (Read)
+    # ========================================================================
+    
+    def test_get_by_name(self):
+        """GET: Retrieve a record by name."""
+        # Setup
         aapl = Ticker(symbol='AAPL', longName='Apple Inc.', exchange='NASDAQ')
         self.db.post(aapl, name='AAPL')
         
-        # Retrieve by name
+        # Test
         result = self.db.getByName('AAPL')
-        
         self.assertIsNotNone(result)
         self.assertEqual(result.info.name, 'AAPL')
         
-        # Convert to Pydantic and extract the inner model
+        # Verify data integrity
         pydantic_record = result.asModel()
         ticker = pydantic_record.body.extract()
-        
         self.assertIsInstance(ticker, Ticker)
         self.assertEqual(ticker.symbol, 'AAPL')
         self.assertEqual(ticker.longName, 'Apple Inc.')
         self.assertEqual(ticker.exchange, 'NASDAQ')
 
-    def test_post_and_retrieve_by_id(self):
-        """
-        Post a Ticker and retrieve it by auto-generated ID.
-        
-        Useful when you need the database-assigned primary key.
-        """
+    def test_get_by_id(self):
+        """GET: Retrieve a record by auto-generated ID."""
+        # Setup
         googl = Ticker(symbol='GOOGL', longName='Alphabet Inc.', exchange='NASDAQ')
         posted = self.db.post(googl, name='GOOGL')
-        
-        # Get the auto-generated ID
         record_id = posted.id
         self.assertIsNotNone(record_id)
         
-        # Retrieve by ID
+        # Test
         result = self.db.getById(record_id)
-        
         self.assertIsNotNone(result)
         self.assertEqual(result.info.name, 'GOOGL')
 
-    def test_post_multiple_and_get_all(self):
-        """
-        Post multiple Tickers and retrieve them all.
-        
-        Demonstrates bulk operations and full table retrieval.
-        """
+    def test_get_all(self):
+        """GET: Retrieve all records."""
+        # Setup
         tickers = [
             Ticker(symbol='JPM',  longName='JPMorgan Chase & Co.', exchange='NYSE'),
             Ticker(symbol='BAC',  longName='Bank of America Corp', exchange='NYSE'),
             Ticker(symbol='WFC',  longName='Wells Fargo & Company', exchange='NYSE'),
         ]
-        
-        # Post each ticker using its symbol as the name
         for t in tickers:
             self.db.post(t, name=t.symbol)
         
-        # Get all records
+        # Test
         results = self.db.getAll()
-        
         self.assertEqual(len(results), 3)
-        
-        # Verify all symbols are present
         names = {r.info.name for r in results}
         self.assertEqual(names, {'JPM', 'BAC', 'WFC'})
 
     def test_get_nonexistent_returns_none(self):
-        """
-        Querying for a non-existent name returns None.
-        
-        This is safe behavior - no exceptions raised.
-        """
+        """GET: Querying for non-existent record returns None."""
         result = self.db.getByName('DOESNOTEXIST')
         self.assertIsNone(result)
-
-    def test_full_roundtrip_preserves_data(self):
-        """
-        Complete data integrity through post/retrieve cycle.
         
-        This is the key test: data goes in, database stores it,
-        data comes out exactly the same.
-        """
-        # Original ticker with all fields
+        result = self.db.getById(99999)
+        self.assertIsNone(result)
+
+    def test_get_preserves_data_integrity(self):
+        """GET: Retrieved data matches original data exactly."""
         original = Ticker(
             symbol='NVDA',
             longName='NVIDIA Corporation',
             exchange='NASDAQ'
         )
         
-        # Post to database
+        # Post
         self.db.post(original, name='NVDA')
         
-        # Retrieve and extract
+        # Retrieve and verify
         sql_record = self.db.getByName('NVDA')
         pydantic_record = sql_record.asModel()
         restored = pydantic_record.body.extract()
         
-        # Verify every field matches
         self.assertEqual(restored.symbol, original.symbol)
         self.assertEqual(restored.longName, original.longName)
         self.assertEqual(restored.exchange, original.exchange)
 
-    def test_delete_by_name_success(self):
-        """
-        Delete a record by name and verify it's removed.
+    # ========================================================================
+    # POST Operations (Create)
+    # ========================================================================
+    
+    def test_post_creates_new_record(self):
+        """POST: Create a new record."""
+        ticker = Ticker(symbol='MSFT', longName='Microsoft Corp', exchange='NASDAQ')
+        rec = self.db.post(ticker, name='MSFT')
         
-        This is the primary deletion use case: remove a record by its unique name.
-        """
-        # Create and post a ticker
+        self.assertIsNotNone(rec)
+        self.assertEqual(rec.info.name, 'MSFT')
+        
+        # Verify it was created
+        retrieved = self.db.getByName('MSFT')
+        self.assertIsNotNone(retrieved)
+        self.assertEqual(retrieved.asModel().body.extract().symbol, 'MSFT')
+    
+    def test_post_multiple_records(self):
+        """POST: Create multiple records."""
+        tickers = [
+            Ticker(symbol='META', longName='Meta Platforms', exchange='NASDAQ'),
+            Ticker(symbol='NFLX', longName='Netflix Inc.', exchange='NASDAQ'),
+            Ticker(symbol='DIS', longName='Disney', exchange='NYSE'),
+        ]
+        
+        for ticker in tickers:
+            self.db.post(ticker, name=ticker.symbol)
+        
+        # Verify all created
+        all_records = self.db.getAll()
+        self.assertEqual(len(all_records), 3)
+        names = {r.info.name for r in all_records}
+        self.assertEqual(names, {'META', 'NFLX', 'DIS'})
+    
+    def test_post_requires_name(self):
+        """POST: Requires name parameter for BaseModel."""
+        ticker = Ticker(symbol='TEST', longName='Test', exchange='NYSE')
+        
+        with self.assertRaises(ValueError) as ctx:
+            self.db.post(ticker, name=None)
+        
+        self.assertIn('name is required', str(ctx.exception))
+        
+        with self.assertRaises(ValueError) as ctx2:
+            self.db.post(ticker)  # name parameter omitted
+        
+        self.assertIn('name is required', str(ctx2.exception))
+    
+    def test_post_with_infoKw(self):
+        """POST: Can pass additional infoKw parameters."""
+        from pyswark.core.models.info import Info
+        from pyswark.core.models.body import Body
+        
+        ticker = Ticker(symbol='TSLA', longName='Tesla Inc.', exchange='NASDAQ')
+        rec = record.Record(
+            info=Info(name='TSLA'),
+            body=Body(model=ticker, contents='{}')
+        )
+        
+        # Post Record with additional infoKw
+        posted_rec = self.db.post(rec, name='TSLA_CUSTOM', custom_attr='test_value')
+        self.assertEqual(posted_rec.info.name, 'TSLA_CUSTOM')
+
+    # ========================================================================
+    # DELETE Operations
+    # ========================================================================
+    
+    def test_delete_by_name(self):
+        """DELETE: Remove a record by name."""
+        # Setup
         tsla = Ticker(symbol='TSLA', longName='Tesla, Inc.', exchange='NASDAQ')
         self.db.post(tsla, name='TSLA')
-        
-        # Verify it exists
         self.assertIsNotNone(self.db.getByName('TSLA'))
         
-        # Delete it
+        # Delete
         result = self.db.deleteByName('TSLA')
         self.assertTrue(result)
         
-        # Verify it's gone
+        # Verify deleted
         self.assertIsNone(self.db.getByName('TSLA'))
 
-    def test_delete_by_id_success(self):
-        """
-        Delete a record by ID and verify it's removed.
-        
-        Useful when you have the database-assigned primary key.
-        """
-        # Create and post a ticker
+    def test_delete_by_id(self):
+        """DELETE: Remove a record by ID."""
+        # Setup
         amzn = Ticker(symbol='AMZN', longName='Amazon.com Inc.', exchange='NASDAQ')
         posted = self.db.post(amzn, name='AMZN')
         record_id = posted.id
-        
-        # Verify it exists
         self.assertIsNotNone(self.db.getById(record_id))
         
-        # Delete it
+        # Delete
         result = self.db.deleteById(record_id)
         self.assertTrue(result)
         
-        # Verify it's gone
+        # Verify deleted
         self.assertIsNone(self.db.getById(record_id))
         self.assertIsNone(self.db.getByName('AMZN'))
 
-    def test_delete_by_name_nonexistent(self):
-        """
-        Attempting to delete a non-existent name returns False.
-        
-        Safe behavior - doesn't raise an exception, just returns False.
-        """
+    def test_delete_nonexistent_returns_false(self):
+        """DELETE: Deleting non-existent record returns False."""
         result = self.db.deleteByName('DOESNOTEXIST')
         self.assertFalse(result)
-
-    def test_delete_by_id_nonexistent(self):
-        """
-        Attempting to delete a non-existent ID returns False.
         
-        Safe behavior - doesn't raise an exception, just returns False.
-        """
-        result = self.db.deleteById(99999)  # Non-existent ID
+        result = self.db.deleteById(99999)
         self.assertFalse(result)
 
-    def test_delete_one_preserves_others(self):
-        """
-        Deleting one record doesn't affect other records.
-        
-        This verifies referential integrity and that deletion is targeted.
-        """
-        # Post multiple tickers
+    def test_delete_preserves_other_records(self):
+        """DELETE: Deleting one record doesn't affect others."""
+        # Setup
         tickers = [
             Ticker(symbol='META', longName='Meta Platforms Inc.', exchange='NASDAQ'),
             Ticker(symbol='NFLX', longName='Netflix, Inc.', exchange='NASDAQ'),
             Ticker(symbol='DIS',  longName='The Walt Disney Company', exchange='NYSE'),
         ]
-        
         for t in tickers:
             self.db.post(t, name=t.symbol)
         
-        # Verify all exist
-        all_records = self.db.getAll()
-        self.assertEqual(len(all_records), 3)
+        self.assertEqual(len(self.db.getAll()), 3)
         
         # Delete one
         result = self.db.deleteByName('NFLX')
         self.assertTrue(result)
         
-        # Verify the deleted one is gone
+        # Verify deleted one is gone
         self.assertIsNone(self.db.getByName('NFLX'))
         
-        # Verify the others still exist
+        # Verify others still exist
         remaining = self.db.getAll()
         self.assertEqual(len(remaining), 2)
-        
         names = {r.info.name for r in remaining}
         self.assertEqual(names, {'META', 'DIS'})
 
-    def test_delete_and_repost_same_name(self):
-        """
-        After deleting, can repost with the same name.
-        
-        This verifies that deletion truly removes the record and doesn't
-        leave behind constraints that prevent reuse of the name.
-        """
-        # Post, delete, then repost with same name
+    def test_delete_and_repost(self):
+        """DELETE: Can repost with same name after deletion."""
+        # Setup
         original = Ticker(symbol='UBER', longName='Uber Technologies Inc.', exchange='NYSE')
         self.db.post(original, name='UBER')
         
-        # Delete it
+        # Delete
         self.assertTrue(self.db.deleteByName('UBER'))
         self.assertIsNone(self.db.getByName('UBER'))
         
-        # Repost with same name but different data
+        # Repost with same name
         updated = Ticker(symbol='UBER', longName='Uber Technologies, Inc.', exchange='NYSE')
         self.db.post(updated, name='UBER')
         
         # Verify new record exists
         result = self.db.getByName('UBER')
         self.assertIsNotNone(result)
-        
-        # Verify it's the new data
-        ticker = result.asModel().body.extract()
-        self.assertEqual(ticker.longName, 'Uber Technologies, Inc.')
+        self.assertEqual(result.asModel().body.extract().longName, 'Uber Technologies, Inc.')
 
     def test_delete_by_id_after_get_by_name(self):
-        """
-        Delete by ID after retrieving by name.
-        
-        Demonstrates the workflow: find by name, get ID, delete by ID.
-        """
-        # Post a ticker
+        """DELETE: Delete by ID after retrieving by name."""
+        # Setup
         sq = Ticker(symbol='SQ', longName='Block, Inc.', exchange='NYSE')
         self.db.post(sq, name='SQ')
         
-        # Get by name to retrieve the ID
+        # Get ID from name
         record = self.db.getByName('SQ')
         record_id = record.id
         
-        # Delete using the ID
+        # Delete by ID
         result = self.db.deleteById(record_id)
         self.assertTrue(result)
         
-        # Verify it's gone by both methods
+        # Verify deleted
         self.assertIsNone(self.db.getByName('SQ'))
         self.assertIsNone(self.db.getById(record_id))
 
-    def test_post_body_requires_name(self):
-        """
-        Posting a Body directly requires a name parameter (DbSQLModel).
-        
-        DbSQLModel uses the same _post() method, so it should have
-        the same validation requirements.
-        """
-        # Create a Body
-        ticker = Ticker(symbol='TEST', longName='Test Corp', exchange='NYSE')
-        bod = body.Body(model=ticker)
-        
-        # Posting without name should raise ValueError
-        with self.assertRaises(ValueError) as ctx:
-            self.db.post(bod, name=None)
-        
-        self.assertIn('name is required', str(ctx.exception))
-        self.assertIn('Body', str(ctx.exception))
-
-    def test_post_basemodel_requires_name(self):
-        """
-        Posting a BaseModel requires a name parameter (DbSQLModel).
-        
-        DbSQLModel uses the same _post() method, so it should have
-        the same validation requirements.
-        """
-        # Create a BaseModel
-        ticker = Ticker(symbol='TEST', longName='Test Corp', exchange='NYSE')
-        
-        # Posting without name should raise ValueError
-        with self.assertRaises(ValueError) as ctx:
-            self.db.post(ticker, name=None)
-        
-        self.assertIn('name is required', str(ctx.exception))
-        self.assertIn('Ticker', str(ctx.exception))
-        
-        # Also test with name not provided at all (defaults to None)
-        with self.assertRaises(ValueError) as ctx2:
-            self.db.post(ticker)  # name parameter omitted
-        
-        self.assertIn('name is required', str(ctx2.exception))
-
+    # ========================================================================
+    # PUT Operations (Update/Create)
+    # ========================================================================
+    
     def test_put_creates_new_record(self):
-        """
-        PUT creates a new record when one doesn't exist (DbSQLModel).
-        
-        PUT is idempotent - it works whether the record exists or not.
-        When the record doesn't exist, PUT behaves like POST.
-        """
-        # PUT a new ticker
+        """PUT: Creates new record when it doesn't exist."""
         aapl = Ticker(symbol='AAPL', longName='Apple Inc.', exchange='NASDAQ')
         sql_rec = self.db.put(aapl, name='AAPL')
         
         self.assertIsNotNone(sql_rec)
         self.assertEqual(sql_rec.info.name, 'AAPL')
         
-        # Verify it was created
+        # Verify created
         retrieved = self.db.getByName('AAPL')
         self.assertIsNotNone(retrieved)
         ticker = retrieved.asModel().body.extract()
@@ -654,38 +612,28 @@ class TestDbSQLModel(unittest.TestCase):
         self.assertEqual(ticker.longName, 'Apple Inc.')
 
     def test_put_updates_existing_record(self):
-        """
-        PUT updates an existing record by replacing it (DbSQLModel).
-        
-        This is the key difference from POST - PUT replaces existing
-        records rather than creating duplicates or raising errors.
-        """
-        # Create initial record
+        """PUT: Updates existing record by replacing it."""
+        # Setup
         original = Ticker(symbol='MSFT', longName='Microsoft Corporation', exchange='NASDAQ')
         self.db.post(original, name='MSFT')
+        self.assertEqual(
+            self.db.getByName('MSFT').asModel().body.extract().longName,
+            'Microsoft Corporation'
+        )
         
-        # Verify original exists
-        retrieved = self.db.getByName('MSFT')
-        self.assertEqual(retrieved.asModel().body.extract().longName, 'Microsoft Corporation')
-        
-        # PUT an updated version
+        # Update with PUT
         updated = Ticker(symbol='MSFT', longName='Microsoft Corp.', exchange='NASDAQ')
         self.db.put(updated, name='MSFT')
         
-        # Verify it was updated
+        # Verify updated
         retrieved = self.db.getByName('MSFT')
         self.assertIsNotNone(retrieved)
         ticker = retrieved.asModel().body.extract()
-        self.assertEqual(ticker.longName, 'Microsoft Corp.')  # Updated value
-        self.assertEqual(ticker.symbol, 'MSFT')  # Same symbol
+        self.assertEqual(ticker.longName, 'Microsoft Corp.')  # Updated
+        self.assertEqual(ticker.symbol, 'MSFT')  # Same
 
     def test_put_is_idempotent(self):
-        """
-        PUT is idempotent - multiple calls with same data produce same result (DbSQLModel).
-        
-        This is a key property of PUT operations - calling it multiple
-        times should result in the same state as calling it once.
-        """
+        """PUT: Multiple calls with same data produce same result."""
         ticker = Ticker(symbol='GOOGL', longName='Alphabet Inc.', exchange='NASDAQ')
         
         # PUT multiple times
@@ -698,40 +646,32 @@ class TestDbSQLModel(unittest.TestCase):
         self.assertIsNotNone(retrieved)
         self.assertEqual(retrieved.asModel().body.extract().longName, 'Alphabet Inc.')
         
-        # Verify only one record exists
         all_records = self.db.getAll()
         googl_records = [r for r in all_records if r.info.name == 'GOOGL']
         self.assertEqual(len(googl_records), 1)
 
     def test_put_preserves_other_records(self):
-        """
-        PUT only affects the specified record, leaving others unchanged.
-        
-        This verifies that PUT operations are targeted and don't have
-        side effects on other records in the database.
-        """
-        # Create multiple records
+        """PUT: Only affects specified record, leaving others unchanged."""
+        # Setup
         tickers = [
             Ticker(symbol='META', longName='Meta Platforms Inc.', exchange='NASDAQ'),
             Ticker(symbol='NFLX', longName='Netflix, Inc.', exchange='NASDAQ'),
             Ticker(symbol='DIS',  longName='The Walt Disney Company', exchange='NYSE'),
         ]
-        
         for t in tickers:
             self.db.post(t, name=t.symbol)
         
-        # Verify all exist
         self.assertEqual(len(self.db.getAll()), 3)
         
-        # PUT an update to one record
+        # PUT update to one record
         updated_nflx = Ticker(symbol='NFLX', longName='Netflix Inc.', exchange='NASDAQ')
         self.db.put(updated_nflx, name='NFLX')
         
-        # Verify the updated record changed
+        # Verify updated record changed
         nflx = self.db.getByName('NFLX')
         self.assertEqual(nflx.asModel().body.extract().longName, 'Netflix Inc.')
         
-        # Verify other records are unchanged
+        # Verify other records unchanged
         meta = self.db.getByName('META')
         self.assertEqual(meta.asModel().body.extract().longName, 'Meta Platforms Inc.')
         
@@ -742,31 +682,21 @@ class TestDbSQLModel(unittest.TestCase):
         self.assertEqual(len(self.db.getAll()), 3)
 
     def test_put_atomic_transaction(self):
-        """
-        PUT operation uses a single transaction for delete and post.
-        
-        Both operations (delete existing, post new) happen within
-        a single database transaction, ensuring atomicity. If either
-        operation fails, the entire transaction is rolled back.
-        """
-        # Create initial record
+        """PUT: Uses single transaction for delete and post."""
+        # Setup
         original = Ticker(symbol='TEST', longName='Original Name', exchange='NASDAQ')
         self.db.post(original, name='TEST')
+        self.assertEqual(
+            self.db.getByName('TEST').asModel().body.extract().longName,
+            'Original Name'
+        )
         
-        # Verify it exists
-        retrieved = self.db.getByName('TEST')
-        self.assertIsNotNone(retrieved)
-        original_name = retrieved.asModel().body.extract().longName
-        self.assertEqual(original_name, 'Original Name')
-        
-        # PUT a new record - both delete and post should succeed together
+        # PUT update
         updated = Ticker(symbol='TEST', longName='Updated Name', exchange='NASDAQ')
         result = self.db.put(updated, name='TEST')
-        
-        # Verify the PUT succeeded
         self.assertIsNotNone(result)
         
-        # Verify the record was updated (both operations completed)
+        # Verify updated
         retrieved_after = self.db.getByName('TEST')
         self.assertIsNotNone(retrieved_after)
         self.assertEqual(
@@ -774,38 +704,533 @@ class TestDbSQLModel(unittest.TestCase):
             'Updated Name'
         )
         
-        # Verify only one record exists (delete happened before post)
+        # Verify only one record exists
         all_records = self.db.getAll()
         test_records = [r for r in all_records if r.info.name == 'TEST']
         self.assertEqual(len(test_records), 1)
+
+
+class TestDbSQLModelConnect(unittest.TestCase):
+    """
+    Tests for DbSQLModel.connect() - context manager pattern for database connections.
+    
+    These tests verify that .connect() works as a context manager with file-based
+    persistence. All operations are organized by HTTP-like methods: GET, POST, DELETE, PUT.
+    """
+    
+    def setUp(self):
+        """Set up test fixtures for file-based database."""
+        import tempfile
+        import os
+        self.temp_dir = tempfile.mkdtemp()
+        self.db_path = os.path.join(self.temp_dir, 'test.db')
+        self.db_url = f'sqlite:///{self.db_path}'
+    
+    def tearDown(self):
+        """Clean up test fixtures."""
+        import shutil
+        import os
+        if os.path.exists(self.temp_dir):
+            shutil.rmtree(self.temp_dir)
+    
+    # ========================================================================
+    # GET Operations (Read)
+    # ========================================================================
+    
+    def test_get_by_name(self):
+        """GET: Retrieve a record by name."""
+        # Setup - create record in one context
+        with DbSQLModel.connect(self.db_url) as db:
+            ticker = Ticker(symbol='AAPL', longName='Apple Inc.', exchange='NASDAQ')
+            db.post(ticker, name='AAPL')
         
-    def test_put_rollback(self):
-        """ If an exception occurs during put, the transaction should be rolled back. """
-        # Create a record that will cause an error during put
-        original = Ticker(symbol='ROLLBACK', longName='Original', exchange='NASDAQ')
-        self.db.post(original, name='ROLLBACK')
+        # Test - retrieve in another context
+        with DbSQLModel.connect(self.db_url) as db:
+            result = db.getByName('AAPL')
+            self.assertIsNotNone(result)
+            self.assertEqual(result.info.name, 'AAPL')
+            
+            ticker = result.asModel().body.extract()
+            self.assertIsInstance(ticker, Ticker)
+            self.assertEqual(ticker.symbol, 'AAPL')
+            self.assertEqual(ticker.longName, 'Apple Inc.')
+    
+    def test_get_by_id(self):
+        """GET: Retrieve a record by auto-generated ID."""
+        # Setup
+        with DbSQLModel.connect(self.db_url) as db:
+            ticker = Ticker(symbol='GOOGL', longName='Alphabet Inc.', exchange='NASDAQ')
+            posted = db.post(ticker, name='GOOGL')
+            self.record_id = posted.id
+        
+        # Test
+        with DbSQLModel.connect(self.db_url) as db:
+            result = db.getById(self.record_id)
+            self.assertIsNotNone(result)
+            self.assertEqual(result.info.name, 'GOOGL')
+    
+    def test_get_all(self):
+        """GET: Retrieve all records."""
+        # Setup
+        with DbSQLModel.connect(self.db_url) as db:
+            tickers = [
+                Ticker(symbol='JPM', longName='JPMorgan Chase', exchange='NYSE'),
+                Ticker(symbol='BAC', longName='Bank of America', exchange='NYSE'),
+                Ticker(symbol='WFC', longName='Wells Fargo', exchange='NYSE'),
+            ]
+            for t in tickers:
+                db.post(t, name=t.symbol)
+        
+        # Test
+        with DbSQLModel.connect(self.db_url) as db:
+            results = db.getAll()
+            self.assertEqual(len(results), 3)
+            names = {r.info.name for r in results}
+            self.assertEqual(names, {'JPM', 'BAC', 'WFC'})
+    
+    def test_get_nonexistent_returns_none(self):
+        """GET: Querying for non-existent record returns None."""
+        with DbSQLModel.connect(self.db_url) as db:
+            result = db.getByName('DOESNOTEXIST')
+            self.assertIsNone(result)
+            
+            result = db.getById(99999)
+            self.assertIsNone(result)
+    
+    def test_get_preserves_data_integrity(self):
+        """GET: Retrieved data matches original data exactly."""
+        original = Ticker(
+            symbol='NVDA',
+            longName='NVIDIA Corporation',
+            exchange='NASDAQ'
+        )
+        
+        # Post
+        with DbSQLModel.connect(self.db_url) as db:
+            db.post(original, name='NVDA')
+        
+        # Retrieve and verify
+        with DbSQLModel.connect(self.db_url) as db:
+            sql_record = db.getByName('NVDA')
+            pydantic_record = sql_record.asModel()
+            restored = pydantic_record.body.extract()
+            
+            self.assertEqual(restored.symbol, original.symbol)
+            self.assertEqual(restored.longName, original.longName)
+            self.assertEqual(restored.exchange, original.exchange)
+    
+    # ========================================================================
+    # POST Operations (Create)
+    # ========================================================================
+    
+    def test_post_creates_new_record(self):
+        """POST: Create a new record."""
+        with DbSQLModel.connect(self.db_url) as db:
+            ticker = Ticker(symbol='MSFT', longName='Microsoft Corp', exchange='NASDAQ')
+            rec = db.post(ticker, name='MSFT')
+            
+            self.assertIsNotNone(rec)
+            self.assertEqual(rec.info.name, 'MSFT')
+            
+            # Verify it was created
+            retrieved = db.getByName('MSFT')
+            self.assertIsNotNone(retrieved)
+            self.assertEqual(retrieved.asModel().body.extract().symbol, 'MSFT')
+    
+    def test_post_auto_commits_on_success(self):
+        """POST: Auto-commits on successful context exit."""
+        # Post in context
+        with DbSQLModel.connect(self.db_url) as db:
+            ticker = Ticker(symbol='GOOGL', longName='Alphabet Inc.', exchange='NASDAQ')
+            db.post(ticker, name='GOOGL')
+            # No explicit commit - should auto-commit on exit
+        
+        # Verify data persisted in new context
+        with DbSQLModel.connect(self.db_url) as db:
+            retrieved = db.getByName('GOOGL')
+            self.assertIsNotNone(retrieved)
+            self.assertEqual(retrieved.asModel().body.extract().symbol, 'GOOGL')
+    
+    def test_post_rolls_back_on_exception(self):
+        """POST: Rolls back on exception."""
+        # Try to post but raise exception
+        try:
+            with DbSQLModel.connect(self.db_url) as db:
+                ticker = Ticker(symbol='TSLA', longName='Tesla Inc.', exchange='NASDAQ')
+                db.post(ticker, name='TSLA')
+                raise ValueError("Simulated error")
+        except ValueError:
+            pass  # Expected
+        
+        # Verify data was NOT persisted (rolled back)
+        with DbSQLModel.connect(self.db_url) as db:
+            retrieved = db.getByName('TSLA')
+            self.assertIsNone(retrieved)
+    
+    def test_post_multiple_records(self):
+        """POST: Create multiple records in single transaction."""
+        with DbSQLModel.connect(self.db_url) as db:
+            tickers = [
+                Ticker(symbol='META', longName='Meta Platforms', exchange='NASDAQ'),
+                Ticker(symbol='NFLX', longName='Netflix Inc.', exchange='NASDAQ'),
+                Ticker(symbol='DIS', longName='Disney', exchange='NYSE'),
+            ]
+            
+            for ticker in tickers:
+                db.post(ticker, name=ticker.symbol)
+        
+        # Verify all persisted
+        with DbSQLModel.connect(self.db_url) as db:
+            all_records = db.getAll()
+            self.assertEqual(len(all_records), 3)
+            names = {r.info.name for r in all_records}
+            self.assertEqual(names, {'META', 'NFLX', 'DIS'})
+    
+    def test_post_all_in_context_manager(self):
+        """POST: postAll() works within context manager and auto-commits."""
+        from pyswark.core.models import info
+        
+        # Test postAll() within context manager (covers lines 294-301)
+        with DbSQLModel.connect(self.db_url) as db:
+            tickers = [
+                Ticker(symbol='JPM', longName='JPMorgan Chase', exchange='NYSE'),
+                Ticker(symbol='BAC', longName='Bank of America', exchange='NYSE'),
+                Ticker(symbol='WFC', longName='Wells Fargo', exchange='NYSE'),
+            ]
+            
+            # Create Records with names for postAll()
+            records = [
+                record.Record(
+                    info=info.Info(name=ticker.symbol),
+                    body=body.Body(model=ticker)
+                )
+                for ticker in tickers
+            ]
+            
+            # Use postAll() instead of individual post() calls
+            sql_models = db.postAll(records)
+            
+            # Verify models were returned
+            self.assertEqual(len(sql_models), 3)
+            self.assertTrue(all(hasattr(m, 'id') for m in sql_models))
+            
+            # Verify all have IDs (flushed and refreshed)
+            ids = {m.id for m in sql_models}
+            self.assertEqual(len(ids), 3)
+            self.assertTrue(all(id is not None for id in ids))
+        
+        # Verify all persisted after context exit (auto-commit worked)
+        with DbSQLModel.connect(self.db_url) as db:
+            all_records = db.getAll()
+            self.assertEqual(len(all_records), 3)
+            names = {r.info.name for r in all_records}
+            self.assertEqual(names, {'JPM', 'BAC', 'WFC'})
+            
+            # Verify individual records can be retrieved
+            jpm = db.getByName('JPM')
+            self.assertIsNotNone(jpm)
+            self.assertEqual(jpm.asModel().body.extract().symbol, 'JPM')
+    
+    def test_post_requires_name(self):
+        """POST: Requires name parameter for BaseModel."""
+        with DbSQLModel.connect(self.db_url) as db:
+            ticker = Ticker(symbol='TEST', longName='Test', exchange='NYSE')
+            
+            with self.assertRaises(ValueError) as ctx:
+                db.post(ticker, name=None)
+            
+            self.assertIn('name is required', str(ctx.exception))
+    
+    # ========================================================================
+    # DELETE Operations
+    # ========================================================================
+    
+    def test_delete_by_name(self):
+        """DELETE: Remove a record by name."""
+        # Setup
+        with DbSQLModel.connect(self.db_url) as db:
+            ticker = Ticker(symbol='TSLA', longName='Tesla Inc.', exchange='NASDAQ')
+            db.post(ticker, name='TSLA')
+        
+        # Delete
+        with DbSQLModel.connect(self.db_url) as db:
+            result = db.deleteByName('TSLA')
+            self.assertTrue(result)
+        
+        # Verify deleted
+        with DbSQLModel.connect(self.db_url) as db:
+            self.assertIsNone(db.getByName('TSLA'))
+    
+    def test_delete_by_id(self):
+        """DELETE: Remove a record by ID."""
+        # Setup
+        record_id = None
+        with DbSQLModel.connect(self.db_url) as db:
+            ticker = Ticker(symbol='AMZN', longName='Amazon Inc.', exchange='NASDAQ')
+            posted = db.post(ticker, name='AMZN')
+            record_id = posted.id
+        
+        # Delete
+        with DbSQLModel.connect(self.db_url) as db:
+            result = db.deleteById(record_id)
+            self.assertTrue(result)
+        
+        # Verify deleted
+        with DbSQLModel.connect(self.db_url) as db:
+            self.assertIsNone(db.getById(record_id))
+            self.assertIsNone(db.getByName('AMZN'))
+    
+    def test_delete_nonexistent_returns_false(self):
+        """DELETE: Deleting non-existent record returns False."""
+        with DbSQLModel.connect(self.db_url) as db:
+            result = db.deleteByName('DOESNOTEXIST')
+            self.assertFalse(result)
+            
+            result = db.deleteById(99999)
+            self.assertFalse(result)
+    
+    def test_delete_preserves_other_records(self):
+        """DELETE: Deleting one record doesn't affect others."""
+        # Setup
+        with DbSQLModel.connect(self.db_url) as db:
+            tickers = [
+                Ticker(symbol='META', longName='Meta Platforms', exchange='NASDAQ'),
+                Ticker(symbol='NFLX', longName='Netflix Inc.', exchange='NASDAQ'),
+                Ticker(symbol='DIS', longName='Disney', exchange='NYSE'),
+            ]
+            for t in tickers:
+                db.post(t, name=t.symbol)
+        
+        # Delete one
+        with DbSQLModel.connect(self.db_url) as db:
+            result = db.deleteByName('NFLX')
+            self.assertTrue(result)
+        
+        # Verify others still exist
+        with DbSQLModel.connect(self.db_url) as db:
+            self.assertIsNone(db.getByName('NFLX'))
+            self.assertIsNotNone(db.getByName('META'))
+            self.assertIsNotNone(db.getByName('DIS'))
+    
+    def test_delete_and_repost(self):
+        """DELETE: Can repost with same name after deletion."""
+        # Setup
+        with DbSQLModel.connect(self.db_url) as db:
+            original = Ticker(symbol='UBER', longName='Uber Technologies', exchange='NYSE')
+            db.post(original, name='UBER')
+        
+        # Delete
+        with DbSQLModel.connect(self.db_url) as db:
+            self.assertTrue(db.deleteByName('UBER'))
+        
+        # Repost with same name
+        with DbSQLModel.connect(self.db_url) as db:
+            updated = Ticker(symbol='UBER', longName='Uber Technologies Inc.', exchange='NYSE')
+            db.post(updated, name='UBER')
+        
+        # Verify new record exists
+        with DbSQLModel.connect(self.db_url) as db:
+            result = db.getByName('UBER')
+            self.assertIsNotNone(result)
+            self.assertEqual(
+                result.asModel().body.extract().longName,
+                'Uber Technologies Inc.'
+            )
+    
+    # ========================================================================
+    # PUT Operations (Update/Create)
+    # ========================================================================
+    
+    def test_put_creates_new_record(self):
+        """PUT: Creates new record when it doesn't exist."""
+        with DbSQLModel.connect(self.db_url) as db:
+            ticker = Ticker(symbol='AAPL', longName='Apple Inc.', exchange='NASDAQ')
+            sql_rec = db.put(ticker, name='AAPL')
+            
+            self.assertIsNotNone(sql_rec)
+            self.assertEqual(sql_rec.info.name, 'AAPL')
+        
+        # Verify persisted
+        with DbSQLModel.connect(self.db_url) as db:
+            retrieved = db.getByName('AAPL')
+            self.assertIsNotNone(retrieved)
+            self.assertEqual(retrieved.asModel().body.extract().symbol, 'AAPL')
+    
+    def test_put_updates_existing_record(self):
+        """PUT: Updates existing record by replacing it."""
+        # Create initial record
+        with DbSQLModel.connect(self.db_url) as db:
+            original = Ticker(symbol='MSFT', longName='Microsoft Corporation', exchange='NASDAQ')
+            db.post(original, name='MSFT')
+        
+        # Update with PUT
+        with DbSQLModel.connect(self.db_url) as db:
+            updated = Ticker(symbol='MSFT', longName='Microsoft Corp.', exchange='NASDAQ')
+            db.put(updated, name='MSFT')
+        
+        # Verify updated
+        with DbSQLModel.connect(self.db_url) as db:
+            retrieved = db.getByName('MSFT')
+            ticker = retrieved.asModel().body.extract()
+            self.assertEqual(ticker.longName, 'Microsoft Corp.')  # Updated
+            self.assertEqual(ticker.symbol, 'MSFT')  # Same
+    
+    def test_put_is_idempotent(self):
+        """PUT: Multiple calls with same data produce same result."""
+        ticker = Ticker(symbol='GOOGL', longName='Alphabet Inc.', exchange='NASDAQ')
+        
+        # PUT multiple times
+        with DbSQLModel.connect(self.db_url) as db:
+            db.put(ticker, name='GOOGL')
+        
+        with DbSQLModel.connect(self.db_url) as db:
+            db.put(ticker, name='GOOGL')
+        
+        with DbSQLModel.connect(self.db_url) as db:
+            db.put(ticker, name='GOOGL')
+        
+        # Should still have exactly one record
+        with DbSQLModel.connect(self.db_url) as db:
+            all_records = db.getAll()
+            googl_records = [r for r in all_records if r.info.name == 'GOOGL']
+            self.assertEqual(len(googl_records), 1)
+    
+    def test_put_preserves_other_records(self):
+        """PUT: Only affects specified record, leaving others unchanged."""
+        # Setup
+        with DbSQLModel.connect(self.db_url) as db:
+            tickers = [
+                Ticker(symbol='META', longName='Meta Platforms Inc.', exchange='NASDAQ'),
+                Ticker(symbol='NFLX', longName='Netflix, Inc.', exchange='NASDAQ'),
+                Ticker(symbol='DIS', longName='The Walt Disney Company', exchange='NYSE'),
+            ]
+            for t in tickers:
+                db.post(t, name=t.symbol)
+        
+        # PUT update to one record
+        with DbSQLModel.connect(self.db_url) as db:
+            updated_nflx = Ticker(symbol='NFLX', longName='Netflix Inc.', exchange='NASDAQ')
+            db.put(updated_nflx, name='NFLX')
+        
+        # Verify the updated record changed
+        with DbSQLModel.connect(self.db_url) as db:
+            nflx = db.getByName('NFLX')
+            self.assertEqual(nflx.asModel().body.extract().longName, 'Netflix Inc.')
+            
+            # Verify other records unchanged
+            meta = db.getByName('META')
+            self.assertEqual(meta.asModel().body.extract().longName, 'Meta Platforms Inc.')
+            
+            dis = db.getByName('DIS')
+            self.assertEqual(dis.asModel().body.extract().longName, 'The Walt Disney Company')
+            
+            # Verify still have 3 records
+            self.assertEqual(len(db.getAll()), 3)
+    
+    def test_put_atomic_transaction(self):
+        """PUT: Uses single transaction for delete and post."""
+        # Setup
+        with DbSQLModel.connect(self.db_url) as db:
+            original = Ticker(symbol='TEST', longName='Original Name', exchange='NASDAQ')
+            db.post(original, name='TEST')
+        
+        # PUT update
+        with DbSQLModel.connect(self.db_url) as db:
+            updated = Ticker(symbol='TEST', longName='Updated Name', exchange='NASDAQ')
+            result = db.put(updated, name='TEST')
+            self.assertIsNotNone(result)
+        
+        # Verify updated
+        with DbSQLModel.connect(self.db_url) as db:
+            retrieved = db.getByName('TEST')
+            self.assertEqual(
+                retrieved.asModel().body.extract().longName,
+                'Updated Name'
+            )
+            
+            # Verify only one record exists
+            all_records = db.getAll()
+            test_records = [r for r in all_records if r.info.name == 'TEST']
+            self.assertEqual(len(test_records), 1)
+    
+    # ========================================================================
+    # Edge Cases: Commit/Rollback
+    # ========================================================================
+    
+    def test_commit_rollback_edge_cases(self):
+        """
+        Test edge cases for commit() and rollback() methods and exception handling.
+        
+        Covers:
+        - commit() called outside context manager raises RuntimeError
+        - rollback() called outside context manager raises RuntimeError
+        - put() exception handling in context manager triggers rollback
+        - put() exception handling outside context manager triggers rollback
+        """
+        # Test 1: commit() outside context manager raises RuntimeError
+        db = DbSQLModel.connect(self.db_url)
+        with self.assertRaises(RuntimeError) as ctx:
+            db.commit()
+        self.assertIn("context manager", str(ctx.exception).lower())
+        
+        # Test 2: rollback() outside context manager raises RuntimeError
+        db = DbSQLModel.connect(self.db_url)
+        with self.assertRaises(RuntimeError) as ctx:
+            db.rollback()
+        self.assertIn("context manager", str(ctx.exception).lower())
+        
+        # Test 3: put() exception handling in context manager triggers rollback
+        # Setup - create initial record
+        with DbSQLModel.connect(self.db_url) as db:
+            original = Ticker(symbol='ERROR_TEST', longName='Original', exchange='NASDAQ')
+            db.post(original, name='ERROR_TEST')
         
         # Verify it exists
-        self.assertIsNotNone(self.db.getByName('ROLLBACK'))
+        with DbSQLModel.connect(self.db_url) as db:
+            self.assertIsNotNone(db.getByName('ERROR_TEST'))
         
-        # Try to put with invalid data that will cause an exception
-        # We'll use a mock to simulate an exception during commit on the Session
+        # Simulate exception during put() in context manager
         from unittest.mock import patch, MagicMock
         from sqlmodel import Session
         
-        # Patch Session's commit method to raise an exception
-        with patch.object(Session, 'commit', side_effect=Exception("Simulated error")):
-            with self.assertRaises(Exception) as ctx:
-                invalid = Ticker(symbol='ROLLBACK', longName='Should Fail', exchange='NASDAQ')
-                self.db.put(invalid, name='ROLLBACK')
-            
-            # Verify the exception was raised
-            self.assertIn("Simulated error", str(ctx.exception))
+        # Mock Session.add to raise an exception
+        with patch.object(Session, 'add', side_effect=Exception("Simulated put error")):
+            try:
+                with DbSQLModel.connect(self.db_url) as db:
+                    updated = Ticker(symbol='ERROR_TEST', longName='Should Fail', exchange='NASDAQ')
+                    db.put(updated, name='ERROR_TEST')
+            except Exception as e:
+                self.assertIn("Simulated put error", str(e))
         
-        # Verify the original record still exists (rollback worked)
-        retrieved = self.db.getByName('ROLLBACK')
-        self.assertIsNotNone(retrieved)
-        self.assertEqual(retrieved.asModel().body.extract().longName, 'Original')
+        # Verify original record still exists (rollback worked)
+        with DbSQLModel.connect(self.db_url) as db:
+            retrieved = db.getByName('ERROR_TEST')
+            self.assertIsNotNone(retrieved)
+            self.assertEqual(retrieved.asModel().body.extract().longName, 'Original')
+        
+        # Test 4: put() exception handling outside context manager triggers rollback
+        # Setup - create initial record
+        db = DbSQLModel(self.db_url)
+        original2 = Ticker(symbol='ERROR_TEST2', longName='Original2', exchange='NASDAQ')
+        db.post(original2, name='ERROR_TEST2')
+        
+        # Verify it exists
+        self.assertIsNotNone(db.getByName('ERROR_TEST2'))
+        
+        # Mock Session.add to raise an exception (non-context manager path)
+        # This tests the exception handling in put() when not using context manager
+        with patch.object(Session, 'add', side_effect=Exception("Simulated put error 2")):
+            db2 = DbSQLModel(self.db_url)
+            updated2 = Ticker(symbol='ERROR_TEST2', longName='Should Fail', exchange='NASDAQ')
+            with self.assertRaises(Exception) as ctx:
+                db2.put(updated2, name='ERROR_TEST2')
+            self.assertIn("Simulated put error 2", str(ctx.exception))
+        
+        # Verify original record still exists and unchanged (rollback prevented update)
+        db3 = DbSQLModel(self.db_url)
+        retrieved2 = db3.getByName('ERROR_TEST2')
+        self.assertIsNotNone(retrieved2)
+        self.assertEqual(retrieved2.asModel().body.extract().longName, 'Original2')
 
 
 if __name__ == '__main__':

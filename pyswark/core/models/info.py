@@ -14,6 +14,14 @@ class Info( base.BaseModel ):
     date_created  : Union[ Datetime, str, dict, None ] = pydantic.Field( default='', validate_default=True )
     date_modified : Union[ Datetime, str, dict, None ] = pydantic.Field( default='', validate_default=True )
 
+    def clone( self, **kwargs ):
+        """ set multiple attributes and return a new Info object """
+        dump = self.model_dump()
+        for k, v in kwargs.items():
+            if k in dump:
+                dump[k] = v
+        return Info( **dump )
+
     @field_validator( 'date_created', 'date_modified', mode='before' )
     def _date( cls, date ):
         if not date:
