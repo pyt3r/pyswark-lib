@@ -5,15 +5,14 @@ import re
 
 
 def get_version(dunder_file):
-    from pkg_resources import get_distribution, DistributionNotFound
+    from importlib.metadata import version, PackageNotFoundError
     here = os.path.dirname(dunder_file)
     package = os.path.basename(here)
 
     try:
-        version = get_distribution(package).version
-    except DistributionNotFound:
-        version = here
-    return version
+        return version(package)
+    except PackageNotFoundError:
+        return here
 
 
 def dumpPackageData(dunder_file, filename='package.data.yaml'):
