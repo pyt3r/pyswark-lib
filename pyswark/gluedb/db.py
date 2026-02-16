@@ -1,11 +1,12 @@
 from pathlib import Path
+from typing import ClassVar
 from pyswark.lib.pydantic import base
 
 from pyswark.core import extractor
 from pyswark.core.io import api
 from pyswark.core.models import db
 
-from pyswark.gluedb.models.iomodel import IoModel
+from pyswark.gluedb.models import iomodel
 
 
 class Base( db.Db ):
@@ -113,8 +114,9 @@ class Db( Base ):
     >>> 
     >>> # List all names
     >>> print(db.getNames())  # ['prices', 'config']
-    """   
-    AllowedInstances = [ IoModel, base.BaseModel ]
+    """
+    IOMODEL: ClassVar = iomodel.IoModel
+    AllowedInstances = [ IOMODEL, base.BaseModel ]
 
     @classmethod
     def _post_fallback( cls, obj, name=None ):
@@ -127,10 +129,10 @@ class Db( Base ):
 
         if isinstance( obj, dict ):
             name = obj.get( 'name', name )
-            obj = IoModel( **obj )
+            obj = cls.IOMODEL( **obj )
 
         elif isinstance( obj, (list, tuple) ):
-            obj = IoModel.fromArgs( *obj )
+            obj = cls.IOMODEL.fromArgs( *obj )
 
         return success, obj, name
 
@@ -177,7 +179,7 @@ class Db( Base ):
         >>> prices_df = db.extract('prices')
         """
         record = self.get( name )
-        model = self._handle( record, IoModel.extract )
+        model = self._handle( record, self.IOMODEL.extract )
 
         if isinstance( model, extractor.Extractor ):
             return model.extract()
@@ -186,20 +188,20 @@ class Db( Base ):
 
     def load( self, data, name ):
         record = self.get( name )
-        return self._handle( record, IoModel.load, data )
+        return self._handle( record, self.IOMODEL.load, data )
 
     def acquireExtract( self, name ):
         record = self.get( name )
-        return self._handle( record, IoModel.acquireExtract )
+        return self._handle( record, self.IOMODEL.acquireExtract )
 
     def acquireLoad( self, name ):
         record = self.get( name )
-        return self._handle( record, IoModel.acquireLoad )
+        return self._handle( record, self.IOMODEL.acquireLoad )
 
     def _handle( self, record, method, *args, **kwargs ):
         model = record.acquire()
         
-        if isinstance( model, IoModel ):
+        if isinstance( model, self.IOMODEL ):
             return method( model, *args, **kwargs )
 
         return model

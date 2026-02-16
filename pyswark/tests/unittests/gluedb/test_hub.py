@@ -6,9 +6,8 @@ import shutil
 from pyswark.lib.pydantic import ser_des
 
 from pyswark.core.models import collection
-from pyswark.core.io import api as io_api
+from pyswark.core.io import api
 
-from pyswark.gluedb import api
 from pyswark.gluedb import db as db_module
 from pyswark.gluedb import hub as hub_module
 
@@ -31,7 +30,7 @@ def buildDB_2():
 
 def buildHub():
     """Build a hub with db_1 and db_2."""
-    hub = hub_module.GlueHub()
+    hub = hub_module.Hub()
     hub.post(buildDB_1(), name='db_1')
     hub.post(buildDB_2(), name='db_2')
     return hub
@@ -46,21 +45,21 @@ class HubTestCases( unittest.TestCase ):
         # Create hub and save to file
         hub = buildHub()
         self.hub_path = pathlib.Path(self.tempdir) / 'hub.gluedb'
-        io_api.write(hub, f'file://{self.hub_path}')
+        api.write(hub, f'file://{self.hub_path}')
 
     def tearDown(self):
         """Clean up temp directory."""
         shutil.rmtree(self.tempdir)
 
     def test_load_contents_from_a_hub(self):
-        hub = api.connect(f'file://{self.hub_path}')
+        hub = api.read(f'file://{self.hub_path}')
 
         db = hub.extract('db_2')
         c  = db.extract( "c" )
         self.assertDictEqual( c, {'d': 4, 'e': 5, 'f': 6} )
 
     def test_consolidating_a_hub_to_a_db(self):
-        hub = api.connect(f'file://{self.hub_path}')
+        hub = api.read(f'file://{self.hub_path}')
 
         db = hub.toDb()
         expected = ['a', 'b', 'c', 'd']
@@ -69,7 +68,7 @@ class HubTestCases( unittest.TestCase ):
         self.assertListEqual(expected, test)
 
     def test_ser_des(self):
-        hub = api.connect(f'file://{self.hub_path}')
+        hub = api.read(f'file://{self.hub_path}')
 
         ser = hub.toJson()
         des = ser_des.fromJson( ser )
@@ -84,7 +83,7 @@ class TestCRUD( unittest.TestCase ):
         self.hub = buildHub()
 
     def test_POST_content_in_a_hub(self):
-        hub = hub_module.GlueHub()
+        hub = hub_module.Hub()
         hub.merge( self.hub )
 
         record = hub.get("db_2")

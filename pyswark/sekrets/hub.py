@@ -8,5 +8,5 @@ DBs = [
     Settings.EXAMPLE_IAC,
 ]
  
-HUB = hub.GlueHub()
+HUB = hub.Hub()
 _ = [ HUB.post( setting.uri, name=setting.name ) for setting in DBs ]

@@ -51,27 +51,27 @@ Read and write data from any URI:
 
 .. code-block:: python
 
-   from pyswark.core.io import api as io
+   from pyswark.core.io import api
 
    # Read from package data
-   df = io.read('pyswark:/data/ohlc-jpm.csv.gz')
+   df = api.read('pyswark:/data/ohlc-jpm.csv.gz')
 
    # Write to file
-   io.write(df, 'file:./output.csv')
+   api.write(df, 'file:./output.csv')
 
 
-3. Data Catalogs with GlueDb
+1. Data Catalogs with GlueDb
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Create and use data catalogs:
 
 .. code-block:: python
 
-   from pyswark.gluedb import api
+   from pyswark.core.io import api
    from pyswark.core.models import collection
 
    # Connect to existing catalog
-   db = api.connect('pyswark:/data/sma-example.gluedb')
+   db = api.read('pyswark:/data/sma-example.gluedb')
    print(db.getNames())  # ['JPM', 'BAC', 'kwargs']
 
    # Extract data by name
@@ -94,7 +94,34 @@ Create and use data catalogs:
    api.write( new_db, 'file:./new.gluedb' )
 
 
-4. Time Series with DatetimeList and TsVector
+4. Persistence with Db.connect
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Persist a GlueDb catalog to a ``.gluedb`` file with ``Db.connect()``.
+Changes made inside the ``with`` block are written to the file on successful exit
+when ``persist=True``:
+
+.. code-block:: python
+
+   from pyswark.gluedb.db import Db
+   from pyswark.core.models import collection
+   from pyswark.core.io import api
+
+   # Create an initial catalog and save it
+   db = Db()
+   db.post('pyswark:/data/ohlc-jpm.csv.gz', name='JPM')
+   api.write(db, 'file:./catalog.gluedb')
+
+   # Re-open with persist=True — auto-saves on exit
+   with Db.connect('file:./catalog.gluedb', persist=True) as db:
+       db.post(collection.Dict({'window': 60}), name='kwargs')
+
+   # Changes are persisted
+   db = Db.connect('file:./catalog.gluedb')
+   print(db.getNames())  # ['JPM', 'kwargs']
+
+
+5. Time Series with DatetimeList and TsVector
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Work with validated time series data:
@@ -131,7 +158,7 @@ Work with validated time series data:
    restored = ser_des.fromJson(json_str)
 
 
-5. Workflow Orchestration
+6. Workflow Orchestration
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Orchestrate multi-step computations with automatic caching:

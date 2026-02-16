@@ -7,9 +7,8 @@ import pandas
 from pyswark.lib.pydantic import ser_des
 
 from pyswark.core.models import primitive, collection, infer
-from pyswark.core.io import api as io_api
+from pyswark.core.io import api
 
-from pyswark.gluedb import api
 from pyswark.gluedb import db as db_module
 from pyswark.gluedb.models import iomodel
 from pyswark.gluedb.db import Db
@@ -41,13 +40,13 @@ class TestLocalExample( unittest.TestCase ):
         # Create DB_1 and save to file
         db_1 = buildDB_1()
         self.db_1_path = pathlib.Path(self.tempdir) / 'db_1.gluedb'
-        io_api.write(db_1, f'file://{self.db_1_path}')
+        api.write(db_1, f'file://{self.db_1_path}')
         self.db_1_uri = self.db_1_path.as_uri()
         
         # Create DB_2 and save to file
         db_2 = buildDB_2()
         self.db_2_path = pathlib.Path(self.tempdir) / 'db_2.gluedb'
-        io_api.write(db_2, f'file://{self.db_2_path}')
+        api.write(db_2, f'file://{self.db_2_path}')
         self.db_2_uri = self.db_2_path.as_uri()
 
     def tearDown(self):
@@ -55,14 +54,14 @@ class TestLocalExample( unittest.TestCase ):
         shutil.rmtree(self.tempdir)
 
     def test_acquiring_content_from_a_gluedb(self):
-        db = api.connect(f'file://{self.db_2_path}')
+        db = api.read(f'file://{self.db_2_path}')
 
         record = db.get( "d" )
         d = record.acquire().extract()
         self.assertDictEqual( d, {'g': 7, 'h': 8, 'i': 9} )
 
     def test_loading_content_from_a_gluedb(self):
-        db = api.connect(f'file://{self.db_2_path}')
+        db = api.read(f'file://{self.db_2_path}')
 
         c   = db.extract( "c" )
         d   = db.extract( "d" )
@@ -84,7 +83,7 @@ class TestLocalExample( unittest.TestCase ):
         self.assertDictEqual(json_data, {'x': 1, 'y': 2})
 
     def test_ser_des(self):
-        db = api.connect(f'file://{self.db_1_path}')
+        db = api.read(f'file://{self.db_1_path}')
 
         ser = db.toJson()
         des = ser_des.fromJson( ser )
@@ -92,7 +91,7 @@ class TestLocalExample( unittest.TestCase ):
         self.assertDictEqual( db.extract('a'), des.extract('a') )
 
     def test_ser_des_using_a_uri_to_set_the_record(self):
-        db = api.connect(f'file://{self.db_1_path}')
+        db = api.read(f'file://{self.db_1_path}')
 
         obj = db.get('a').acquire()
 
@@ -112,14 +111,14 @@ class TestCRUD( unittest.TestCase ):
         self.tempdir = tempfile.mkdtemp()
         db_2 = buildDB_2()
         self.db_2_path = pathlib.Path(self.tempdir) / 'db_2.gluedb'
-        io_api.write(db_2, f'file://{self.db_2_path}')
+        api.write(db_2, f'file://{self.db_2_path}')
 
     def tearDown(self):
         """Clean up temp directory."""
         shutil.rmtree(self.tempdir)
 
     def test_POST_content_in_a_db(self):
-        old = api.connect(f'file://{self.db_2_path}')
+        old = api.read(f'file://{self.db_2_path}')
 
         db = db_module.Db()
         db.merge( old )
@@ -150,7 +149,7 @@ class TestCRUD( unittest.TestCase ):
             db.post( infer.Infer('2'), name='a' )
         
     def test_PUT_content_in_a_db(self):
-        db = api.connect(f'file://{self.db_2_path}')
+        db = api.read(f'file://{self.db_2_path}')
 
         old = db.extract( "c" )
 

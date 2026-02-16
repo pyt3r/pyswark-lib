@@ -1,8 +1,8 @@
 """
-GlueHub - Collection of GlueDb Instances
+Hub - Collection of GlueDb Instances
 =========================================
 
-A GlueHub is a container for multiple GlueDb instances, allowing you to
+A Hub is a container for multiple GlueDb instances, allowing you to
 organize and manage related databases together.
 
 Example
@@ -10,7 +10,7 @@ Example
 >>> from pyswark.gluedb import hub
 >>>
 >>> # Create a hub
->>> hub = hub.GlueHub()
+>>> hub = hub.Hub()
 >>> hub.post('market_data', market_db)
 >>> hub.post('config', config_db)
 >>>
@@ -20,63 +20,22 @@ Example
 >>> # Consolidate all databases into one
 >>> consolidated = hub.toDb()
 """
-
-from typing import Union
-from pyswark.lib.pydantic import base
 from pyswark.gluedb import db
+from pyswark.gluedb.models import iomodel
 
 
-class Contents(base.BaseModel):
-    """
-    Contents model for GlueHub records.
-    
-    Stores a reference to a GlueDb instance, either as a URI string
-    or as a Db instance directly.
-    """
-    
-    gluedb: Union[str, db.Db]
-    
-    def extract(self):
-        """
-        Extract the GlueDb instance from this contents.
-        
-        If gluedb is a string URI, it will be loaded using api.connect().
-        If it's already a Db instance, it will be returned directly.
-        
-        Returns
-        -------
-        Db
-            The GlueDb instance.
-        """
-        gluedb = self.gluedb
-        
-        if isinstance(gluedb, str):
-            # Import locally to avoid circular import
-            from pyswark.gluedb.api import connect
-            gluedb = connect(gluedb)
-        
-        # Check for GlueHub using string to avoid forward reference
-        if type(gluedb).__name__ == 'GlueHub':
-            raise TypeError(f"Expected type=Db, got type=GlueHub")
-        
-        if not isinstance(gluedb, db.Db):
-            raise TypeError(f"Expected type=Db, got type={type(gluedb)}")
-        
-        return gluedb
-
-
-class GlueHub(db.Db):
+class Hub(db.Db):
     """
     A hub containing multiple GlueDb instances.
     
-    GlueHub extends Db but uses Contents model to store references to
+    Hub extends Db but uses Contents model to store references to
     other GlueDb instances. This allows organizing multiple databases
     together and consolidating them when needed.
     
     Example
     -------
     >>> from pyswark.gluedb import hub
-    >>> hub = hub.GlueHub()
+    >>> hub = hub.Hub()
     >>> hub.post('market_data', market_db)
     >>> hub.post('config', 'pyswark:/data/config.gluedb')
     >>> 
@@ -86,44 +45,34 @@ class GlueHub(db.Db):
     >>> # Consolidate all databases
     >>> consolidated = hub.toDb()
     """
+    AllowedInstances = [ iomodel.IoModel, db.Base ]
     
-    AllowedInstances = [Contents, base.BaseModel]
-    
-    @classmethod
-    def _post(cls, obj, name=None):
+    def extract(self, name):
         """
-        Post an object to the hub.
+        Extract a database from the hub by name.
         
-        Handles:
-        - Db instances: wrapped in Contents
-        - String URIs: converted to Contents with gluedb=uri
-        - Dict: converted to Contents
-        - Contents: posted directly
+        This method retrieves the record and extracts its data. If the record
+        points to a URI, the data will be loaded from that URI. If the record
+        contains inline data, it will be returned directly.
         """
-        try:
-            return super()._post(obj, name=name)  # parent's dispatched handlers
-            
-        except NotImplementedError:
-            
-            # Handle Db instances
-            if isinstance(obj, db.Db):
-                obj = Contents(gluedb=obj)
-            
-            # Handle string URIs
-            elif isinstance(obj, str):
-                obj = Contents(gluedb=obj)
-            
-            # Handle dict
-            elif isinstance(obj, dict):
-                # If it has 'gluedb' key, assume it's Contents-like
-                if 'gluedb' in obj:
-                    obj = Contents(**obj)
-                else:
-                    # Otherwise, try to create Contents with gluedb=obj
-                    obj = Contents(gluedb=obj)
-            
-            return super()._post(obj, name=name)
-    
+        gluedb = super().extract(name)
+
+        if not isinstance( gluedb, db.Base ):
+            raise TypeError( f"Expected type={ db.Base }, got type={ type(gluedb) }" )
+        
+        return gluedb
+
+    def load(self, data, name):
+        """
+        Load a database into the hub by name.
+        
+        This method stores the database in the hub under the given name.
+        """
+        if not isinstance( data, db.Base ):
+            raise TypeError( f"Expected type={ db.Base }, got type={ type(data) }" )
+
+        return super().load(data, name)
+
     def toDb(self):
         """
         Consolidate all databases in the hub into a single GlueDb.

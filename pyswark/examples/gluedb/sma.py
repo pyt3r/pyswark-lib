@@ -3,10 +3,9 @@
 def main():
 
     # connect to a db
-    from pyswark.core.io import api as io_api
-    from pyswark.gluedb import api
+    from pyswark.core.io import api
     
-    db = io_api.read( 'pyswark:/data/sma-example.gluedb', datahandler='pjson' )
+    db = api.read( 'pyswark:/data/sma-example.gluedb', datahandler='pjson' )
 
     # view the names
     print( db.getNames() )
@@ -60,7 +59,7 @@ def main():
     from pyswark.core.models import collection, primitive
 
     db = db.Db()
-    db.post( 'pyswark:/data/ohlc-jpm.csv.gz', name='JPM' )
+    db.post( 'pyswark:/data/ohlc-jpm.csv.gz', name=Enum.JPM )
     db.post( 'pyswark:/data/ohlc-bac.csv.gz', name='BAC' )
     db.post( primitive.Int("60.0"), name='window' )
     db.post( collection.Dict({ "window": 60 }), name='kwargs' )
@@ -71,9 +70,7 @@ def main():
 
 
     # == analytics workflow ==
-    from pyswark.gluedb import api
-
-    db = api.connect( 'pyswark:/data/sma-example.gluedb' )
+    db = api.read( 'pyswark:/data/sma-example.gluedb' )
 
     # extract the data
     Enum   = db.enum

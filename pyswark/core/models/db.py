@@ -16,7 +16,7 @@ class MixinName:
     @staticmethod
     def _processName( name ):
         if isinstance( name, _enum.Enum ):
-            return name.value
+            name = name.name
         return name
 
 

@@ -55,7 +55,7 @@ class TestSekrets(unittest.TestCase):
     def test_hub(self):
         """Test creating a hub and posting the test database."""
         Settings = self.Settings
-        hub = gluedb_hub.GlueHub()
+        hub = gluedb_hub.Hub()
         hub.post(Settings.TEST.uri, name=Settings.TEST.name)
         
         # Verify the hub contains the test database

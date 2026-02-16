@@ -20,7 +20,7 @@ Example
 """
 
 from functools import lru_cache
-from pyswark.gluedb import api
+from pyswark.core.io import api
 from pyswark.sekrets.settings import Settings
 
 
@@ -72,12 +72,12 @@ def getHub():
 
     Returns
     -------
-    GlueHub
+    Hub
         The hub containing all protocol-specific secret databases.
     """
     from pyswark.sekrets import hub
 
-    return api.connect( f"python://{ hub.__name__}.HUB" )
+    return api.read( f"python://{ hub.__name__}.HUB" )
 
 @lru_cache()
 def _getProtocolName( protocol ):

@@ -11,13 +11,6 @@ Key Concepts
 - **GlueHub**: A hub containing multiple GlueDb instances
 - **Record**: A named entry with URI and extraction settings
 
-API Functions
--------------
-
-.. automodule:: pyswark.gluedb.api
-   :members: connect
-   :undoc-members:
-   :show-inheritance:
 
 GlueDb Class
 ------------
@@ -43,10 +36,10 @@ Connecting to an Existing GlueDb
 
 .. code-block:: python
 
-   from pyswark.gluedb import api
+   from pyswark.core.io import api
 
    # Connect to a .gluedb file
-   db = api.connect('pyswark:/data/sma-example.gluedb')
+   db = api.read('pyswark:/data/sma-example.gluedb')
 
    # View available records
    print(db.getNames())  # ['JPM', 'BAC', 'kwargs']
@@ -81,6 +74,104 @@ Creating a New GlueDb
 
    # Save the database
    io.write(db, 'file:./my-analysis.gluedb')
+
+Persisting with Db.connect
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+``Db.connect()`` loads a ``.gluedb`` catalog from a URI and returns a context
+manager. When ``persist=True``, the catalog is written back to the file on
+successful exit:
+
+.. code-block:: python
+
+   from pyswark.gluedb.db import Db
+   from pyswark.core.models import collection
+   from pyswark.core.io import api
+
+   # Create an initial catalog and save it
+   db = Db()
+   db.post('pyswark:/data/ohlc-jpm.csv.gz', name='JPM')
+   api.write(db, 'file:./catalog.gluedb')
+
+   # Re-open with persist=True — auto-saves on exit
+   with Db.connect('file:./catalog.gluedb', persist=True) as db:
+       db.post(collection.Dict({'window': 60}), name='kwargs')
+
+   # Changes are persisted
+   db = Db.connect('file:./catalog.gluedb')
+   print(db.getNames())  # ['JPM', 'kwargs']
+
+   # Extract data
+   jpm_data = db.extract('JPM')
+
+Persisting with DbSQLModel.connect
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+``DbSQLModel.connect()`` provides SQLite-backed persistence with automatic
+commit/rollback semantics. Data posted inside a ``with`` block is committed
+on successful exit and rolled back on exception:
+
+.. code-block:: python
+
+   from pyswark.core.models.db import DbSQLModel
+   from pyswark.lib.pydantic import base
+
+   class Ticker(base.BaseModel):
+       symbol   : str
+       longName : str
+       exchange : str
+
+   db_url = 'sqlite:///./my-tickers.db'
+
+   # Post records — auto-commits on exit
+   with DbSQLModel.connect(db_url) as db:
+       aapl = Ticker(symbol='AAPL', longName='Apple Inc.', exchange='NASDAQ')
+       db.post(aapl, name='AAPL')
+
+       msft = Ticker(symbol='MSFT', longName='Microsoft Corp', exchange='NASDAQ')
+       db.post(msft, name='MSFT')
+
+   # Data persists across connections
+   with DbSQLModel.connect(db_url) as db:
+       result = db.getByName('AAPL')
+       ticker = result.body.extract()
+       print(ticker.symbol)    # 'AAPL'
+       print(ticker.longName)  # 'Apple Inc.'
+
+       all_records = db.getAll()
+       print(len(all_records))  # 2
+
+Updating and deleting records:
+
+.. code-block:: python
+
+   # PUT replaces or creates a record (idempotent)
+   with DbSQLModel.connect(db_url) as db:
+       updated = Ticker(symbol='MSFT', longName='Microsoft Corporation', exchange='NASDAQ')
+       db.put(updated, name='MSFT')
+
+   # DELETE removes a record
+   with DbSQLModel.connect(db_url) as db:
+       db.deleteByName('MSFT')
+
+   # Verify
+   with DbSQLModel.connect(db_url) as db:
+       print(db.getByName('MSFT'))  # None
+
+Rollback on exception:
+
+.. code-block:: python
+
+   # If an exception occurs, changes are rolled back
+   try:
+       with DbSQLModel.connect(db_url) as db:
+           db.post(Ticker(symbol='TSLA', longName='Tesla', exchange='NASDAQ'), name='TSLA')
+           raise ValueError("something went wrong")
+   except ValueError:
+       pass
+
+   with DbSQLModel.connect(db_url) as db:
+       print(db.getByName('TSLA'))  # None (rolled back)
 
 Merging Databases
 ^^^^^^^^^^^^^^^^^
