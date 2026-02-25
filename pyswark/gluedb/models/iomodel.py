@@ -31,9 +31,9 @@ class IoModel( iohandler.IoHandler ):
     def extract( self ):
         return self._getExtractor().read()
 
-    def load( self, data ):
+    def load( self, data, **kwargs ):
         """ the L in ETL - loads the contents into a system """
-        return self._getLoader().write( data )
+        return self._getLoader().write( data, **kwargs )
 
     def acquireExtract( self ):
         return self._getExtractor().acquire()

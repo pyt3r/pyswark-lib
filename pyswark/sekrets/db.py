@@ -8,7 +8,7 @@ class Db( db.Base ):
     FALLBACK : ClassVar[ type[ base.Sekret ] ] = generic.Sekret
     AllowedInstances = [ base.Sekret ]
 
-    def _init( self, fallback=generic.Sekret, **kw ):
+    def _init( self, *a, fallback=generic.Sekret, **kw ):
         self.FALLBACK = fallback
         return super()._init( *a, **kw )
 

@@ -4,7 +4,7 @@ import pathlib
 import shutil
 
 from pyswark.core.io import api as io_api
-from pyswark.sekrets import api, settings, db
+from pyswark.sekrets import api, settings
 from pyswark.gluedb import hub as gluedb_hub
 
 
@@ -22,7 +22,7 @@ description: Space Ranger - Falling with style
 """
 
     sekrets = io_api.read(sekretsData, 'string')
-    sekretsDb = db.Db()
+    sekretsDb = api.Db()
     sekretsDb.postAll(sekrets)
     return sekretsDb
 

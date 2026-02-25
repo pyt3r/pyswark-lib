@@ -1,6 +1,6 @@
 import pathlib
 import pyswark
-from pyswark.lib.aenum import AliasEnum
+from pyswark.lib.aenum import AliasEnum, Alias
 
 
 class Mixin:
@@ -23,8 +23,11 @@ class Settings( Base ):
     _ROOT    = pathlib.Path( pyswark.__file__ ).parent
     _PROJECT = _ROOT / '..' / '..'
     _HIDDEN  = _PROJECT / 'iac-project' / 'hidden'
+    _SEKRETS = _PROJECT / 'iac-project' / 'sekrets'
 
     SGDRIVE2      = ( 's-gdrive2', _HIDDEN / 's-gdrive2.json' )
     PRIVATE_CONDA = _HIDDEN / 'private-conda.docs.yaml'
     REDIS         = _HIDDEN / 'redis.docs.yaml'
     EXAMPLE_IAC   = ( 'example-iac', _HIDDEN / 'example-iac.json' )
+
+    GDRIVE2 = _SEKRETS / 'gdrive2.gluedb', Alias( 'gdrive2' )

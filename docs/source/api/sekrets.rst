@@ -57,7 +57,7 @@ Configuration
 -------------
 
 Secrets configuration is managed through the ``Settings`` class and
-external hub definitions. See the ``sekrets.settings`` and ``sekrets.hub``
+external hub definitions. See the ``sekrets.settings`` and ``sekrets.hubdata``
 modules for configuration details.
 
 Security Best Practices

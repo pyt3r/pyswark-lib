@@ -49,9 +49,9 @@ class IoHandler( extractor.Extractor ):
             klass = DataHandler.get( datahandler )
         return klass( uri )
 
-    def write( self, data ):
+    def write( self, data, **kwargs ):
         handler = self.acquire()
-        return handler.write( data, **self.kw )
+        return handler.write( data, **{ **self.kw, **kwargs } )
 
     def guess( self ):
         return guess.api( self.uri )

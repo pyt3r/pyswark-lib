@@ -19,21 +19,19 @@ Example
 >>> creds = api.get('myusername', 'sgdrive2')
 """
 
-from functools import lru_cache
 from pyswark.core.io import api
-from pyswark.sekrets.settings import Settings
 
 
-def get( username, protocol ):
+def get( protocol, name ):
     """
-    Retrieve credentials for a username and protocol.
+    Retrieve credentials for a name and protocol.
 
     Parameters
     ----------
-    username : str
-        The username/identifier for the credential.
     protocol : str
-        The protocol/service name (e.g., 'sgdrive2').
+        The protocol/service name (e.g., 'gdrive2').
+    name : str
+        The username/identifier for the credential.
 
     Returns
     -------
@@ -42,12 +40,25 @@ def get( username, protocol ):
 
     Example
     -------
-    >>> creds = get('myuser', 'sgdrive2')
+    >>> creds = get('sgdrive2', 'myuser')
     """
-    db = getDb( _getProtocolName( protocol ))
-    return db.extract( username )
+    hub = getHub()
+    return hub.extractFromDb( protocol, name )
 
-@lru_cache()
+
+def getHub():
+    """
+    Get the central secrets hub.
+
+    Returns
+    -------
+    Hub
+        The hub containing all protocol-specific secret databases.
+    """
+    from pyswark.sekrets import hubdata
+    return api.read( f"python://{ hubdata.__name__}.HUB" )
+
+
 def getDb( protocol ):
     """
     Get the secrets database for a protocol.
@@ -63,24 +74,15 @@ def getDb( protocol ):
         The secrets database for this protocol.
     """
     hub = getHub()
-    return hub.extract(_getProtocolName(protocol))
+    return hub.extract( protocol )
 
-@lru_cache()
-def getHub():
-    """
-    Get the central secrets hub.
 
-    Returns
-    -------
-    Hub
-        The hub containing all protocol-specific secret databases.
-    """
-    from pyswark.sekrets import hub
+def Db():
+    """ create a new database """
+    from pyswark.sekrets import db
+    return db.Db()
 
-    return api.read( f"python://{ hub.__name__}.HUB" )
-
-@lru_cache()
-def _getProtocolName( protocol ):
-    """Get the canonical protocol name from settings."""
-    return Settings.get( protocol ).name
-
+def sekret( name ):
+    """ Get the model for a sekret """
+    from pyswark.sekrets.models.enum import Models
+    return Models.get( name ).klass

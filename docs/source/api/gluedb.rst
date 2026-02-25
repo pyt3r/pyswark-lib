@@ -23,8 +23,8 @@ GlueDb Class
 GlueHub Class
 -------------
 
-.. autoclass:: pyswark.gluedb.hub.GlueHub
-   :members: toDb, extract
+.. autoclass:: pyswark.gluedb.hub.Hub
+   :members: extract, load, getFromDb, postToDb, putToDb, deleteFromDb, extractFromDb, acquireFromDb, mergeToDb, toDb
    :undoc-members:
    :show-inheritance:
 
@@ -197,10 +197,40 @@ Using GlueHub for Multiple Databases
 
    from pyswark.gluedb import hub
 
-   hub = hub.GlueHub()
-   hub.post('market_data', market_db)
-   hub.post('config', config_db)
+   gluedb_hub = hub.Hub()
+   gluedb_hub.post('market_data', market_db)
+   gluedb_hub.post('config', config_db)
 
    # Extract a specific database from the hub
-   market_db = hub.extract('market_data')
+   market_db = gluedb_hub.extract('market_data')
+
+Per-Database Helpers
+^^^^^^^^^^^^^^^^^^^^
+
+When a hub entry points at a URI (for example, a ``.gluedb`` file), you can
+modify the underlying database and persist changes back to the file using the
+convenience helpers:
+
+.. code-block:: python
+
+   from pyswark.gluedb import hub
+   from pyswark.core.models import collection
+
+   gluedb_hub = hub.Hub()
+   gluedb_hub.post('file:./catalog.gluedb', name='catalog')
+
+   # Post a new record into the underlying GlueDb and overwrite the file
+   gluedb_hub.postToDb(
+       collection.Dict({'window': 120}),
+       'catalog',
+       name='kwargs_120',
+   )
+
+   # Merge another GlueDb and persist the merged result
+   from pyswark.gluedb import db as gluedb
+
+   other = gluedb.Db()
+   other.post('extra', 'file:./extra.csv')
+
+   gluedb_hub.mergeToDb(other, 'catalog')
 
