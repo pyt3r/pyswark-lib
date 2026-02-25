@@ -3,10 +3,7 @@ from pyswark.sekrets.settings import Settings
 
 
 DBs = [
-    Settings.SGDRIVE2,
-    Settings.PRIVATE_CONDA,
-    Settings.REDIS,
-    Settings.EXAMPLE_IAC,
+    Settings.GITHUB_IO_DEMO,
     Settings.GDRIVE2,
 ]
 

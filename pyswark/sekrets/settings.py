@@ -22,12 +22,7 @@ class Base( Mixin, AliasEnum ):
 class Settings( Base ):
     _ROOT    = pathlib.Path( pyswark.__file__ ).parent
     _PROJECT = _ROOT / '..' / '..'
-    _HIDDEN  = _PROJECT / 'iac-project' / 'hidden'
     _SEKRETS = _PROJECT / 'iac-project' / 'sekrets'
 
-    SGDRIVE2      = ( 's-gdrive2', _HIDDEN / 's-gdrive2.json' )
-    PRIVATE_CONDA = _HIDDEN / 'private-conda.docs.yaml'
-    REDIS         = _HIDDEN / 'redis.docs.yaml'
-    EXAMPLE_IAC   = ( 'example-iac', _HIDDEN / 'example-iac.json' )
-
-    GDRIVE2 = _SEKRETS / 'gdrive2.gluedb', Alias( 'gdrive2' )
+    GITHUB_IO_DEMO = './github-io-demo.gluedb', Alias( 'github-io-demo' )
+    GDRIVE2        = _SEKRETS / 'gdrive2.gluedb', Alias( 'gdrive2' )
