@@ -23,6 +23,7 @@ dependencies:
   - sqlalchemy
   - pydantic
   - fsspec
+  - pydrive2
   - requests
   - aiohttp
   - aenum
