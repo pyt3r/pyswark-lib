@@ -31,8 +31,9 @@ class Model( function.FunctionModel ):
     PATTERN: ClassVar = re.compile(
         r'^(?:(?P<scheme>[a-zA-Z][a-zA-Z0-9+.-]*)://)?'
         r'(?:(?P<username>[^:@\s]+)'
-        r'(?::(?P<password>[^@\s]*))?@)?'
-        r'(?P<host>[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}|localhost|\d{1,3}(?:\.\d{1,3}){3})?'
+        r'(?::(?P<password>[^@\s]*))?@'
+        r'|@(?P<_target>[^/:?\s#@]+))?'
+        r'(?P<host>[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}|localhost|\d{1,3}(?:\.\d{1,3}){3}|(?:(?<=@)|^)[a-zA-Z][\w-]*)?'
         r'(?::(?P<port>\d+))?'
         r'(?P<path>/[^?#]*)?'
         r'(?:\?(?P<query>[^\s#]*))?'
@@ -47,7 +48,13 @@ class Model( function.FunctionModel ):
         if not match:
             raise ValueError( f"cannot match { inputs.uri= } to the uri regex pattern" )
 
-        return Outputs( **match.groupdict() )
+        d = match.groupdict()
+
+        # '_target' exists solely for the new format: schema://@username/path/to/file, where @ is a prefix before the username
+        target = d.pop( '_target', None )
+        if target and not d.get( 'username' ):
+            d['username'] = target
+        return Outputs( **d )
 
     @property
     def scheme(self):

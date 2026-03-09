@@ -15,10 +15,11 @@ filesystem(protocol)
 
 import fsspec
 
-_PROTOCOLS = {
+IMPLEMENTATIONS = {
     'python' : "pyswark.lib.fsspec.implementations.PythonFileSystem",
+    'gdrive2': "pydrive2.fs.GDriveFileSystem",
 }
-[ fsspec.register_implementation( *_p ) for _p in _PROTOCOLS.items() ]
+[ fsspec.register_implementation( *i ) for i in IMPLEMENTATIONS.items() ]
 
 
 def open( uri, *args, **kwargs ):

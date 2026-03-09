@@ -22,7 +22,7 @@ Example
 from pyswark.core.io import api
 
 
-def get( protocol, name ):
+def get( name, protocol=None ):
     """
     Retrieve credentials for a name and protocol.
 
@@ -43,7 +43,11 @@ def get( protocol, name ):
     >>> creds = get('sgdrive2', 'myuser')
     """
     hub = getHub()
-    return hub.extractFromDb( protocol, name )
+    if protocol is None:
+        return hub.asDb().extract( name )
+    else:
+        return hub.extractFromDb( protocol, name )
+
 
 
 def getHub():

@@ -1,1 +1,3 @@
-from pyswark.lib.fsspec.fsspec import open, filesystem
+from .fsspec import *
+
+__all__ = ["open", "filesystem", "IMPLEMENTATIONS"], 

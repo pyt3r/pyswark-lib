@@ -11,6 +11,10 @@ class Model( interface.Model ):
         try:
             model = generic.Model( uri )
             if model.host:
+                if '.' not in model.host and model.host != 'localhost':
+                    if model.username:
+                        return model
+                    return file.ModelGuess( f'file:{ uri }' )
                 if not model.path and not model.Ext:
                     return _guess( uri )
                 model = http.ModelGuess( uri )
