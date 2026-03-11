@@ -17,7 +17,6 @@ import fsspec
 
 IMPLEMENTATIONS = {
     'python' : "pyswark.lib.fsspec.implementations.PythonFileSystem",
-    #'gdrive2': "pydrive2.fs.GDriveFileSystem",
 }
 [ fsspec.register_implementation( *i ) for i in IMPLEMENTATIONS.items() ]
 

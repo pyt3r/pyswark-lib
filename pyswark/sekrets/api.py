@@ -44,7 +44,7 @@ def get( name, protocol=None ):
     """
     hub = getHub()
     if protocol is None:
-        return hub.asDb().extract( name )
+        return hub.toDb().extract( name )
     else:
         return hub.extractFromDb( protocol, name )
 

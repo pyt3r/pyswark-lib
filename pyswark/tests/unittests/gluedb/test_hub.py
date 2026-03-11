@@ -212,3 +212,28 @@ class TestDbHelpers( unittest.TestCase ):
             )
         finally:
             shutil.rmtree( tempdir )
+
+
+class TestHubGuards( unittest.TestCase ):
+    """Type-guard branches that reject invalid inputs."""
+
+    def test_load_rejects_non_db(self):
+        hub = hub_module.Hub()
+        with self.assertRaises( TypeError ):
+            hub.load( 'not-a-db', name='bad' )
+
+    def test_mergeToDb_rejects_non_db(self):
+        hub = buildHub()
+        with self.assertRaises( TypeError ):
+            hub.mergeToDb( 'not-a-db', 'db_1' )
+
+    def test_putToDb_requires_name(self):
+        hub = buildHub()
+        with self.assertRaises( ValueError ):
+            hub.putToDb( collection.Dict( {'x': 1} ), 'db_1' )
+
+    def test_deleteFromDb_returns_false_for_missing(self):
+        """deleteFromDb returns False when the record does not exist."""
+        hub = buildHub()
+        success = hub.deleteFromDb( 'db_1', 'nonexistent' )
+        self.assertFalse( success )
