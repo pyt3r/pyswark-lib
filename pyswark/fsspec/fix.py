@@ -12,10 +12,15 @@ from pyswark.lib.pydantic import base
 from pyswark.sekrets import api as sekrets_api
 from pyswark.core.io import api as io_api
 from pyswark.core.models.uri.base import UriModel
+import pyswark
 
 
 IMPLEMENTATIONS = {
-    'gdrive2': 'pydrive2.fs.GDriveFileSystem',
+    # Use pyswark's wrapped GDriveFileSystem so that paths opened via
+    # fsspec.filesystem('gdrive2', ...) go through our subclass, which
+    # can normalise paths relative to the sekret root.
+    'gdrive2': 'pyswark.fsspec.implementations.GDriveFileSystem',
+    'pyswark': 'pyswark.fsspec.implementations.PyswarkFileSystem',
 }
 
 
@@ -62,7 +67,7 @@ def filesystem( fn ):
         protocol = handler.scheme
         sekret   = handler.getSekret()
 
-        return fn( protocol, **{ **sekret, **kwargs }, )
+        return fn( protocol, target_username=target_username, **{ **sekret, **kwargs }, )
 
     return wrapper
 
@@ -82,7 +87,8 @@ class Handler( base.BaseModel ):
     the appropriate subclass (e.g. :class:`Gdrive2`) when the URI or scheme matches.
     """
     HANDLERS : ClassVar = {
-        'gdrive2': 'pyswark.fsspec.fix.Gdrive2'
+        'gdrive2': 'pyswark.fsspec.fix.Gdrive2',
+        'pyswark': 'pyswark.fsspec.fix.Pyswark',
     }
     uri      : Optional[UriModel] = Field( default=None )
     scheme   : Optional[str] = Field( default=None )
@@ -118,9 +124,11 @@ class Handler( base.BaseModel ):
 
     @model_validator( mode='after' )
     def _others(self):
-        if self.uri:
-            self.scheme   = self.uri.scheme or self.scheme
-            self.username = self.uri.username or self.username
+        if self.uri and not self.scheme:
+            self.scheme = self.uri.scheme
+        
+        if self.uri and not self.username:
+            self.username = self.uri.username
         
         self.scheme   = ( self.scheme or '' ).lower()
         self.username = ( self.username or '' ).lower()
@@ -136,7 +144,7 @@ class Handler( base.BaseModel ):
 
     def getPath(self):
         """Return the path component of the URI as a :class:`pathlib.Path`."""
-        return Path( self.uri.path )
+        return Path( self.uri.path if self.uri else '' )
 
 
 class Gdrive2( Handler ):
@@ -149,5 +157,15 @@ class Gdrive2( Handler ):
     def getPath(self):
         """Return the full path: sekret root path joined with the URI path (leading slash stripped)."""
         root = Path( self._getSekret().get( 'path', '' ) )
+        path = str( super().getPath() )
+        return root / path.lstrip('/')
+
+
+class Pyswark( Handler ):
+    """Handler for ``pyswark://path`` URIs; resolves path relative to the pyswark package root."""
+
+    def getPath(self):
+        """Return the relative path (leading slash stripped) for the PyswarkFileSystem."""
+        root = Path( pyswark.__file__ ).parent
         path = str( super().getPath() )
         return root / path.lstrip('/')

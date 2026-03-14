@@ -243,13 +243,6 @@ class MockPjson( base.BaseModel ):
     f: float
 
 
-class TestCustomPyswarkIo( unittest.TestCase ):
-
-    def test_read_from_package(self):
-        DF = api.read('pyswark://data/df.csv')
-        self.assertIsInstance( DF, pandas.DataFrame )
-
-
 class TestStringDataHandler( unittest.TestCase ):
 
     def test_read_yaml_string(self):

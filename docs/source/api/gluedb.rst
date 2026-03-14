@@ -39,7 +39,7 @@ Connecting to an Existing GlueDb
    from pyswark.core.io import api
 
    # Connect to a .gluedb file
-   db = api.read('pyswark:/data/sma-example.gluedb')
+   db = api.read('file:./sma-example.gluedb')
 
    # View available records
    print(db.getNames())  # ['JPM', 'BAC', 'kwargs']
@@ -61,8 +61,8 @@ Creating a New GlueDb
    db = db.Db()
 
    # Post records pointing to data sources
-   db.post('JPM', 'pyswark:/data/ohlc-jpm.csv.gz')
-   db.post('BAC', 'pyswark:/data/ohlc-bac.csv.gz')
+   db.post('file:./ohlc-jpm.csv.gz', name='JPM')
+   db.post('file:./ohlc-bac.csv.gz', name='BAC')
 
    # Post inline data (dict, list, etc.)
    db.post('config', collection.Dict({
@@ -90,7 +90,7 @@ successful exit:
 
    # Create an initial catalog and save it
    db = Db()
-   db.post('pyswark:/data/ohlc-jpm.csv.gz', name='JPM')
+   db.post('file:./ohlc-jpm.csv.gz', name='JPM')
    api.write(db, 'file:./catalog.gluedb')
 
    # Re-open with persist=True — auto-saves on exit

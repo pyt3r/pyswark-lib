@@ -1,7 +1,5 @@
 import unittest
-import pathlib
 
-import pyswark
 from pyswark.core.models.uri.base import UriModel
 from pyswark.core.models.uri.ext import Ext
 
@@ -30,8 +28,7 @@ class Pyswark( Mixin, unittest.TestCase ):
     ]
 
     def test_path(self):
-        parent   = pathlib.Path( pyswark.__file__ ).parent
-        expected = f'{ parent }/data/data.csv'
+        expected = '/data/data.csv'
         self.runTests( attr='path', expected=expected )
 
 

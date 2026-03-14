@@ -40,6 +40,7 @@ from pyswark.fsspec import fix
 
 IMPLEMENTATIONS = {
     **fix.IMPLEMENTATIONS,
+    "pyswark": "pyswark.fsspec.implementations.PyswarkFileSystem",
 }
 [ _fsspec.register_implementation( *i ) for i in IMPLEMENTATIONS.items() ]
 

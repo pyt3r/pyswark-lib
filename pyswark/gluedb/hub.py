@@ -37,7 +37,7 @@ class Hub(db.Db):
     >>> from pyswark.gluedb import hub
     >>> hub = hub.Hub()
     >>> hub.post('market_data', market_db)
-    >>> hub.post('config', 'pyswark:/data/config.gluedb')
+    >>> hub.post('config', 'file:./config.gluedb')
     >>> 
     >>> # Extract a database
     >>> market_db = hub.extract('market_data')

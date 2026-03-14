@@ -63,4 +63,4 @@ class TestFsspecFilesystem( unittest.TestCase ):
         from pyswark.fsspec import fsspec
         fsspec.filesystem( 'file' )
 
-        mock_fsspec.filesystem.assert_called_once_with( 'file' )
+        mock_fsspec.filesystem.assert_called_once_with( 'file', target_username=None )

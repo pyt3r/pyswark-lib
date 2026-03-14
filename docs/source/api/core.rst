@@ -8,7 +8,7 @@ Key Features
 ------------
 
 - **Unified I/O API**: Read/write any data source with a consistent URI interface
-- **URI handling**: Support for file:, pyswark:, python:, http: schemes
+- **URI handling**: Support for file:, python:, http: schemes
 - **Model abstractions**: Converters, extractors, and data models
 
 I/O API
@@ -36,9 +36,6 @@ pyswark supports multiple URI schemes:
    * - ``file:``
      - ``file:./data.csv``
      - Local filesystem
-   * - ``pyswark:``
-     - ``pyswark:/data/ohlc-jpm.csv.gz``
-     - Package data files
    * - ``python:``
      - ``python://module.Class``
      - Python objects by import path
@@ -55,9 +52,6 @@ Reading Data
 .. code-block:: python
 
    from pyswark.core.io import api as io
-
-   # Read from package data
-   df = io.read('pyswark:/data/ohlc-jpm.csv.gz')
 
    # Read from local file
    config = io.read('file:./config.yaml')
@@ -92,7 +86,6 @@ Validating URIs
    from pyswark.core.io import api as io
 
    io.isUri('file:./data.csv')      # True
-   io.isUri('pyswark:/data/foo')    # True
    io.isUri('/plain/path.csv')      # False
 
 Core Models

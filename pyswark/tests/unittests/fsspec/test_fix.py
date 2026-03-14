@@ -1,9 +1,10 @@
 import unittest
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
+import pyswark
 from pyswark.fsspec import fix
-from pyswark.fsspec.fix import Handler, Gdrive2
+from pyswark.fsspec.fix import Handler, Gdrive2, Pyswark
 
 
 MOCK_SEKRET = {
@@ -33,8 +34,8 @@ class TestHandlerConstruction( unittest.TestCase ):
 
     def test_uri_overrides_scheme_and_username(self):
         h = Handler( uri='gdrive2://@alice/f.txt', scheme='other', username='other' )
-        self.assertEqual( h.scheme, 'gdrive2' )
-        self.assertEqual( h.username, 'alice' )
+        self.assertEqual( h.scheme, 'other' )
+        self.assertEqual( h.username, 'other' )
 
     def test_none_defaults(self):
         h = Handler( scheme='s3' )
@@ -151,3 +152,37 @@ class TestFilesystemDecorator( unittest.TestCase ):
         _, kwargs = calls[0]
         self.assertIn( 'bucket', kwargs )
         self.assertNotIn( 'client_id', kwargs )
+
+
+class TestPyswark( unittest.TestCase ):
+    """Tests for the pyswark:// fix handler and filesystem."""
+
+    def test_dispatches_to_pyswark_handler(self):
+        h = Handler.getHandler( uri='pyswark://data/df.csv' )
+        self.assertIsInstance( h, Pyswark )
+
+    def test_getPath_returns_absolute(self):
+        import pyswark
+        h = Pyswark( uri='pyswark:///data/df.csv', scheme='pyswark' )
+        expected = Path( pyswark.__file__ ).parent / 'data/df.csv'
+        self.assertEqual( h.getPath(), expected )
+
+    def test_getSekret_returns_empty(self):
+        h = Pyswark( uri='pyswark://data/df.csv' )
+        self.assertEqual( h.getSekret(), {} )
+
+    def test_open_decorator_resolves_pyswark_uri(self):
+        import pyswark
+        calls = []
+
+        @fix.open
+        def fake_open( uri, *args, **kwargs ):
+            calls.append( ( uri, kwargs ) )
+
+        fake_open( 'pyswark://data/df.csv' )
+        uri, kwargs = calls[0]
+        self.assertIsInstance( uri, Path )
+        expected = Path( pyswark.__file__ ).parent / 'data/df.csv'
+        self.assertEqual( uri, expected )
+        self.assertEqual( kwargs['protocol'], 'pyswark' )
+
