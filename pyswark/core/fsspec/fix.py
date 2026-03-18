@@ -122,7 +122,8 @@ class Handler( base.BaseModel ):
 
         if scheme in cls.HANDLERS:
             path = cls.HANDLERS[ scheme ]
-            Handler = io_api.read( path, datahandler='python' )
+            with io_api.verbosity( 'CRITICAL' ):
+                Handler = io_api.read( path, datahandler='python' )
             handler = Handler( uri=handler.uri, scheme=handler.scheme, username=handler.username )
             return handler
 

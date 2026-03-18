@@ -60,7 +60,7 @@ Read and write data from any URI:
    api.write(df, 'file:./output.csv')
 
 
-1. Data Catalogs with GlueDb
+3. Data Catalogs with GlueDb
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Create and use data catalogs:
@@ -71,7 +71,7 @@ Create and use data catalogs:
    from pyswark.core.models import collection
 
    # Connect to existing catalog
-   db = api.read('file:./sma-example.gluedb')
+   db = api.read('pyswark://data/sma-example.gluedb')
    print(db.getNames())  # ['JPM', 'BAC', 'kwargs']
 
    # Extract data by name
@@ -109,7 +109,7 @@ when ``persist=True``:
 
    # Create an initial catalog and save it
    db = Db()
-   db.post('file:./ohlc-jpm.csv.gz', name='JPM')
+   db.post('pyswark://data/sma-example.gluedb', name='JPM')
    api.write(db, 'file:./catalog.gluedb')
 
    # Re-open with persist=True — auto-saves on exit
@@ -165,7 +165,7 @@ Orchestrate multi-step computations with automatic caching:
 
 .. code-block:: python
 
-   from from pyswark.workflow.workflow import Workflow
+   from pyswark.workflow.workflow import Workflow
    from pyswark.workflow.step import Step
    from pyswark.workflow.state import State
    from pyswark.lib.pydantic import base

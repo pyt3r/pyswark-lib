@@ -20,18 +20,16 @@ through unchanged.
 
 Quick start
 -----------
->>> from pyswark import fsspec
+>>> from pyswark.core import fsspec
 >>>
 >>> # Open a file on GDrive (credentials resolved automatically)
 >>> with fsspec.open("gdrive2://@phb2114/phb2114-keepme.json") as f:
 ...     data = f.read()
 >>>
->>> # Walk a remote directory
->>> for root, dirs, files in fsspec.walk("gdrive2://@phb2114/PUBLIC"):
-...     print(root, dirs, files)
->>>
->>> # Get a filesystem instance directly
+>>> # Walk a remote directory (via the filesystem instance)
 >>> fs = fsspec.filesystem("gdrive2", target_username="phb2114")
+>>> for root, dirs, files in fs.walk(fs.path):
+...     print(root, dirs, files)
 """
 
 from pyswark.lib.fsspec import fsspec as _fsspec
