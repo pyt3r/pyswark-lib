@@ -34,7 +34,7 @@ Quick start
 >>> fs = fsspec.filesystem("gdrive2", target_username="phb2114")
 """
 
-from pyswark.lib.fsspec import fsspec
+from pyswark.lib.fsspec import fsspec as _fsspec
 from pyswark.core.fsspec import fix
 
 
@@ -42,17 +42,17 @@ IMPLEMENTATIONS = {
     **fix.IMPLEMENTATIONS,
     "pyswark": "pyswark.core.fsspec.implementations.PyswarkFileSystem",
 }
-[ fsspec.register_implementation( *i ) for i in IMPLEMENTATIONS.items() ]
+[ _fsspec.register_implementation( *i ) for i in IMPLEMENTATIONS.items() ]
 
 
 @fix.open
 def open( uri, *args, **kwargs ):
     """Open a file, injecting credentials when the URI contains a username."""
-    return fsspec.open( uri, *args, **kwargs )
+    return _fsspec.open( uri, *args, **kwargs )
 
 
 @fix.filesystem
 def filesystem( protocol, **kwargs ):
     """Get a filesystem instance, optionally injecting credentials
     via *target_username*."""
-    return fsspec.filesystem( protocol, **kwargs )
+    return _fsspec.filesystem( protocol, **kwargs )
