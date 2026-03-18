@@ -27,11 +27,18 @@ test:
 	coverage run -m \
 		--source=${PACKAGE_PATH} \
 		--omit=${TESTS_PATH}/* \
-		unittest discover ${TESTS_PATH}
+		unittest discover ${TESTS_PATH}/unittests
 	coverage report -m
 	coverage html
 	coverage xml
 	open htmlcov/index.html
+
+test-integration:
+	python -m unittest discover ${TESTS_PATH}/integration
+
+test-all:
+	make test
+	make test-integration
 
 conda-package:
 	conda build . -c conda-forge -c defaults --output-folder=./
@@ -40,6 +47,12 @@ conda-package:
 test-package:
 	cd ${TESTS_PATH} && \
 	python -c "import ${PACKAGE_NAME}; ${PACKAGE_NAME}.test('unittests')" && \
+	conda uninstall ${PACKAGE_NAME} -y --force && \
+	cd ..
+
+test-package-integration:
+	cd ${TESTS_PATH} && \
+	python -c "import ${PACKAGE_NAME}; ${PACKAGE_NAME}.test('integration')" && \
 	conda uninstall ${PACKAGE_NAME} -y --force && \
 	cd ..
 
@@ -75,4 +88,4 @@ clean:
 	find . -name "*.pyc" | xargs rm -rf
 	rm -rf docs/build/ docs/source/examples
 
-.PHONY: test-env rtd-env _pip-env add-packages pep8 lint test conda-package test-package docs-sym-link docs-pdf docs-html docs-latex git-merge clean
+.PHONY: test-env rtd-env _pip-env add-packages pep8 lint test test-integration test-all conda-package test-package test-package-integration docs-sym-link docs-pdf docs-html docs-latex git-merge clean
