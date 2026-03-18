@@ -17,13 +17,8 @@ class Model( interface.Model ):
     SCHEME  : ClassVar = Inputs.SCHEME
 
     @property
-    def Path(self):
-        parent = pathlib.Path( pyswark.__file__ ).parent
-        return pathlib.Path( f'{ parent }/{ super().Path }' )
-
-    @property
     def fsspec(self):
-        return self.path
+        return f'{ self.scheme }://{ self.path }'
 
     @property
     def Ext(self):

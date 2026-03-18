@@ -9,7 +9,6 @@ sources (files, URLs, Python objects) behind a consistent API.
 Supported URI Schemes
 ---------------------
 - ``file:`` - Local filesystem (e.g., ``file:./data.csv``)
-- ``pyswark:`` - Package data files (e.g., ``pyswark:/data/ohlc-jpm.csv.gz``)
 - ``python:`` - Python objects by import path (e.g., ``python://mymodule.MyClass``)
 - ``http:``/``https:`` - Remote URLs
 
@@ -18,7 +17,6 @@ Example
 >>> from pyswark.core.io import api as io
 >>>
 >>> # Read from various sources
->>> df = io.read('pyswark:/data/ohlc-jpm.csv.gz')
 >>> config = io.read('file:./config.yaml')
 >>>
 >>> # Write data
@@ -57,7 +55,6 @@ def read( uri, datahandler=None, **kw ):
         The URI to read from. Supports multiple schemes:
         
         - ``file:./path/to/file.csv`` - Local file
-        - ``pyswark:/data/filename`` - Package data
         - ``python://module.Class`` - Python object
         - ``https://example.com/data.json`` - Remote URL
         
@@ -74,7 +71,6 @@ def read( uri, datahandler=None, **kw ):
 
     Example
     -------
-    >>> df = read('pyswark:/data/ohlc-jpm.csv.gz')
     >>> config = read('file:./config.yaml')
     """
     contents = IoHandler( uri=uri, datahandler=datahandler, kw=kw )

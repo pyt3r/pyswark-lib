@@ -2,9 +2,11 @@ import unittest
 import tempfile
 import pathlib
 import shutil
+from unittest.mock import patch, MagicMock
 
 from pyswark.core.io import api as io_api
 from pyswark.sekrets import api, settings
+from pyswark.sekrets import hub as sekrets_hub
 from pyswark.gluedb import hub as gluedb_hub
 
 
@@ -92,3 +94,82 @@ description: Mr. Potato Head - Detachable parts, detachable heart
         # Extract buzz's sekret
         buzz_sekret = self.sekretsDb.extract('buzz')
         self.assertDictEqual(buzz_sekret, {'sekret': 'to_infinity_and_beyond', 'description': 'Space Ranger - Falling with style'})
+
+
+class TestSekretsApi( unittest.TestCase ):
+    """Test sekrets.api functions via a mocked hub."""
+
+    def _build_hub(self):
+        """Build a base hub (no Settings resolution) with a 'TEST' protocol db."""
+        sekretsDb = buildDb()
+        h = gluedb_hub.Hub()
+        h.post( sekretsDb, name='TEST' )
+        return h
+
+    @patch( 'pyswark.sekrets.api.getHub' )
+    def test_get_with_protocol(self, mock_getHub):
+        """api.get(name, protocol) delegates to hub.extractFromDb."""
+        mock_getHub.return_value = self._build_hub()
+        result = api.get( 'woody', 'TEST' )
+        self.assertIsInstance( result, dict )
+        self.assertEqual( result['sekret'], 'theres_a_snake_in_my_boot' )
+
+    @patch( 'pyswark.sekrets.api.getHub' )
+    def test_get_without_protocol(self, mock_getHub):
+        """api.get(name) without protocol consolidates hub then extracts."""
+        mock_getHub.return_value = self._build_hub()
+        result = api.get( 'buzz' )
+        self.assertIsInstance( result, dict )
+        self.assertEqual( result['sekret'], 'to_infinity_and_beyond' )
+
+    @patch( 'pyswark.sekrets.api.getHub' )
+    def test_getDb(self, mock_getHub):
+        """api.getDb returns the db for a protocol."""
+        mock_getHub.return_value = self._build_hub()
+        db = api.getDb( 'TEST' )
+        self.assertIn( 'woody', db.getNames() )
+
+    def test_Db_returns_empty_sekrets_db(self):
+        """api.Db() returns an empty sekrets database."""
+        db = api.Db()
+        self.assertEqual( db.getNames(), [] )
+
+    def test_sekret_returns_model_class(self):
+        """api.sekret('generic') returns the generic Sekret class."""
+        from pyswark.sekrets.models.generic import Sekret
+        klass = api.sekret( 'generic' )
+        self.assertEqual( klass.__name__, Sekret.__name__ )
+        self.assertEqual( klass.__module__, Sekret.__module__ )
+
+
+class TestSekretsDbFallback( unittest.TestCase ):
+    """Test _post_fallback paths in sekrets.db.Db."""
+
+    def test_post_dict_with_name_key(self):
+        """Posting a dict with 'name' key uses that as record name."""
+        db = api.Db()
+        db.post( { 'name': 'rex', 'sekret': 'rawr', 'description': 'dinosaur' } )
+        self.assertIn( 'rex', db.getNames() )
+        extracted = db.extract( 'rex' )
+        self.assertEqual( extracted['sekret'], 'rawr' )
+
+    def test_post_dict_without_name_key(self):
+        """Posting a dict without 'name' requires explicit name= argument."""
+        db = api.Db()
+        db.post( { 'sekret': 'sssh', 'description': 'unnamed' }, name='anon' )
+        self.assertIn( 'anon', db.getNames() )
+
+    def test_post_multiline_yaml_string_multiple_docs(self):
+        """Posting a multi-doc YAML string via read+postAll creates all records."""
+        multi = """
+---
+name: alpha
+sekret: a
+---
+name: beta
+sekret: b
+"""
+        parsed = io_api.read( multi, 'string' )
+        db = api.Db()
+        db.postAll( parsed )
+        self.assertCountEqual( db.getNames(), ['alpha', 'beta'] )

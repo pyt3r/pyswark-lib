@@ -40,8 +40,8 @@ class MixinDb( base.BaseModel, MixinName ):
         Parameters
         ----------
         url : str
-            URI to a ``db`` file (e.g. ``file:./data.gluedb`` or
-            ``pyswark:/data/catalog.gluedb``). If it exists, records are loaded.
+            URI to a ``db`` file (e.g. ``file:./data.gluedb``).
+            If it exists, records are loaded.
             If None, no load or persist is done.
         persist : bool, optional
             If True and url is set, write self to url on successful

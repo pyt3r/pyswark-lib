@@ -53,8 +53,8 @@ Read and write data from any URI:
 
    from pyswark.core.io import api
 
-   # Read from package data
-   df = api.read('pyswark:/data/ohlc-jpm.csv.gz')
+   # Read from local file
+   df = api.read('file:./data.csv')
 
    # Write to file
    api.write(df, 'file:./output.csv')
@@ -71,7 +71,7 @@ Create and use data catalogs:
    from pyswark.core.models import collection
 
    # Connect to existing catalog
-   db = api.read('pyswark:/data/sma-example.gluedb')
+   db = api.read('file:./sma-example.gluedb')
    print(db.getNames())  # ['JPM', 'BAC', 'kwargs']
 
    # Extract data by name
@@ -82,7 +82,7 @@ Create and use data catalogs:
    # Create a new catalog
    from pyswark.gluedb import db
    new_db = db.Db()
-   new_db.post("pyswark:/data/ohlc-jpm.csv.gz", name='JPM')
+   new_db.post('file:./ohlc-jpm.csv.gz', name='JPM')
    new_db.post(collection.Dict({'window': 60}), name='kwargs')
 
    # Extract from a new catalog
@@ -109,7 +109,7 @@ when ``persist=True``:
 
    # Create an initial catalog and save it
    db = Db()
-   db.post('pyswark:/data/ohlc-jpm.csv.gz', name='JPM')
+   db.post('file:./ohlc-jpm.csv.gz', name='JPM')
    api.write(db, 'file:./catalog.gluedb')
 
    # Re-open with persist=True — auto-saves on exit

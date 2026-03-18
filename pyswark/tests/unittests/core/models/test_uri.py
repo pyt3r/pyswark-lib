@@ -1,7 +1,5 @@
 import unittest
-import pathlib
 
-import pyswark
 from pyswark.core.models.uri.base import UriModel
 from pyswark.core.models.uri.ext import Ext
 
@@ -30,8 +28,7 @@ class Pyswark( Mixin, unittest.TestCase ):
     ]
 
     def test_path(self):
-        parent   = pathlib.Path( pyswark.__file__ ).parent
-        expected = f'{ parent }/data/data.csv'
+        expected = '/data/data.csv'
         self.runTests( attr='path', expected=expected )
 
 
@@ -95,6 +92,57 @@ class Url( Mixin, unittest.TestCase ):
 
     def test_path(self):
         self.runTests( attr='path', expected='/my path/to/a page' )
+
+
+class UserAtProtocol( Mixin, unittest.TestCase ):
+    """Tests for the ``username@protocol/path`` URI format."""
+
+    URIs = [
+        'phb2114@gdrive2/PUBLIC/data.json',
+        'burrows.peter.h@gdrive2/tmp/file.csv',
+        'pyt3rb@s-gdrive2/keepme.json',
+    ]
+
+    def test_username(self):
+        for uri, expected in zip( self.URIs, ['phb2114', 'burrows.peter.h', 'pyt3rb'] ):
+            with self.subTest( uri=uri ):
+                model = UriModel( uri )
+                self.assertEqual( model.username, expected )
+
+    def test_host(self):
+        for uri, expected in zip( self.URIs, ['gdrive2', 'gdrive2', 's-gdrive2'] ):
+            with self.subTest( uri=uri ):
+                model = UriModel( uri )
+                self.assertEqual( model.host, expected )
+
+    def test_path(self):
+        for uri, expected in zip( self.URIs, ['/PUBLIC/data.json', '/tmp/file.csv', '/keepme.json'] ):
+            with self.subTest( uri=uri ):
+                model = UriModel( uri )
+                self.assertEqual( model.path, expected )
+
+    def test_scheme_is_none(self):
+        for uri in self.URIs:
+            with self.subTest( uri=uri ):
+                model = UriModel( uri )
+                self.assertIsNone( model.scheme )
+
+    def test_no_path(self):
+        model = UriModel( 'phb2114@gdrive2' )
+        self.assertEqual( model.username, 'phb2114' )
+        self.assertEqual( model.host, 'gdrive2' )
+        self.assertIsNone( model.path )
+
+    def test_does_not_affect_standard_user_at_host(self):
+        model = UriModel( 'user@domain.com/path' )
+        self.assertEqual( model.username, 'user' )
+        self.assertEqual( model.host, 'domain.com' )
+        self.assertEqual( model.path, '/path' )
+
+    def test_does_not_affect_bare_relative_path(self):
+        model = UriModel( 'path/to/file' )
+        self.assertIsNone( model.username )
+        self.assertIsNone( model.host )
 
 
 class ExtTests( unittest.TestCase ):

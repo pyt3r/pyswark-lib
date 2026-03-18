@@ -1,4 +1,4 @@
-import pyswark.lib.fsspec as fsspec
+from pyswark.core import fsspec
 from pyswark.core.models.uri.base import UriModel
 from pyswark.core.io import decorate
 
