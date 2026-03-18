@@ -18,7 +18,7 @@ class Model( interface.Model ):
 
     @property
     def fsspec(self):
-        return self.path
+        return f'{ self.scheme }://{ self.path }'
 
     @property
     def Ext(self):

@@ -1,27 +1,26 @@
 import functools
 import pydrive2.fs
 from fsspec.implementations.local import LocalFileSystem
-from pathlib import Path
 
-import pyswark
-from pyswark.fsspec import fix
-
+from pyswark.core.fsspec import fix
 
 
 def path(func):
 
     @functools.wraps(func)
     def wrapper( self, path, *args, **kwargs ):
-        root            = self.path or ''
-        target_username = self.target_username
-        
-        if not root or not path.startswith( root ):
-            root = fix.getHandler( None, self.protocol, target_username ).getPath()
-            path = str( Path( root ) / path.lstrip( '/' ) )
+
+        handler = fix.getHandler( None, self.protocol, self.target_username )
+
+        if handler:
+            root = handler.getPath()
+            if path and not path.startswith( str( root )):
+                path = str( root / str( path ).lstrip( '/' ))
 
         return func( self, path, *args, **kwargs )
 
     return wrapper
+
 
 
 class Base:
@@ -29,9 +28,9 @@ class Base:
 
     def __init__( self, *args, **kwargs ):
         super().__init__( *args, **kwargs )
-        self.path = kwargs.get( 'path', None )
+        #self.path = kwargs.get( 'path', None )
         self.target_username = kwargs.get( 'target_username', None )
-        
+
     @path
     def open( self, path, *args, **kw ):
         return super().open( path, *args, **kw )

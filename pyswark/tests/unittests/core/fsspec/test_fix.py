@@ -3,8 +3,8 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pyswark
-from pyswark.fsspec import fix
-from pyswark.fsspec.fix import Handler, Gdrive2, Pyswark
+from pyswark.core.fsspec import fix
+from pyswark.core.fsspec.fix import Handler, Gdrive2, Pyswark
 
 
 MOCK_SEKRET = {
@@ -55,15 +55,14 @@ class TestHandlerGetHandler( unittest.TestCase ):
 
     def test_returns_base_handler_for_unknown_scheme(self):
         h = Handler.getHandler( scheme='s3', username='alice' )
-        self.assertIsInstance( h, Handler )
-        self.assertNotIsInstance( h, Gdrive2 )
+        self.assertIsNone( h )
 
     def test_dispatches_to_gdrive2(self):
         h = Handler.getHandler( uri='gdrive2://@alice/file.csv' )
         self.assertIsInstance( h, Gdrive2 )
 
     def test_base_getSekret_returns_empty(self):
-        h = Handler.getHandler( scheme='s3', username='alice' )
+        h = Handler.getHandler( scheme='pyswark' )
         self.assertEqual( h.getSekret(), {} )
 
 
@@ -110,24 +109,10 @@ class TestOpenDecorator( unittest.TestCase ):
         self.assertEqual( kwargs['protocol'], 'gdrive2' )
         self.assertEqual( kwargs['client_id'], 'abc' )
 
-    def test_passthrough_for_plain_scheme(self):
-        """URIs without a registered handler get base Handler (empty sekret)."""
-        calls = []
-
-        @fix.open
-        def fake_open( uri, *args, **kwargs ):
-            calls.append( ( uri, kwargs ) )
-
-        fake_open( 'http://example.com/data.csv' )
-        uri, kwargs = calls[0]
-        self.assertIsInstance( uri, Path )
-        self.assertEqual( kwargs['protocol'], 'http' )
-        self.assertNotIn( 'client_id', kwargs )
-
 
 class TestFilesystemDecorator( unittest.TestCase ):
 
-    @patch( 'pyswark.fsspec.fix.sekrets_api' )
+    @patch( 'pyswark.core.fsspec.fix.sekrets_api' )
     def test_injects_creds_for_target_username(self, mock_api):
         mock_api.get.return_value = MOCK_SEKRET
         calls = []

@@ -9,8 +9,10 @@ from pathlib import Path
 from typing import ClassVar, Optional
 from pydantic import Field, field_validator, model_validator
 from pyswark.lib.pydantic import base
-from pyswark.sekrets import api as sekrets_api
-from pyswark.core.io import api as io_api
+
+import pyswark.sekrets.api as sekrets_api
+import pyswark.core.io.api as io_api
+
 from pyswark.core.models.uri.base import UriModel
 import pyswark
 
@@ -19,8 +21,8 @@ IMPLEMENTATIONS = {
     # Use pyswark's wrapped GDriveFileSystem so that paths opened via
     # fsspec.filesystem('gdrive2', ...) go through our subclass, which
     # can normalise paths relative to the sekret root.
-    'gdrive2': 'pyswark.fsspec.implementations.GDriveFileSystem',
-    'pyswark': 'pyswark.fsspec.implementations.PyswarkFileSystem',
+    'gdrive2': 'pyswark.core.fsspec.implementations.GDriveFileSystem',
+    'pyswark': 'pyswark.core.fsspec.implementations.PyswarkFileSystem',
 }
 
 
@@ -40,16 +42,21 @@ def open( fn ):
     @functools.wraps( fn )
     def wrapper( uri, *args, **kwargs ):
         handler  = getHandler( uri, **kwargs )
-        path     = handler.getPath()
-        protocol = handler.scheme
-        sekret   = handler.getSekret()
 
-        return fn(
-            path,
-            *args,
-            protocol=protocol,
-            **{ **sekret, **kwargs },
-        )
+        if handler:
+            uri             = handler.getPath()
+            protocol        = handler.scheme
+            target_username = handler.username
+            sekret          = handler.getSekret()
+            
+            kwargs = { 
+                'protocol' : protocol,
+                'target_username': target_username,
+                **sekret,
+                **kwargs,
+            }
+
+        return fn( uri, *args, **kwargs )
 
     return wrapper
 
@@ -64,15 +71,20 @@ def filesystem( fn ):
     @functools.wraps( fn )
     def wrapper( protocol, *, target_username=None, **kwargs ):
         handler  = getHandler( scheme=protocol, username=target_username )
-        protocol = handler.scheme
-        sekret   = handler.getSekret()
+        if handler:
+            protocol = handler.scheme
+            sekret   = handler.getSekret()
+            kwargs = { 
+                **sekret,
+                **kwargs,
+            }
 
-        return fn( protocol, target_username=target_username, **{ **sekret, **kwargs }, )
+        return fn( protocol, target_username=target_username, **kwargs, )
 
     return wrapper
 
 
-def getHandler( uri=None, scheme=None, username=None ):
+def getHandler( uri=None, scheme=None, username=None, **kw ):
     """Return a protocol-specific :class:`Handler` for the given URI, scheme, or username.
 
     At least one of *uri*, *scheme*, or *username* must be provided.
@@ -86,9 +98,9 @@ class Handler( base.BaseModel ):
     Subclasses are registered in :attr:`HANDLERS` by scheme; :meth:`getHandler` returns
     the appropriate subclass (e.g. :class:`Gdrive2`) when the URI or scheme matches.
     """
-    HANDLERS : ClassVar = {
-        'gdrive2': 'pyswark.fsspec.fix.Gdrive2',
-        'pyswark': 'pyswark.fsspec.fix.Pyswark',
+    HANDLERS : ClassVar[dict[str, str]] = {
+        'gdrive2': 'pyswark.core.fsspec.fix.Gdrive2',
+        'pyswark': 'pyswark.core.fsspec.fix.Pyswark',
     }
     uri      : Optional[UriModel] = Field( default=None )
     scheme   : Optional[str] = Field( default=None )
@@ -112,10 +124,10 @@ class Handler( base.BaseModel ):
             path = cls.HANDLERS[ scheme ]
             Handler = io_api.read( path, datahandler='python' )
             handler = Handler( uri=handler.uri, scheme=handler.scheme, username=handler.username )
-        return handler
+            return handler
 
     def __init__(self, uri=None, scheme=None, username=None, **kw):
-        super().__init__( uri=uri, scheme=scheme, username=username)
+        super().__init__( uri=uri, scheme=scheme, username=username )
 
     @field_validator( 'uri', mode='before' )
     def _uri(cls, uri):
