@@ -2,6 +2,10 @@ PACKAGE_NAME=pyswark
 PACKAGE_PATH=`python -c "import ${PACKAGE_NAME}, os; print(os.path.dirname(${PACKAGE_NAME}.__file__))"`
 TESTS_PATH=${PACKAGE_PATH}/tests
 
+cursor-rules:
+	mkdir -p $(CURDIR)/../.cursor/rules
+	ln -sf $(CURDIR)/.cursor/rules/pyswark-env.mdc $(CURDIR)/../.cursor/rules/pyswark-env.mdc
+
 test-env:
 	conda env create --file ci/test-env-requirements.yml
 
@@ -92,4 +96,4 @@ clean:
 	find . -name "*.pyc" | xargs rm -rf
 	rm -rf rtd/build/ rtd/source/examples
 
-.PHONY: test-env rtd-env _pip-env add-packages pep8 lint test test-integration test-all conda conda-package test-package test-package-integration docs docs-sym-link docs-pdf docs-html docs-latex git-merge clean
+.PHONY: cursor-rules test-env rtd-env _pip-env add-packages pep8 lint test test-integration test-all conda conda-package test-package test-package-integration docs docs-sym-link docs-pdf docs-html docs-latex git-merge clean

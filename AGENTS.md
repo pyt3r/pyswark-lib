@@ -86,8 +86,9 @@ conda activate test-env
 cd pyswark-lib          # or: export PYTHONPATH="$PWD/pyswark-lib:$PYTHONPATH"
 ```
 
-> Cursor agents: this is also configured in `.cursor/rules/pyswark-env.mdc`
-> and will be injected automatically when working on `pyswark-lib/**` files.
+> Cursor agents: the rule is versioned at `pyswark-lib/.cursor/rules/pyswark-env.mdc`
+> and injected automatically when working on `pyswark-lib/**` files.
+> To install it as a symlink in the workspace run `make cursor-rules` from `pyswark-lib/`.
 
 ## Development workflow
 

@@ -1,0 +1,35 @@
+---
+description: Environment setup for running pyswark tests and code
+globs: pyswark-lib/**
+alwaysApply: false
+---
+
+# pyswark environment
+
+When running tests, scripts, or any Python code in `pyswark-lib/`:
+
+1. **Activate the conda environment:**
+   ```bash
+   conda activate test-env
+   ```
+
+2. **Set the working directory** to `pyswark-lib/` so that `pyswark` is importable:
+   ```bash
+   cd pyswark-lib
+   ```
+   Alternatively, add it to `PYTHONPATH`:
+   ```bash
+   export PYTHONPATH="$PWD/pyswark-lib:$PYTHONPATH"
+   ```
+
+3. **Run tests:**
+   ```bash
+   make test        # unit tests with coverage
+   ```
+
+4. **Build docs:**
+   ```bash
+   make docs-html   # builds Sphinx HTML and opens in browser
+   ```
+
+Always activate `test-env` before any shell command that imports pyswark.
