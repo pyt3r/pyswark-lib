@@ -10,9 +10,9 @@ build:
   tools:
     python: "mambaforge-22.9"
 
-# Build documentation in the docs/ directory with Sphinx
+# Build documentation in the rtd/ directory with Sphinx
 sphinx:
-  configuration: docs/source/conf.py
+  configuration: rtd/source/conf.py
 
 # Build documentation with MkDocs
 #mkdocs:

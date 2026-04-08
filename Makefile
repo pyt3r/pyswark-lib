@@ -57,17 +57,17 @@ test-package-integration:
 	cd ..
 
 docs-html:
-	cd docs/ && \
+	cd rtd/ && \
 	make html && \
 	open build/html/index.html && \
 	cd ..
 
 docs-pdf:
-	sphinx-build -b pdf docs/source docs/build
-	open docs/build/${PACKAGE_NAME}.pdf
+	sphinx-build -b pdf rtd/source rtd/build
+	open rtd/build/${PACKAGE_NAME}.pdf
 
 docs-latex:
-	cd docs/ && \
+	cd rtd/ && \
 	make latexpdf && \
 	cd ..
 
@@ -86,6 +86,6 @@ clean:
 	rm -rf channeldata.json index.html noarch osx-64 linux-32 linux-64 win-32 win-64 icons
 	find . -name "__pycache__" | xargs  rm -rf
 	find . -name "*.pyc" | xargs rm -rf
-	rm -rf docs/build/ docs/source/examples
+	rm -rf rtd/build/ rtd/source/examples
 
 .PHONY: test-env rtd-env _pip-env add-packages pep8 lint test test-integration test-all conda-package test-package test-package-integration docs-sym-link docs-pdf docs-html docs-latex git-merge clean
