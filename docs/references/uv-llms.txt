@@ -1,0 +1,83 @@
+UV AND MODERN PYTHON TOOLING REFERENCE
+=======================================
+
+This file is an LLM-consumable reference for uv and modern Python packaging tools,
+relevant to pyswark's potential migration from setuptools+conda to modern tooling.
+
+CURRENT STATE
+-------------
+pyswark currently uses:
+- setuptools (setup.py) for pip-installable builds
+- conda-build (meta.yaml) for conda distribution
+- No pyproject.toml exists (tracked as TD-001 in tech-debt-tracker.md)
+
+UV OVERVIEW
+-----------
+uv (https://github.com/astral-sh/uv) is a fast Python package manager written
+in Rust. It can replace pip, pip-tools, virtualenv, and parts of conda workflows.
+
+Key capabilities:
+- uv pip install — drop-in pip replacement (10-100x faster)
+- uv venv — virtualenv creation
+- uv lock / uv sync — dependency locking (like pip-tools)
+- uv run — run commands in managed environments
+- uv init — scaffold pyproject.toml projects
+
+MIGRATION PATH (IF PURSUED)
+----------------------------
+To add uv support to pyswark:
+
+1. Create pyproject.toml with [build-system] and [project] tables
+2. Move metadata from meta.yaml → pyproject.toml [project]
+3. Keep meta.yaml for conda-specific builds, reading from pyproject.toml
+4. Add uv.lock for reproducible pip installs
+5. Update CI to use uv for test environments
+
+Example pyproject.toml skeleton:
+
+  [build-system]
+  requires = ["setuptools>=68.0"]
+  build-backend = "setuptools.backends._legacy:_Backend"
+
+  [project]
+  name = "pyswark"
+  version = "0.0.8"
+  requires-python = ">=3.9"
+  dependencies = [
+      "pyyaml",
+      "numpy",
+      "pandas",
+      "pyarrow",
+      "sqlmodel",
+      "sqlalchemy",
+      "pydantic>=2.0",
+      "fsspec",
+      "requests",
+      "aiohttp",
+      "aenum",
+  ]
+
+  [project.optional-dependencies]
+  viz = ["holoviews", "panel", "bokeh", "jupyter_bokeh"]
+  drive = ["pydrive2"]
+  dev = ["coverage", "pytest"]
+
+  [project.scripts]
+  pyswark-entry-point = "pyswark.scripts.hello:world"
+
+TRADEOFFS
+---------
+Pros of adding pyproject.toml:
+- Standard PEP 621 metadata
+- uv/pip/build can consume directly
+- Enables modern tools (ruff, mypy) config co-location
+- Better IDE support
+
+Cons:
+- Dual maintenance with meta.yaml (unless meta.yaml reads from pyproject.toml)
+- conda-build has its own dependency resolution; must stay in sync
+
+RECOMMENDATION
+--------------
+Add pyproject.toml as the primary metadata source. Have both setup.py and
+meta.yaml read from it. This is a non-breaking incremental change.

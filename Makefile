@@ -40,6 +40,8 @@ test-all:
 	make test
 	make test-integration
 
+conda: conda-package
+
 conda-package:
 	conda build . -c conda-forge -c defaults --output-folder=./
 	(conda install ./**/*.tar.bz2) || (conda install ./**/*.conda)
@@ -55,6 +57,8 @@ test-package-integration:
 	python -c "import ${PACKAGE_NAME}; ${PACKAGE_NAME}.test('integration')" && \
 	conda uninstall ${PACKAGE_NAME} -y --force && \
 	cd ..
+
+docs: docs-html
 
 docs-html:
 	cd rtd/ && \
@@ -88,4 +92,4 @@ clean:
 	find . -name "*.pyc" | xargs rm -rf
 	rm -rf rtd/build/ rtd/source/examples
 
-.PHONY: test-env rtd-env _pip-env add-packages pep8 lint test test-integration test-all conda-package test-package test-package-integration docs-sym-link docs-pdf docs-html docs-latex git-merge clean
+.PHONY: test-env rtd-env _pip-env add-packages pep8 lint test test-integration test-all conda conda-package test-package test-package-integration docs docs-sym-link docs-pdf docs-html docs-latex git-merge clean

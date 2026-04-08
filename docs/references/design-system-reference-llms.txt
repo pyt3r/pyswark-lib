@@ -1,0 +1,77 @@
+DESIGN SYSTEM REFERENCE — pyswark
+==================================
+
+This file is an LLM-consumable reference for the design patterns and abstractions
+used throughout pyswark. Read this to understand how to write idiomatic code.
+
+PYDANTIC MODELS
+---------------
+pyswark uses Pydantic v2 BaseModel (extended in lib.pydantic.base) as the universal
+data contract. All configuration, DTOs, handlers, and workflow state are Pydantic models.
+
+Key rules:
+- Inherit from pyswark.lib.pydantic.base.BaseModel, not directly from pydantic.
+- Use field validators for boundary validation.
+- Use model_config for serialization settings.
+
+ALIAS ENUM REGISTRY PATTERN
+----------------------------
+pyswark maps string identifiers to implementation classes via AliasEnum (lib.aenum).
+This is the core extensibility mechanism for I/O handlers, URI schemes, and formats.
+
+How it works:
+1. Define an AliasEnum member with value = dotted import path string.
+2. At runtime, pydoc.locate(value) imports and returns the class.
+3. The enum supports aliases so multiple names can map to the same handler.
+
+Example:
+  class DataHandler(AliasEnum):
+      json = 'pyswark.core.io.json.JsonHandler'
+      yaml = 'pyswark.core.io.yaml.YamlHandler'
+
+To add a new handler:
+1. Create a class extending AbstractDataHandler.
+2. Add it to the relevant AliasEnum.
+3. If it needs a file extension, add to Ext enum.
+4. If it needs a URI scheme, add to Scheme enum.
+
+STRATEGY PATTERN (DATA HANDLERS)
+---------------------------------
+AbstractDataHandler (core.io.base) defines the read/write contract.
+Concrete handlers implement _read() and _write() for each format.
+
+Each handler receives a UriModel and uses fsspec for file access.
+Handlers should not import other handlers or application-layer code.
+
+URI MODEL SYSTEM
+----------------
+core.models.uri provides pluggable URI parsing.
+UriModel.register() adds scheme-specific models.
+guess() uses LRU cache to match URIs to handlers via Ext or Scheme enums.
+
+DECORATOR COMPOSITION
+---------------------
+I/O operations are wrapped with decorators from core.io.decorate:
+- Log.decorate: adds entry/exit logging with URI and handler info
+- Kwargs: injects default keyword arguments
+
+These are applied in AbstractDataHandler, not in individual handlers.
+
+CONTEXT-MANAGED PERSISTENCE
+----------------------------
+Db.connect(uri, persist=True) is a context manager pattern:
+- __enter__: loads data from URI via api.read()
+- __exit__: if no exception, writes back via api.write()
+
+This ensures atomic-ish persistence without manual save calls.
+
+FSSPEC INTEGRATION
+------------------
+pyswark wraps fsspec.open() and fsspec.filesystem() in core.fsspec.
+The fix module intercepts URIs with @username patterns and injects
+credentials from sekrets before passing to fsspec.
+
+WORKFLOW CACHING
+----------------
+Workflow/Step/State use input/output fingerprinting to skip already-completed
+steps. The Extracts mechanism compares cached outputs to current inputs.
