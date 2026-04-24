@@ -188,6 +188,22 @@ class TestWorkflowMixin:
         self.assertListEqual( workflow.stepsSkipped, [] )
         self.assertListEqual( workflow.stepsRan, [0, 1, 2] )
 
+    def test_rerun_is_idempotent_on_immutable_state( self ):
+        workflow = self.workflow
+        workflow.addStep( self.step1 )
+        workflow.addStep( self.step2 )
+
+        first = workflow.run( self.state )
+        self.assertEqual( first, { 'external.e': 6 } )
+        self.assertListEqual( workflow.stepsSkipped, [] )
+        self.assertListEqual( workflow.stepsRan, [0, 1, 2] )
+
+        second = workflow.run( self.state )
+        self.assertEqual( second, { 'external.e': 6 } )
+        self.assertListEqual( workflow.stepsSkipped, [0, 1, 2] )
+        self.assertListEqual( workflow.stepsRan, [0, 1, 2] )
+        self.assertEqual( self.state.extract('external.e'), 6 )
+
     def test_ser_des(self):
         workflow = self.workflow
         workflow.addStep( self.step1 )

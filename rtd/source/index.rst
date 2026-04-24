@@ -12,4 +12,5 @@ and workflow orchestration, to name a few.
    :caption: Contents
 
    getting_started
+   examples/index
    api/index

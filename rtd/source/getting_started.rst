@@ -210,9 +210,45 @@ Orchestrate multi-step computations with automatic caching:
    print(workflow.stepsRan)      # [0, 1] - both ran
    print(workflow.stepsSkipped)  # []
 
-   # Second run with same inputs - steps are skipped! 
+   # Second run with same inputs - steps are skipped!
    # - workflow cached its previous results and sees no need to recompute
+   # - stepsRan / stepsSkipped accumulate across runs; they are not reset
    state2 = State(backend=inputData)
    workflow.run(state2)
-   print(workflow.stepsSkipped)  # [0, 1] - both skipped!
+   print(workflow.stepsRan)      # [0, 1] - still from first run
+   print(workflow.stepsSkipped)  # [0, 1] - both skipped on the second run!
+
+
+7. Workflow Runner
+^^^^^^^^^^^^^^^^^^
+
+The :class:`~pyswark.workflow.runner.Runner` is the top-level entry point for
+running a workflow.  It pairs a ``Workflow`` and a ``State`` — given directly
+as instances or as ``python://module.path`` reference strings — runs them,
+and stashes the post-run artifacts for inspection and cheap ``rerun()``:
+
+.. code-block:: python
+
+   from pyswark.workflow.runner import Runner
+
+   # 1) Pass instances directly
+   runner = Runner(workflow=workflow, state=State(backend=inputData))
+   result = runner.run()
+   print(result)                              # {'final': 20}
+   print(runner.rerunWorkflow.stepsRan)       # [0, 1]
+
+   # Rerun against the cached state — all steps are skipped (idempotent)
+   runner.rerun()
+   print(runner.rerunWorkflow.stepsSkipped)   # [0, 1]
+
+   # 2) Or pass python:// refs — preferred for production entry points.
+   #    Each run() re-imports the refs, giving a fresh workflow and state.
+   runner = Runner(
+       workflow = 'python://mymodule.workflows.etl.WORKFLOW',
+       state    = 'python://mymodule.states.season.SEASON_2023',
+   )
+   runner.run()
+
+See the *Workflow Runner* gallery example and
+:doc:`/api/workflow` for full details.
 

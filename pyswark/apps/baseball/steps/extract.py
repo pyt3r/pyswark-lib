@@ -9,5 +9,5 @@ class ExtractModel( base.BaseModel ):
 
     def run( self ):
         data = io.read( self.uri )
-        print( data )
+        print( data[:100] )
         return { 'data': data }

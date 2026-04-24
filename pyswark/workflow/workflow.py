@@ -187,7 +187,10 @@ class Workflow( base.BaseModel ):
         self._addOutputExtract( i, modelOutput )
 
         stateOutput = step.extractStateOutputFromModelOutput( modelOutput )
-        step.postStateOutputToState( state, stateOutput )
+        toPost      = stateOutput
+        if skip:
+            toPost = { name: val for name, val in stateOutput.items() if name not in state.backend }
+        step.postStateOutputToState( state, toPost )
         return state, stateOutput
 
     def _skipModel( self, i: int, modelInput ):
