@@ -64,11 +64,11 @@ Creating a New GlueDb
    db.post('file:./ohlc-jpm.csv.gz', name='JPM')
    db.post('file:./ohlc-bac.csv.gz', name='BAC')
 
-   # Post inline data (dict, list, etc.)
-   db.post('config', collection.Dict({
+   # Post inline data (dict, list, etc.). Signature: db.post(obj, name=...)
+   db.post(collection.Dict({
        'window': 60,
-       'method': 'rolling'
-   }))
+       'method': 'rolling',
+   }), name='config')
 
    print(db.getNames())  # ['JPM', 'BAC', 'config']
 
@@ -181,10 +181,10 @@ Merging Databases
    from pyswark.gluedb import db
 
    db1 = db.Db()
-   db1.post('data1', 'file:./data1.csv')
+   db1.post('file:./data1.csv', name='data1')
 
    db2 = db.Db()
-   db2.post('data2', 'file:./data2.csv')
+   db2.post('file:./data2.csv', name='data2')
 
    # Merge db2 into db1
    db1.merge(db2)
