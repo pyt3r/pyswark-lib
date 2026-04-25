@@ -4,7 +4,9 @@ channels:
   - defaults
 dependencies:
   # build dependencies
-  - python>=3.9
+  - python>=3.9,<3.13
+  - pip
+  - setuptools
   - conda-build
   - pyyaml
   - coverage
@@ -21,6 +23,7 @@ dependencies:
   - requests
   - aiohttp
   - aenum
+  - beautifulsoup4
   - holoviews
   - panel
   - bokeh

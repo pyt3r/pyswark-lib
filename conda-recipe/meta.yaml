@@ -18,6 +18,8 @@ build:
 requirements:
   build:
     - python>=3.9
+    - pip
+    - setuptools
     - pyyaml
     - numpy
     - pandas
@@ -29,6 +31,7 @@ requirements:
     - requests
     - aiohttp
     - aenum
+    - beautifulsoup4
     - holoviews
     - panel
     - bokeh
