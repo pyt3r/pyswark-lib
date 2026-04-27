@@ -24,5 +24,4 @@ class Settings( Base ):
     _PROJECT = _ROOT / '..' / '..'
     _SEKRETS = _PROJECT / 'iac-project' / 'sekrets'
 
-    GITHUB_IO_DEMO = './github-io-demo.gluedb', Alias( 'github-io-demo' )
     GDRIVE2        = _SEKRETS / 'gdrive2.gluedb', Alias( 'gdrive2' )
