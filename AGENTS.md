@@ -336,8 +336,11 @@ pyswark/apps/<app_name>/
 
 ```
 apps/baseball/
-├── steps/extract.py          # ExtractModel(uri: str) -> {'data': ...}
-├── workflows/etl.py          # WORKFLOW = Workflow(steps=[Step(ExtractModel, ...)])
+├── steps/
+│   ├── scrape.py             # ScrapeModel(uri: str) -> {'scraped': Scraped(dates, games)}
+│   ├── parse.py              # ParseModel(scraped: Scraped) -> {'parsed': ParsedGames(records)}
+│   └── transform.py          # TransformModel(parsed: ParsedGames) -> {'clean': CleanGames(records)}
+├── workflows/etl.py          # WORKFLOW = Workflow(steps=[scrape, parse, transform])
 ├── states/season.py          # create(year) -> StateWithGlueDb; SEASON_2023
 └── runner/etl.py             # create(year) -> Runner(workflow='python://...', state='python://...')
 ```

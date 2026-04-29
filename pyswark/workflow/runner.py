@@ -41,10 +41,11 @@ class Runner( base.BaseModel ):
     def run( self ):
         workflow = self.getWorkflow()
         state    = self.getState()
-        results  = workflow.run( state )
 
         self.rerunWorkflow = workflow
         self.rerunState    = state
+
+        results  = workflow.run( state )
 
         return results
 

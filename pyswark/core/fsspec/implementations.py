@@ -35,6 +35,19 @@ class Base:
     def open( self, path, *args, **kw ):
         return super().open( path, *args, **kw )
 
+    # Decorate other path-taking methods so that writes (which check
+    # ``exists`` before opening, and may call ``rm`` for overwrite) see the
+    # sekret root prepended, just like ``open``. Without this, gdrive2's
+    # ``_get_item_id`` asserts on the raw URI path and fails.
+
+    @path
+    def exists( self, path, *args, **kw ):
+        return super().exists( path, *args, **kw )
+
+    @path
+    def rm( self, path, *args, **kw ):
+        return super().rm( path, *args, **kw )
+
 
 class GDriveFileSystem( Base, pydrive2.fs.GDriveFileSystem ):
     """GDrive filesystem registered under the ``gdrive2`` protocol.

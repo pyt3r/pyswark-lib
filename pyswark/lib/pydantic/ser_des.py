@@ -168,7 +168,12 @@ class ToDictModel( base.BaseModel ):
     @classmethod
     def mustBeDumpable( cls, model: BaseModelInst ) -> dict:
         cls._mustBeBaseModelInstance( model )
-        return model.model_dump()
+        # ``mode='json'`` so non-JSON-native types (datetime, UUID, Path, ...)
+        # are pre-serialized to JSON-safe primitives. Downstream callers do
+        # ``json.dumps(toDict(model))`` (in ``toJson`` and ``Body._before``)
+        # which would otherwise blow up on those types. Pydantic reconstructs
+        # them from strings on the ``fromDict`` path.
+        return model.model_dump( mode='json' )
 
     @staticmethod
     def _mustBeBaseModelInstance( model: BaseModelInst ) -> None:

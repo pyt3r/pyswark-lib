@@ -5,9 +5,19 @@ from pyswark.workflow.step import Step
 WORKFLOW = Workflow(
     steps=[
         Step(
-            model   = 'pyswark.apps.baseball.steps.extract.ExtractModel',
+            model   = 'pyswark.apps.baseball.steps.scrape.ScrapeModel',
             inputs  = { 'uri': 'uri' },
-            outputs = { 'data': 'raw_data' },
+            outputs = { 'scraped': 'scraped' },
+        ),
+        Step(
+            model   = 'pyswark.apps.baseball.steps.parse.ParseModel',
+            inputs  = { 'scraped': 'scraped' },
+            outputs = { 'parsed': 'parsed' },
+        ),
+        Step(
+            model   = 'pyswark.apps.baseball.steps.transform.TransformModel',
+            inputs  = { 'parsed': 'parsed' },
+            outputs = { 'clean': 'clean' },
         ),
     ],
 )

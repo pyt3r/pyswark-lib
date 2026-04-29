@@ -7,7 +7,7 @@
 pyswark's `sekrets` module provides centralized credential management:
 
 - Credentials are stored as typed GlueDb records in a local hub file
-- Each credential is associated with a named protocol (e.g., `github-io-demo`, GDrive)
+- Each credential is associated with a named protocol (e.g., `gdrive2`)
 - Resolution: `sekrets.api.get(protocol_name)` → hub lookup → protocol-specific model
 - The hub file location is configured via settings, not hardcoded
 

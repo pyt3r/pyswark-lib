@@ -25,6 +25,8 @@ Example Usage
 """
 
 import unittest
+from datetime import datetime
+from typing import List
 from pyswark.lib.pydantic import base
 from pyswark.core.models import body
 
@@ -33,6 +35,17 @@ class SampleModel(base.BaseModel):
     """A sample model for testing Body functionality."""
     a: int
     b: str
+
+
+class DatetimeModel(base.BaseModel):
+    """A sample model with a non-JSON-native field (datetime)."""
+    when: datetime
+    label: str
+
+
+class NestedDatetimeModel(base.BaseModel):
+    """A model whose nested records carry datetime fields."""
+    items: List[DatetimeModel]
 
 
 class TestBody(unittest.TestCase):
@@ -141,6 +154,42 @@ class TestBody(unittest.TestCase):
         self.assertIsInstance(extracted, SampleModel)
         self.assertEqual(extracted.a, 99)
         self.assertEqual(extracted.b, 'database')
+
+
+class TestBodyWithNonJsonNativeFields(unittest.TestCase):
+    """
+    Regression tests: Body must round-trip pydantic models whose fields aren't
+    JSON-native (datetime, UUID, Path, ...). The serializer ToDictModel uses
+    ``model_dump(mode='json')`` so json.dumps can take it from there.
+    """
+
+    def test_datetime_field_roundtrips(self):
+        when = datetime(2023, 4, 1, 13, 45, 30)
+        original = DatetimeModel(when=when, label='opening day')
+
+        wrapped = body.Body(model=original)
+        self.assertIsInstance(wrapped.contents, str)
+
+        extracted = wrapped.extract()
+        self.assertIsInstance(extracted, DatetimeModel)
+        self.assertEqual(extracted.when, when)
+        self.assertEqual(extracted.label, 'opening day')
+
+    def test_nested_datetime_roundtrips_via_json(self):
+        nested = NestedDatetimeModel(items=[
+            DatetimeModel(when=datetime(2023, 4, 1), label='a'),
+            DatetimeModel(when=datetime(2023, 4, 2), label='b'),
+        ])
+
+        wrapped = body.Body(model=nested)
+        json_str = wrapped.toJson()
+        restored = body.Body.fromJson(json_str)
+        extracted = restored.extract()
+
+        self.assertIsInstance(extracted, NestedDatetimeModel)
+        self.assertEqual(len(extracted.items), 2)
+        self.assertEqual(extracted.items[0].when, datetime(2023, 4, 1))
+        self.assertEqual(extracted.items[1].label, 'b')
 
 
 if __name__ == '__main__':
